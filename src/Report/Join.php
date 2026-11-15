@@ -31,6 +31,7 @@ class Join {
 	const NEVER      = 'never';
 	const INACTIVE   = 'inactive';
 	const ALWAYS_MIN = 0.95;
+	const ALMOST_MIN = 0.80; // "Almost every page": at least this share in every primary context that counts (pre-submit polish).
 
 	// Pass rules (spec §2).
 	const M1_MEMORY_SHARE = 0.75;
@@ -191,6 +192,8 @@ class Join {
 			$row['always_in'] = $always['mask'];
 			// Whole site: at least 95% in every primary context with enough requests (WP-CLI aside), not just in one.
 			$row['whole_site'] = $always['counted'] > 0 && ( $always['mask'] & $always['counted'] ) === $always['counted'];
+			// At least 80% in every one of those contexts, under 95% in one: "almost every page" on the Check tab.
+			$row['all_contexts'] = $always['counted'] > 0 && ( $always['near'] & $always['counted'] ) === $always['counted'];
 			unset( $row['usage_id'], $row['hits_by_context'] );
 			$row['bucket']   = self::bucket( $row );
 			$row['priority'] = self::priority( $row );
@@ -208,13 +211,14 @@ class Join {
 	 *
 	 * @param string|null $hits_by_context JSON from upshift_usage (bit => hits).
 	 * @param array       $requests        Meta 'requests' (primary bit => sampled requests).
-	 * @return array mask (always-loaded contexts), counted (contexts the whole-site check needs).
+	 * @return array mask (always-loaded contexts), counted (contexts the whole-site check needs), near (80% or more).
 	 */
 	public static function always_in( $hits_by_context, array $requests ) {
 		$by  = is_string( $hits_by_context ) ? json_decode( $hits_by_context, true ) : null;
 		$out = array(
 			'mask'    => 0,
 			'counted' => 0,
+			'near'    => 0,
 		);
 		foreach ( $requests as $bit => $total ) {
 			$bit   = (int) $bit;
@@ -227,6 +231,9 @@ class Join {
 			}
 			if ( is_array( $by ) && isset( $by[ $bit ] ) && $by[ $bit ] / $total >= self::ALWAYS_MIN ) {
 				$out['mask'] |= $bit;
+			}
+			if ( is_array( $by ) && isset( $by[ $bit ] ) && $by[ $bit ] / $total >= self::ALMOST_MIN ) {
+				$out['near'] |= $bit;
 			}
 		}
 		return $out;

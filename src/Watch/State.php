@@ -35,6 +35,7 @@ class State {
 			'end'           => '',    // Watch: last day.
 			'source'        => '',    // Watch: 'switch' or 'manual'.
 			'back'          => array(), // After a switch back: from, to, start, day.
+			'changed'       => '',    // Day of the last confirmed version change.
 			'capped_day'    => '',    // Day the row cap was reached.
 			'pending'       => '',    // New version seen but not confirmed yet.
 			'pending_at'    => 0,     // When it was first seen.
@@ -149,6 +150,7 @@ class State {
 		}
 
 		$state['php']           = $php;
+		$state['changed']       = $day;
 		$state['pending']       = '';
 		$state['pending_at']    = 0;
 		$state['pending_block'] = 0;
@@ -185,6 +187,21 @@ class State {
 	public static function manual( array $state, $php, $today ) {
 		$state         = self::begin( $state, '', $php, $today, 'manual' );
 		$state['php']  = $php;
+		$state['back'] = array();
+		return $state;
+	}
+
+	/**
+	 * "Stop comparing": the 7 days end now. The collected rows stay, and the version stays known, so a later real change
+	 * still starts a new comparison by itself.
+	 *
+	 * @param array $state State.
+	 * @return array
+	 */
+	public static function stop( array $state ) {
+		foreach ( array( 'from', 'to', 'start', 'end', 'source' ) as $key ) {
+			$state[ $key ] = '';
+		}
 		$state['back'] = array();
 		return $state;
 	}

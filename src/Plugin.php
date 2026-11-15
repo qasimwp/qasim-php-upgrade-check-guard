@@ -50,6 +50,8 @@ class Plugin {
 			add_action( 'admin_post_upshift_activity_on', array( __NAMESPACE__ . '\\Admin\\CheckTab', 'handle_activity_on' ) );
 			add_action( 'admin_post_upshift_save_settings', array( __NAMESPACE__ . '\\Admin\\SettingsTab', 'handle_save' ) );
 			add_action( 'admin_post_upshift_delete_data', array( __NAMESPACE__ . '\\Admin\\SettingsTab', 'handle_delete' ) );
+			// Always registered: a Stop sent after the guard was turned off in another tab gets a calm notice.
+			add_action( 'admin_post_upshift_watch_stop', array( __NAMESPACE__ . '\\Admin\\WatchTab', 'handle_stop' ) );
 			// The Plugins screen badge and the Site Health test (they read the small cached summary only).
 			add_filter( 'plugin_action_links_' . plugin_basename( UPSHIFT_FILE ), array( __NAMESPACE__ . '\\Admin\\Integrations', 'action_links' ) );
 			add_filter( 'plugin_row_meta', array( __NAMESPACE__ . '\\Admin\\Integrations', 'row_meta' ), 10, 2 );

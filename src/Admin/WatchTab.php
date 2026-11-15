@@ -22,6 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class WatchTab {
 
 	const START = 'upshift_watch_start';
+	const STOP  = 'upshift_watch_stop';
 
 	/**
 	 * Renders the tab.
@@ -41,7 +42,7 @@ class WatchTab {
 			self::render_result( $report );
 		}
 		self::render_notes( $report );
-		echo '<p class="upshift-honest">' . esc_html( self::honest_line( $report ) ) . '</p>';
+		self::render_counting( $report );
 		if ( ! $waiting ) {
 			self::render_switch( true );
 		}
@@ -57,6 +58,10 @@ class WatchTab {
 			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Settings saved.', 'upshift' ) . '</p></div>';
 		} elseif ( 'started' === $msg ) {
 			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Upgrade guard started. Upshift compares the next 7 days with the 7 days before.', 'upshift' ) . '</p></div>';
+		} elseif ( 'stopped' === $msg ) {
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Comparison stopped. Upgrade guard keeps watching.', 'upshift' ) . '</p></div>';
+		} elseif ( 'guard_off' === $msg ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Upgrade guard is already off. Nothing to stop.', 'upshift' ) . '</p></div>';
 		}
 	}
 
@@ -72,6 +77,9 @@ class WatchTab {
 		echo '<p class="upshift-switch__row"><label><input type="checkbox" name="upgrade_watch" value="1"' . checked( $on, true, false ) . ' /> <strong>' . esc_html__( 'Watch for problems after a PHP upgrade', 'upshift' ) . '</strong></label> ';
 		submit_button( __( 'Save', 'upshift' ), 'secondary', 'submit', false );
 		echo '</p>';
+		if ( $on ) {
+			echo '<p class="upshift-muted">' . esc_html__( 'Turn this off to stop Upgrade guard completely.', 'upshift' ) . '</p>';
+		}
 		// "Turn it on now" only makes sense while it is off.
 		echo '<p class="upshift-muted">' . esc_html( $on ? __( 'Tells you if any plugin starts crashing after your host changes PHP.', 'upshift' ) : __( 'Tells you if any plugin starts crashing after your host changes PHP. Turn it on now, so Upshift knows how your site behaves before the change.', 'upshift' ) ) . '</p>';
 		if ( ! $on ) {
@@ -109,6 +117,18 @@ class WatchTab {
 		echo '<input type="hidden" name="action" value="' . esc_attr( self::START ) . '" />';
 		wp_nonce_field( self::START );
 		echo '<button type="submit" class="button' . ( $primary ? ' button-primary' : '' ) . '">' . esc_html__( 'Start comparing now', 'upshift' ) . '</button></form>';
+	}
+
+	/**
+	 * "Stop comparing", with its confirm text in the page (no script): the first button opens it, the second sends it.
+	 */
+	private static function render_stop() {
+		echo '<details class="upshift-stop"><summary class="button">' . esc_html__( 'Stop comparing', 'upshift' ) . '</summary>';
+		echo '<div class="upshift-stop__confirm"><p>' . esc_html__( 'Stop comparing? Upshift keeps watching and starts a new comparison when your PHP version changes.', 'upshift' ) . '</p>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( self::STOP ) . '" />';
+		wp_nonce_field( self::STOP );
+		echo '<button type="submit" class="button">' . esc_html__( 'Stop comparing', 'upshift' ) . '</button></form></div></details>';
 	}
 
 	/**
@@ -185,11 +205,13 @@ class WatchTab {
 		echo '<p class="upshift-muted">' . esc_html( Report::headline( $report ) ) . '</p>';
 		self::render_also( $report['also'] );
 		echo '</div>';
+		echo '<div class="upshift-hero__action">';
 		if ( Report::WATCHING !== $report['phase'] ) {
-			echo '<div class="upshift-hero__action">';
 			self::render_start( false );
-			echo '</div>';
+		} else {
+			self::render_stop();
 		}
+		echo '</div>';
 		echo '</section>';
 
 		$rows = array_values(
@@ -295,7 +317,7 @@ class WatchTab {
 				$notes[] = __( 'Upgrade guard was not on before this change, so some older problems may show as new.', 'upshift' );
 			} else {
 				/* translators: %s: number of days. */
-				$notes[] = sprintf( _n( 'Upgrade guard was on for only %s day before this change, so some older problems may show as new.', 'Upgrade guard was on for only %s days before this change, so some older problems may show as new.', $report['thin'], 'upshift' ), number_format_i18n( $report['thin'] ) );
+				$notes[] = sprintf( _n( 'Upshift had only %s day to learn how your site normally behaves. A few warnings listed as new may have been there before.', 'Upshift had only %s days to learn how your site normally behaves. A few warnings listed as new may have been there before.', $report['thin'], 'upshift' ), number_format_i18n( $report['thin'] ) );
 			}
 		}
 		if ( $report['paused'] ) {
@@ -310,14 +332,29 @@ class WatchTab {
 	}
 
 	/**
-	 * The honest line at the bottom.
+	 * "How Upshift counts problems", collapsed.
 	 *
 	 * @param array $report Report::build().
+	 */
+	private static function render_counting( array $report ) {
+		echo '<details class="upshift-howcount"><summary>' . esc_html__( 'How Upshift counts problems', 'upshift' ) . '</summary>';
+		echo '<p>' . esc_html( self::counting_text( $report['rate'] ) ) . '</p></details>';
+	}
+
+	/**
+	 * The counting text. The "1 in N" sentence follows the real share of page views and is left out when all are watched.
+	 *
+	 * @param int $rate Percent of page views watched (Report::build() 'rate').
 	 * @return string
 	 */
-	private static function honest_line( array $report ) {
-		/* translators: %s: percent of page views. */
-		return sprintf( __( 'Crashes are counted on every page view. Warnings are counted on about %s%% of page views, so the real numbers can be higher. Crashes in must-use plugins cannot be seen, because they load before Upshift.', 'upshift' ), number_format_i18n( $report['rate'] ) );
+	public static function counting_text( $rate ) {
+		$parts = array( __( 'Upshift counts every crash.', 'upshift' ) );
+		if ( $rate > 0 && $rate < 100 ) {
+			/* translators: %s: a number, e.g. 4 in "1 in 4 page views". */
+			$parts[] = sprintf( __( 'To keep your site fast, it looks at about 1 in %s page views for smaller warnings.', 'upshift' ), number_format_i18n( (int) round( 100 / $rate ) ) );
+		}
+		$parts[] = __( "Must-use plugins load before Upshift, so their crashes aren't included.", 'upshift' );
+		return implode( ' ', $parts );
 	}
 
 	/**
@@ -336,6 +373,34 @@ class WatchTab {
 				array(
 					'tab'         => 'watch',
 					'upshift_msg' => 'started',
+				),
+				admin_url( 'tools.php?page=' . Page::SLUG )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Admin-post: "Stop comparing" (capability + nonce first). Registered even while the guard is off, so a form sent from
+	 * a tab that was open before the guard was turned off gets a calm notice instead of an empty page.
+	 */
+	public static function handle_stop() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to do this.', 'upshift' ), 403 );
+		}
+		check_admin_referer( self::STOP );
+
+		$msg = 'guard_off';
+		if ( ! empty( Settings::get( 'upgrade_watch' ) ) ) {
+			State::save( State::stop( State::get() ) );
+			$msg = 'stopped';
+		}
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'tab'         => 'watch',
+					'upshift_msg' => $msg,
 				),
 				admin_url( 'tools.php?page=' . Page::SLUG )
 			)

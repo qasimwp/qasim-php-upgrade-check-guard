@@ -501,6 +501,7 @@ class Install {
 		delete_option( 'upshift_watch_mail_day' );
 		delete_option( 'upshift_compact_last' );
 		delete_option( 'upshift_storage_state' );
+		delete_option( 'upshift_build' );
 
 		// delete_transient() also reaches a persistent object cache, where transients never touch
 		// wp_options. Literal names: this method can't load other classes. The LIKE below is a sweep.

@@ -508,7 +508,7 @@ class CheckTab {
 			return;
 		}
 		echo '<span class="upshift-chips">';
-		if ( in_array( $where['kind'], array( 'some', 'every', 'checkout' ), true ) ) {
+		if ( in_array( $where['kind'], array( 'some', 'every', 'almost', 'checkout' ), true ) ) {
 			echo '<span class="upshift-chips__label">' . esc_html__( 'Runs on:', 'upshift' ) . '</span>';
 		}
 		foreach ( $where['chips'] as $chip ) {
@@ -554,6 +554,10 @@ class CheckTab {
 		}
 
 		echo '<details class="upshift-tech"><summary>' . esc_html__( 'Technical details', 'upshift' ) . '</summary><ul>';
+		if ( ! empty( $item['where']['almost'] ) ) {
+			/* translators: %s: list of places, e.g. "checkout, cart and admin". */
+			echo '<li>' . esc_html( sprintf( __( 'Runs on: %s', 'upshift' ), $item['where']['list'] ) ) . '</li>';
+		}
 		foreach ( $item['groups'] as $group ) {
 			foreach ( $group['tech'] as $rule => $message ) {
 				echo '<li><code>' . esc_html( $rule ) . '</code> ' . esc_html( $message ) . '</li>';

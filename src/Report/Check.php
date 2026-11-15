@@ -202,6 +202,7 @@ class Check {
 				'contexts' => 0,
 				'whole'    => false,
 				'front'    => false,
+				'almost'   => false,
 			),
 		);
 		$list = 'theme' === $item['kind'] ? $installed['themes'] : $installed['plugins'];
@@ -252,6 +253,7 @@ class Check {
 					'contexts' => 0,
 					'whole'    => false,
 					'front'    => false,
+					'almost'   => false,
 				),
 			);
 		}
@@ -278,6 +280,7 @@ class Check {
 			$usage['contexts'] |= (int) $row['contexts'];
 			$usage['whole']     = $usage['whole'] || ! empty( $row['whole_site'] );
 			$usage['front']     = $usage['front'] || ( (int) $row['always_in'] & Recorder::FRONT );
+			$usage['almost']    = $usage['almost'] || ! empty( $row['all_contexts'] );
 		}
 		return $usage;
 	}
@@ -398,6 +401,8 @@ class Check {
 			return $out;
 		}
 		if ( $days <= 0 ) {
+			// The CSV cell is never empty (the page shows no chip).
+			$out['table'] = __( 'Not known yet: Smart results has no data', 'upshift' );
 			return $out;
 		}
 		if ( $usage['rows'] <= 0 ) {
@@ -412,6 +417,12 @@ class Check {
 
 		$contexts = (int) $usage['contexts'] & ~Recorder::CLI;
 		if ( 0 === $contexts ) {
+			// Seen only in WP-CLI commands (for example a plugin's own "wp" command files).
+			$out['rank']  = 4;
+			$out['kind']  = 'cli';
+			$out['text']  = __( 'Only when run from the command line', 'upshift' );
+			$out['table'] = $out['text'];
+			$out['chips'] = array( array( 'dashicons-editor-code', __( 'command line only', 'upshift' ) ) );
 			return $out;
 		}
 		$shop = Recorder::WC_SHOP | Recorder::WC_PRODUCT | Recorder::WC_ACCOUNT;
@@ -439,14 +450,30 @@ class Check {
 		}
 
 		$labels = array();
+		$chips  = array();
 		foreach ( self::chip_list() as $bit => $chip ) {
 			if ( $contexts & $bit ) {
-				$out['chips'][] = $chip;
-				$labels[]       = $chip[1];
+				$chips[]  = $chip;
+				$labels[] = $chip[1];
 			}
 		}
-		$out['kind'] = $contexts & Recorder::WC_CHECKOUT ? 'checkout' : 'some';
 		$out['list'] = wp_sprintf_l( '%l', $labels );
+
+		if ( $usage['almost'] ) {
+			// Seen in every kind of page, under 95% in at least one: the full list stays in Technical details ('list').
+			$out['kind']   = 'almost';
+			$out['almost'] = true;
+			$out['text']   = __( 'Runs on almost every page', 'upshift' );
+			$out['table']  = __( 'almost every page', 'upshift' );
+			$out['chips']  = array( array( 'dashicons-admin-site-alt3', __( 'almost every page', 'upshift' ) ) );
+			if ( $contexts & Recorder::WC_CHECKOUT ) {
+				$out['kind'] = 'checkout';
+			}
+			return $out;
+		}
+
+		$out['chips'] = $chips;
+		$out['kind']  = $contexts & Recorder::WC_CHECKOUT ? 'checkout' : 'some';
 		/* translators: %s: list of places, e.g. "checkout, cart and admin". */
 		$out['text']  = sprintf( __( 'Runs on: %s', 'upshift' ), $out['list'] );
 		$out['table'] = $out['list'];
@@ -467,6 +494,7 @@ class Check {
 				'contexts' => 0,
 				'whole'    => false,
 				'front'    => false,
+				'almost'   => false,
 			),
 			$row
 		);
@@ -615,6 +643,8 @@ class Check {
 				return $theme ? __( 'An update is available and this theme runs on your checkout.', 'upshift' ) : __( 'An update is available and this plugin runs on your checkout.', 'upshift' );
 			case 'every':
 				return $theme ? __( 'An update is available and this theme runs on every page.', 'upshift' ) : __( 'An update is available and this plugin runs on every page.', 'upshift' );
+			case 'almost':
+				return $theme ? __( 'An update is available and this theme runs on almost every page.', 'upshift' ) : __( 'An update is available and this plugin runs on almost every page.', 'upshift' );
 			case 'some':
 				return $theme
 					/* translators: %s: list of places, e.g. "shop and admin". */

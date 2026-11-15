@@ -873,6 +873,38 @@ details[open] > summary .upshift-item__chevron {
 	color: var(--upshift-muted);
 }
 
+/* Upgrade guard: how problems are counted (collapsed) and the in-page Stop confirm. */
+.upshift-howcount {
+	max-width: 70ch;
+	margin-block-start: var(--upshift-3);
+	color: var(--upshift-muted);
+}
+
+.upshift-howcount summary {
+	color: var(--upshift-accent);
+	cursor: pointer;
+}
+
+.upshift-howcount p {
+	margin-block: var(--upshift-1) 0;
+}
+
+.upshift-stop {
+	max-width: 260px;
+}
+
+.upshift-stop summary {
+	list-style: none;
+}
+
+.upshift-stop summary::-webkit-details-marker {
+	display: none;
+}
+
+.upshift-stop__confirm p {
+	margin-block: var(--upshift-2) var(--upshift-1);
+}
+
 @media screen and (max-width: 960px) {
 	.upshift-item__row {
 		grid-template-columns: 150px minmax(0, 1fr) 24px;

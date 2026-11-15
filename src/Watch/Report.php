@@ -452,6 +452,9 @@ class Report {
 		if ( 'manual' === $state['source'] ) {
 			/* translators: %s: date. */
 			$first = sprintf( __( 'You started comparing on %s.', 'upshift' ), self::date( $state['start'] ) );
+			if ( self::unchanged( $report ) ) {
+				$first .= ' ' . __( 'Your PHP version has not changed yet.', 'upshift' );
+			}
 		} else {
 			/* translators: 1: old PHP version, 2: new PHP version, 3: date. */
 			$first = sprintf( __( 'You moved from PHP %1$s to PHP %2$s on %3$s.', 'upshift' ), $state['from'], $state['to'], self::date( $state['start'] ) );
@@ -462,6 +465,19 @@ class Report {
 		}
 		/* translators: 1: day number, 2: number of days. */
 		return $first . ' ' . sprintf( __( 'Day %1$s of %2$s.', 'upshift' ), number_format_i18n( (int) $report['day'] ), number_format_i18n( State::WATCH_DAYS ) );
+	}
+
+	/**
+	 * Whether a comparison started by hand runs on a version Upshift has watched since before the button was pressed,
+	 * with no change seen since the switch was turned on (a change during the comparison starts a new one by itself).
+	 *
+	 * @param array $report build().
+	 * @return bool
+	 */
+	public static function unchanged( array $report ) {
+		$state = $report['state'];
+		return self::WATCHING === $report['phase'] && 'manual' === $state['source'] && '' !== (string) $state['since']
+			&& $state['since'] < $state['start'] && ( '' === (string) $state['changed'] || $state['changed'] < $state['since'] );
 	}
 
 	/**

@@ -2005,8 +2005,10 @@ class Rollup {
 		}
 		ksort( $by_day );
 		$out['from'] = gmdate( 'Y-m-d', strtotime( max( array_keys( $by_day ) ) . ' 00:00:00 UTC' ) - ( self::RECENT_DAYS - 1 ) * DAY_IN_SECONDS );
+		// Days up to the one this build was installed on may hold an older build's losses; they are left out.
+		$build = Health::build()['day'];
 		foreach ( $by_day as $day => $counts ) {
-			if ( $day >= $out['from'] ) {
+			if ( $day >= $out['from'] && $day > $build ) {
 				$out['sampled'] += $counts[0];
 				$out['lost']    += $counts[1];
 			}

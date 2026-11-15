@@ -23,6 +23,7 @@ class Health {
 	const DROP_WINDOW = 7 * DAY_IN_SECONDS;
 	const LOST_SHARE  = 0.05; // Share of the recent page views without a file list before the notice shows (DECISIONS D66).
 	const LOST_MIN    = 50;   // And at least this many.
+	const BUILD       = 'upshift_build'; // This build's stamp, the day and time it was first seen.
 
 	/**
 	 * Dropped page views by reason, from the recorder flags.
@@ -32,6 +33,32 @@ class Health {
 	public static function dropped() {
 		$flags = Recorder::flags();
 		return isset( $flags['dropped'] ) && is_array( $flags['dropped'] ) ? array_map( 'intval', $flags['dropped'] ) : array();
+	}
+
+	/**
+	 * The day and time this build of Upshift was first seen. The version and DB version stay the same between builds of
+	 * one release, so the stamp also holds the main file's time, which an update by zip, FTP or wordpress.org changes.
+	 * Called only from admin pages, Site Health and the hourly job: never on a visitor's request.
+	 *
+	 * @param int|null $now Current time (tests).
+	 * @return array day (Y-m-d), at (Unix time).
+	 */
+	public static function build( $now = null ) {
+		$now   = null === $now ? time() : (int) $now;
+		$stamp = UPSHIFT_VERSION . '|' . UPSHIFT_DB_VERSION . '|' . (int) filemtime( UPSHIFT_FILE );
+		$build = get_option( self::BUILD, array() );
+		if ( ! is_array( $build ) || ! isset( $build['stamp'], $build['day'], $build['at'] ) || $stamp !== $build['stamp'] ) {
+			$build = array(
+				'stamp' => $stamp,
+				'day'   => wp_date( 'Y-m-d', $now ),
+				'at'    => $now,
+			);
+			update_option( self::BUILD, $build, false );
+		}
+		return array(
+			'day' => (string) $build['day'],
+			'at'  => (int) $build['at'],
+		);
 	}
 
 	/**
@@ -79,9 +106,10 @@ class Health {
 
 		// Only a large loss in the newest days of the last finished rollup: stable data (a running job or cleanup never changes
 		// it), and old losses are history. A meta without these figures (an older build's) shows nothing (DECISIONS D66).
+		// A rollup from before this build was installed may count an older build's losses: it shows nothing (pre-submit polish).
 		$meta   = Rollup::meta();
-		$recent = false !== $meta && isset( $meta['recent']['sampled'], $meta['recent']['lost'] ) ? $meta['recent'] : null;
-		if ( null !== $recent && (int) $recent['lost'] >= self::LOST_MIN && (int) $recent['lost'] >= self::LOST_SHARE * (int) $recent['sampled'] ) {
+		$recent = false !== $meta && isset( $meta['recent']['sampled'], $meta['recent']['lost'] ) && (int) $meta['time'] >= self::build( $now )['at'] ? $meta['recent'] : null;
+		if ( null !== $recent && (int) $recent['sampled'] > 0 && (int) $recent['lost'] >= self::LOST_MIN && (int) $recent['lost'] >= self::LOST_SHARE * (int) $recent['sampled'] ) {
 			$out[] = sprintf(
 				/* translators: 1: number of days, 2: page views without a file list, 3: all page views of those days. */
 				_n( 'In the last %1$s day, %2$s of %3$s recorded page views were saved without their list of files, so Smart results may miss where some code runs. Recording continues normally.', 'In the last %1$s days, %2$s of %3$s recorded page views were saved without their list of files, so Smart results may miss where some code runs. Recording continues normally.', (int) $recent['days'], 'upshift' ),
