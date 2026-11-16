@@ -873,7 +873,7 @@ details[open] > summary .upshift-item__chevron {
 	color: var(--upshift-muted);
 }
 
-/* Upgrade guard: how problems are counted (collapsed) and the in-page Stop confirm. */
+/* Upgrade guard: how problems are counted (collapsed) and the Stop confirm text. */
 .upshift-howcount {
 	max-width: 70ch;
 	margin-block-start: var(--upshift-3);
@@ -893,16 +893,8 @@ details[open] > summary .upshift-item__chevron {
 	max-width: 260px;
 }
 
-.upshift-stop summary {
-	list-style: none;
-}
-
-.upshift-stop summary::-webkit-details-marker {
-	display: none;
-}
-
-.upshift-stop__confirm p {
-	margin-block: var(--upshift-2) var(--upshift-1);
+.upshift-stop p {
+	margin-block: 0 var(--upshift-1);
 }
 
 @media screen and (max-width: 960px) {

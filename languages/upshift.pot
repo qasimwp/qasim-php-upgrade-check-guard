@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-15T17:47:04+01:00\n"
+"POT-Creation-Date: 2026-11-16T10:33:45+01:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: upshift\n"
@@ -52,8 +52,8 @@ msgstr ""
 #: src/Admin/Page.php:638
 #: src/Admin/SettingsTab.php:233
 #: src/Admin/SettingsTab.php:278
-#: src/Admin/WatchTab.php:365
-#: src/Admin/WatchTab.php:389
+#: src/Admin/WatchTab.php:364
+#: src/Admin/WatchTab.php:388
 msgid "You do not have permission to do this."
 msgstr ""
 
@@ -67,13 +67,13 @@ msgstr ""
 
 #: src/Admin/CheckTab.php:92
 #: src/Admin/CheckTab.php:556
-#: src/Admin/WatchTab.php:299
+#: src/Admin/WatchTab.php:298
 msgid "Technical details"
 msgstr ""
 
 #. translators: %s: PHP version.
 #: src/Admin/CheckTab.php:154
-#: src/Admin/WatchTab.php:163
+#: src/Admin/WatchTab.php:162
 #, php-format
 msgid "Your site runs PHP %s."
 msgstr ""
@@ -214,7 +214,7 @@ msgstr ""
 #. translators: 1: current PHP version, 2: target PHP version.
 #. translators: 1: PHP version before, 2: PHP version after.
 #: src/Admin/CheckTab.php:315
-#: src/Admin/WatchTab.php:256
+#: src/Admin/WatchTab.php:255
 #, php-format
 msgid "From PHP %1$s to PHP %2$s"
 msgstr ""
@@ -1159,119 +1159,118 @@ msgid "Start comparing now"
 msgstr ""
 
 #: src/Admin/WatchTab.php:126
-#: src/Admin/WatchTab.php:131
-msgid "Stop comparing"
-msgstr ""
-
-#: src/Admin/WatchTab.php:127
 msgid "Stop comparing? Upshift keeps watching and starts a new comparison when your PHP version changes."
 msgstr ""
 
-#: src/Admin/WatchTab.php:141
+#: src/Admin/WatchTab.php:130
+msgid "Stop comparing"
+msgstr ""
+
+#: src/Admin/WatchTab.php:140
 msgid "Already upgraded? Start comparing now"
 msgstr ""
 
-#: src/Admin/WatchTab.php:142
+#: src/Admin/WatchTab.php:141
 msgid "Use this only if your host changed PHP recently."
 msgstr ""
 
-#: src/Admin/WatchTab.php:156
+#: src/Admin/WatchTab.php:155
 msgid "Upgrade guard is on. Nothing more to do. When your host changes PHP, Upshift starts comparing automatically for 7 days."
 msgstr ""
 
-#: src/Admin/WatchTab.php:159
+#: src/Admin/WatchTab.php:158
 msgid "Learning how your site normally behaves"
 msgstr ""
 
 #. translators: %s: date, for example "9 Nov".
-#: src/Admin/WatchTab.php:161
+#: src/Admin/WatchTab.php:160
 #, php-format
 msgid "Collecting since %s"
 msgstr ""
 
-#: src/Admin/WatchTab.php:165
+#: src/Admin/WatchTab.php:164
 msgid "Your host changes PHP"
 msgstr ""
 
-#: src/Admin/WatchTab.php:166
+#: src/Admin/WatchTab.php:165
 msgid "7-day comparison"
 msgstr ""
 
 #. translators: %s: for example "0 crashes, 3 warnings".
-#: src/Admin/WatchTab.php:171
+#: src/Admin/WatchTab.php:170
 #, php-format
 msgid "Last 7 days: %s."
 msgstr ""
 
 #. translators: %s: for example "12 notes about old code that still work".
-#: src/Admin/WatchTab.php:188
+#: src/Admin/WatchTab.php:187
 #, php-format
 msgid "Also seen: %s."
 msgstr ""
 
-#: src/Admin/WatchTab.php:236
+#: src/Admin/WatchTab.php:235
 msgid "Copy report"
 msgstr ""
 
-#: src/Admin/WatchTab.php:269
+#: src/Admin/WatchTab.php:268
 msgid "Plugin or theme"
 msgstr ""
 
-#: src/Admin/WatchTab.php:270
+#: src/Admin/WatchTab.php:269
 msgid "New crashes"
 msgstr ""
 
-#: src/Admin/WatchTab.php:271
+#: src/Admin/WatchTab.php:270
 msgid "New errors"
 msgstr ""
 
-#: src/Admin/WatchTab.php:272
+#: src/Admin/WatchTab.php:271
 msgid "New warnings"
 msgstr ""
 
-#: src/Admin/WatchTab.php:273
+#: src/Admin/WatchTab.php:272
 msgid "Where"
 msgstr ""
 
-#: src/Admin/WatchTab.php:274
+#: src/Admin/WatchTab.php:273
 msgid "Last seen"
 msgstr ""
 
-#: src/Admin/WatchTab.php:317
-msgid "Upgrade guard was not on before this change, so some older problems may show as new."
+#: src/Admin/WatchTab.php:316
+msgid "Upshift didn't have time to learn how your site normally behaves before this. A few warnings listed as new may have been there before."
 msgstr ""
 
 #. translators: %s: number of days.
-#: src/Admin/WatchTab.php:320
+#: src/Admin/WatchTab.php:319
 #, php-format
 msgid "Upshift had only %s day to learn how your site normally behaves. A few warnings listed as new may have been there before."
 msgid_plural "Upshift had only %s days to learn how your site normally behaves. A few warnings listed as new may have been there before."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/WatchTab.php:324
+#: src/Admin/WatchTab.php:323
 msgid "Upgrade guard paused itself for a few minutes after a database error. It starts again on its own."
 msgstr ""
 
-#: src/Admin/WatchTab.php:327
+#: src/Admin/WatchTab.php:326
 msgid "So many different warnings appeared today that Upshift stopped counting new ones until tomorrow. Crashes are still counted."
 msgstr ""
 
-#: src/Admin/WatchTab.php:340
+#: src/Admin/WatchTab.php:339
 msgid "How Upshift counts problems"
 msgstr ""
 
-#: src/Admin/WatchTab.php:351
+#: src/Admin/WatchTab.php:350
 msgid "Upshift counts every crash."
 msgstr ""
 
 #. translators: %s: a number, e.g. 4 in "1 in 4 page views".
-#: src/Admin/WatchTab.php:354
+#: src/Admin/WatchTab.php:353
 #, php-format
 msgid "To keep your site fast, it looks at about 1 in %s page views for smaller warnings."
 msgstr ""
 
-#: src/Admin/WatchTab.php:356
+#: src/Admin/WatchTab.php:355
 msgid "Must-use plugins load before Upshift, so their crashes aren't included."
 msgstr ""
 

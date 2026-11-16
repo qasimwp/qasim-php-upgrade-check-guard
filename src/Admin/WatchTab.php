@@ -120,15 +120,14 @@ class WatchTab {
 	}
 
 	/**
-	 * "Stop comparing", with its confirm text in the page (no script): the first button opens it, the second sends it.
+	 * "Stop comparing": the confirm text, always shown, and one button that sends it (no script).
 	 */
 	private static function render_stop() {
-		echo '<details class="upshift-stop"><summary class="button">' . esc_html__( 'Stop comparing', 'upshift' ) . '</summary>';
-		echo '<div class="upshift-stop__confirm"><p>' . esc_html__( 'Stop comparing? Upshift keeps watching and starts a new comparison when your PHP version changes.', 'upshift' ) . '</p>';
+		echo '<div class="upshift-stop"><p>' . esc_html__( 'Stop comparing? Upshift keeps watching and starts a new comparison when your PHP version changes.', 'upshift' ) . '</p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( self::STOP ) . '" />';
 		wp_nonce_field( self::STOP );
-		echo '<button type="submit" class="button">' . esc_html__( 'Stop comparing', 'upshift' ) . '</button></form></div></details>';
+		echo '<button type="submit" class="button">' . esc_html__( 'Stop comparing', 'upshift' ) . '</button></form></div>';
 	}
 
 	/**
@@ -314,7 +313,7 @@ class WatchTab {
 		$notes = array();
 		if ( null !== $report['thin'] ) {
 			if ( 0 === $report['thin'] ) {
-				$notes[] = __( 'Upgrade guard was not on before this change, so some older problems may show as new.', 'upshift' );
+				$notes[] = __( 'Upshift didn\'t have time to learn how your site normally behaves before this. A few warnings listed as new may have been there before.', 'upshift' );
 			} else {
 				/* translators: %s: number of days. */
 				$notes[] = sprintf( _n( 'Upshift had only %s day to learn how your site normally behaves. A few warnings listed as new may have been there before.', 'Upshift had only %s days to learn how your site normally behaves. A few warnings listed as new may have been there before.', $report['thin'], 'upshift' ), number_format_i18n( $report['thin'] ) );
