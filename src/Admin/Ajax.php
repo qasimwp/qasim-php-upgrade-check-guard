@@ -2,28 +2,28 @@
 /**
  * Scan AJAX endpoints (spec §7.6): start, batch, cancel, status.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Admin;
+namespace Qpucg\Admin;
 
-use Upshift\Scan\Runner;
-use Upshift\Settings;
-use Upshift\Usage\Recorder;
-use Upshift\Usage\Rollup;
+use Qpucg\Scan\Runner;
+use Qpucg\Settings;
+use Qpucg\Usage\Recorder;
+use Qpucg\Usage\Rollup;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Every handler checks the capability and its nonce (`upshift_scan`, or `upshift_rollup` for the rollup step) before
+ * Every handler checks the capability and its nonce (`qpucg_scan`, or `qpucg_rollup` for the rollup step) before
  * any work.
  */
 class Ajax {
 
-	const NONCE        = 'upshift_scan';
-	const ROLLUP_NONCE = 'upshift_rollup';
+	const NONCE        = 'qpucg_scan';
+	const ROLLUP_NONCE = 'qpucg_rollup';
 
 	/**
 	 * Smallest and largest time budget a batch request may ask for (seconds; DECISIONS D54).
@@ -113,7 +113,7 @@ class Ajax {
 			wp_send_json_error(
 				array(
 					'code'    => 'not_found',
-					'message' => __( 'Scan not found.', 'upshift' ),
+					'message' => __( 'Scan not found.', 'qasim-php-upgrade-check-guard' ),
 				)
 			);
 		}
@@ -138,7 +138,7 @@ class Ajax {
 			wp_send_json_error(
 				array(
 					'code'    => 'rollup_error',
-					'message' => isset( $flags['last_error'] ) ? (string) $flags['last_error'] : __( 'Unknown error.', 'upshift' ),
+					'message' => isset( $flags['last_error'] ) ? (string) $flags['last_error'] : __( 'Unknown error.', 'qasim-php-upgrade-check-guard' ),
 				)
 			);
 		}
@@ -157,7 +157,7 @@ class Ajax {
 			wp_send_json_error(
 				array(
 					'code'    => 'forbidden',
-					'message' => __( 'You do not have permission to do this.', 'upshift' ),
+					'message' => __( 'You do not have permission to do this.', 'qasim-php-upgrade-check-guard' ),
 				),
 				403
 			);

@@ -10,14 +10,14 @@
  * learns about them here. PHP's own handling is unchanged, because the handler returns the previous handler's result, or
  * false when there is none, which hands the error back to PHP's standard handler. Errors silenced with @ are skipped.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Watch;
+namespace Qpucg\Watch;
 
-use Upshift\Paths;
-use Upshift\Settings;
-use Upshift\Usage\Recorder;
+use Qpucg\Paths;
+use Qpucg\Settings;
+use Qpucg\Usage\Recorder;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -31,7 +31,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Collector {
 
-	const TABLE         = 'upshift_errors';
+	const TABLE         = 'qpucg_errors';
 	const DEFAULT_RATE  = 0.25; // Used when Activity watch is off.
 	const MAX_DISTINCT  = 200;  // Different errors kept in memory per request.
 	const MAX_RAW       = 2000; // Bytes of one message kept until it is cleaned.
@@ -181,7 +181,7 @@ class Collector {
 	 */
 	private static function note( $errno, $errstr, $errfile, $errline ) {
 		try {
-			if ( ! self::$active || ( defined( 'UPSHIFT_SCANNING' ) && UPSHIFT_SCANNING ) ) {
+			if ( ! self::$active || ( defined( 'QPUCG_SCANNING' ) && QPUCG_SCANNING ) ) {
 				return;
 			}
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting, WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_error_reporting -- read only: 0 (below PHP 8) or 4437 means the @ operator.
@@ -219,7 +219,7 @@ class Collector {
 		self::$reserve = null;
 		self::$active  = false;
 		try {
-			if ( ( defined( 'UPSHIFT_SCANNING' ) && UPSHIFT_SCANNING ) || ! ( $GLOBALS['wpdb'] instanceof \wpdb ) ) {
+			if ( ( defined( 'QPUCG_SCANNING' ) && QPUCG_SCANNING ) || ! ( $GLOBALS['wpdb'] instanceof \wpdb ) ) {
 				return;
 			}
 			$last = error_get_last();
@@ -239,7 +239,7 @@ class Collector {
 	 */
 	private static function record_crash( $error, $path ) {
 		if ( '' !== self::$caught_by || ! is_array( $error ) || ! isset( $error['type'], $error['message'], $error['file'] )
-			|| 0 === ( (int) $error['type'] & self::FATAL ) || ( defined( 'UPSHIFT_SCANNING' ) && UPSHIFT_SCANNING ) ) {
+			|| 0 === ( (int) $error['type'] & self::FATAL ) || ( defined( 'QPUCG_SCANNING' ) && QPUCG_SCANNING ) ) {
 			return;
 		}
 		self::$reserve   = null;
@@ -376,9 +376,11 @@ class Collector {
 			return self::$roots;
 		}
 		// phpcs:disable WordPress.PHP.NoSilencedErrors.Discouraged -- realpath() warns under open_basedir; false is handled.
+		// Display-only: strip site paths from error samples. No file read/write. ABSPATH is the
+		// WordPress root constant (no equivalent function for this prefix-strip). Content dir via Paths.
 		$dirs = array(
-			array( WP_CONTENT_DIR, 'wp-content/' ),
-			array( @realpath( WP_CONTENT_DIR ), 'wp-content/' ),
+			array( Paths::content_dir(), 'wp-content/' ),
+			array( @realpath( Paths::content_dir() ), 'wp-content/' ),
 			array( ABSPATH, '' ),
 			array( @realpath( ABSPATH ), '' ),
 		);
@@ -558,7 +560,7 @@ class Collector {
 	public static function purge() {
 		global $wpdb;
 
-		if ( UPSHIFT_DB_VERSION !== get_option( 'upshift_db_version' ) ) {
+		if ( QPUCG_DB_VERSION !== get_option( 'qpucg_db_version' ) ) {
 			return;
 		}
 		$table    = $wpdb->prefix . self::TABLE;

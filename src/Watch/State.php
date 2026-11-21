@@ -2,10 +2,10 @@
 /**
  * Upgrade watch state: the small autoloaded option, the PHP version change and the load order (DECISIONS D59).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Watch;
+namespace Qpucg\Watch;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class State {
 
-	const OPTION      = 'upshift_watch_state';
+	const OPTION      = 'qpucg_watch_state';
 	const WATCH_DAYS  = 7;
 	const CONFIRM_SEC = 300; // A new version counts only when seen again this long after the first time.
 
@@ -251,16 +251,16 @@ class State {
 	}
 
 	/**
-	 * Upshift's entry in active_plugins.
+	 * Qpucg's entry in active_plugins.
 	 *
 	 * @return string
 	 */
 	private static function own_plugin() {
-		return plugin_basename( UPSHIFT_FILE );
+		return plugin_basename( QPUCG_FILE );
 	}
 
 	/**
-	 * Moves Upshift to the front of active_plugins, so it can see a crash in a plugin that loads later. The other plugins
+	 * Moves Qpucg to the front of active_plugins, so it can see a crash in a plugin that loads later. The other plugins
 	 * keep their order. Not run on every page, so a plugin that also forces itself first can't cause a write on each request.
 	 */
 	public static function move_first() {
@@ -275,7 +275,7 @@ class State {
 	}
 
 	/**
-	 * Puts Upshift back at its alphabetical place. The other plugins keep their order (they may have a custom one).
+	 * Puts Qpucg back at its alphabetical place. The other plugins keep their order (they may have a custom one).
 	 */
 	public static function move_back() {
 		$active = (array) get_option( 'active_plugins', array() );

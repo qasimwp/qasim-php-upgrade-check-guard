@@ -2,13 +2,13 @@
 /**
  * Tables, DB version, cron scheduling, uninstall (spec §6, §7.11).
  *
- * The uninstall() method must not depend on UPSHIFT_* constants or other classes: uninstall.php
+ * The uninstall() method must not depend on QPUCG_* constants or other classes: uninstall.php
  * loads this file directly while the plugin is inactive.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift;
+namespace Qpucg;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -19,19 +19,19 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Install {
 
-	const CRON_HOOK         = 'upshift_daily';
-	const OPTION_DB_VERSION = 'upshift_db_version';
-	const OPTION_SETTINGS   = 'upshift_settings';
-	const OPTION_FLAGS      = 'upshift_recorder_flags';
-	const STEP_HOOK         = 'upshift_rollup_step';
-	const COMPACT_HOOK      = 'upshift_compact';
-	const COMPACT_STEP_HOOK = 'upshift_compact_step';
-	const STORAGE_HOOK      = 'upshift_storage';
-	const SCAN_STEP_HOOK    = 'upshift_scan_step';
-	const OPTION_NOTICE     = 'upshift_show_notice';
+	const CRON_HOOK         = 'qpucg_daily';
+	const OPTION_DB_VERSION = 'qpucg_db_version';
+	const OPTION_SETTINGS   = 'qpucg_settings';
+	const OPTION_FLAGS      = 'qpucg_recorder_flags';
+	const STEP_HOOK         = 'qpucg_rollup_step';
+	const COMPACT_HOOK      = 'qpucg_compact';
+	const COMPACT_STEP_HOOK = 'qpucg_compact_step';
+	const STORAGE_HOOK      = 'qpucg_storage';
+	const SCAN_STEP_HOOK    = 'qpucg_scan_step';
+	const OPTION_NOTICE     = 'qpucg_show_notice';
 
 	/**
-	 * Short table names (without `{prefix}upshift_`).
+	 * Short table names (without `{prefix}qpucg_`).
 	 *
 	 * @return string[]
 	 */
@@ -47,7 +47,7 @@ class Install {
 	 */
 	public static function table( $name ) {
 		global $wpdb;
-		return $wpdb->prefix . 'upshift_' . $name;
+		return $wpdb->prefix . 'qpucg_' . $name;
 	}
 
 	/**
@@ -136,7 +136,7 @@ class Install {
 		global $wpdb;
 
 		// Option row "{expires}", SQL only: INSERT IGNORE is atomic; an expired lock is deleted by compare-and-swap.
-		$lock = 'upshift_upgrade_lock';
+		$lock = 'qpucg_upgrade_lock';
 		$sql  = "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')";
 		if ( 1 !== $wpdb->query( $wpdb->prepare( $sql, $lock, (string) ( time() + 120 ) ) ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- fixed query string.
 			$current = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $lock ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- lock row.
@@ -150,7 +150,7 @@ class Install {
 		try {
 			// Another request may have finished the upgrade while we waited for the lock: read the version with SQL.
 			$version = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::OPTION_DB_VERSION ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- must bypass the option cache.
-			if ( UPSHIFT_DB_VERSION === $version ) {
+			if ( QPUCG_DB_VERSION === $version ) {
 				wp_cache_delete( 'alloptions', 'options' );
 				return true;
 			}
@@ -171,7 +171,7 @@ class Install {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 		$collate = $wpdb->get_charset_collate();
-		$p       = $wpdb->prefix . 'upshift_';
+		$p       = $wpdb->prefix . 'qpucg_';
 
 		$sql = array();
 
@@ -391,7 +391,7 @@ class Install {
 			Report\Status::refresh_after_remap();
 		}
 
-		update_option( self::OPTION_DB_VERSION, UPSHIFT_DB_VERSION, 'yes' );
+		update_option( self::OPTION_DB_VERSION, QPUCG_DB_VERSION, 'yes' );
 		return true;
 	}
 
@@ -403,7 +403,7 @@ class Install {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- job row is SQL only.
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s", 'upshift_rollup_job' ) );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s", 'qpucg_rollup_job' ) );
 		foreach ( array( 'usage_next', 'rollup_state' ) as $name ) {
 			$table = self::table( $name );
 			$wpdb->query( "TRUNCATE TABLE {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- table name from $wpdb->prefix.
@@ -413,7 +413,7 @@ class Install {
 			unset( $flags['fileset_cap_reached'] );
 			update_option( self::OPTION_FLAGS, $flags, false );
 		}
-		delete_transient( 'upshift_fileset_count' );
+		delete_transient( 'qpucg_fileset_count' );
 	}
 
 	/**
@@ -426,7 +426,7 @@ class Install {
 
 		$table = self::table( 'scans' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- table name from $wpdb->prefix.
-		$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET status = 'failed', finished = %s, error = %s WHERE status IN ('queued','running')", current_time( 'mysql' ), __( 'Upshift was updated while this scan was running. Please start a new scan.', 'upshift' ) ) );
+		$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET status = 'failed', finished = %s, error = %s WHERE status IN ('queued','running')", current_time( 'mysql' ), __( 'Qasim PHP Upgrade Check & Guard was updated while this scan was running. Please start a new scan.', 'qasim-php-upgrade-check-guard' ) ) );
 	}
 
 	/**
@@ -466,7 +466,7 @@ class Install {
 		global $wpdb;
 
 		delete_option( self::OPTION_NOTICE );
-		// "Delete all data when Upshift is uninstalled" is on unless the owner turned it off. The scheduled events always go.
+		// "Delete all data when Qpucg is uninstalled" is on unless the owner turned it off. The scheduled events always go.
 		$settings = get_option( self::OPTION_SETTINGS );
 		if ( is_array( $settings ) && isset( $settings['delete_on_uninstall'] ) && ! $settings['delete_on_uninstall'] ) {
 			wp_clear_scheduled_hook( self::CRON_HOOK );
@@ -487,25 +487,25 @@ class Install {
 		delete_option( self::OPTION_SETTINGS );
 		delete_option( self::OPTION_DB_VERSION );
 		delete_option( self::OPTION_FLAGS );
-		delete_option( 'upshift_scan_stats' );
-		delete_option( 'upshift_scan_lock' );
-		delete_option( 'upshift_bench_result' );
-		delete_option( 'upshift_rollup_meta' );
-		delete_option( 'upshift_rollup_job' );
-		delete_option( 'upshift_rollup_lock' );
-		delete_option( 'upshift_rollup_stopped' );
-		delete_option( 'upshift_upgrade_lock' );
-		delete_option( 'upshift_scan_page_until' );
-		delete_option( 'upshift_check_summary' );
-		delete_option( 'upshift_watch_state' );
-		delete_option( 'upshift_watch_mail_day' );
-		delete_option( 'upshift_compact_last' );
-		delete_option( 'upshift_storage_state' );
-		delete_option( 'upshift_build' );
+		delete_option( 'qpucg_scan_stats' );
+		delete_option( 'qpucg_scan_lock' );
+		delete_option( 'qpucg_bench_result' );
+		delete_option( 'qpucg_rollup_meta' );
+		delete_option( 'qpucg_rollup_job' );
+		delete_option( 'qpucg_rollup_lock' );
+		delete_option( 'qpucg_rollup_stopped' );
+		delete_option( 'qpucg_upgrade_lock' );
+		delete_option( 'qpucg_scan_page_until' );
+		delete_option( 'qpucg_check_summary' );
+		delete_option( 'qpucg_watch_state' );
+		delete_option( 'qpucg_watch_mail_day' );
+		delete_option( 'qpucg_compact_last' );
+		delete_option( 'qpucg_storage_state' );
+		delete_option( 'qpucg_build' );
 
 		// delete_transient() also reaches a persistent object cache, where transients never touch
 		// wp_options. Literal names: this method can't load other classes. The LIKE below is a sweep.
-		foreach ( array( 'upshift_rollup_meta', 'upshift_rollup_lock', 'upshift_fileset_count', 'upshift_bench_result', 'upshift_scan_lock' ) as $transient ) {
+		foreach ( array( 'qpucg_rollup_meta', 'qpucg_rollup_lock', 'qpucg_fileset_count', 'qpucg_bench_result', 'qpucg_scan_lock' ) as $transient ) {
 			delete_transient( $transient );
 		}
 
@@ -513,8 +513,8 @@ class Install {
 		$wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
-				$wpdb->esc_like( '_transient_upshift_' ) . '%',
-				$wpdb->esc_like( '_transient_timeout_upshift_' ) . '%'
+				$wpdb->esc_like( '_transient_qpucg_' ) . '%',
+				$wpdb->esc_like( '_transient_timeout_qpucg_' ) . '%'
 			)
 		);
 		wp_cache_delete( 'alloptions', 'options' );

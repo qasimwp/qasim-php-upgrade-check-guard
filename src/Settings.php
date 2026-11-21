@@ -2,21 +2,21 @@
 /**
  * Option read/write with defaults and sanitization (spec §6, §7.11).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift;
+namespace Qpucg;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Settings stored in the autoloaded option `upshift_settings`.
+ * Settings stored in the autoloaded option `qpucg_settings`.
  */
 class Settings {
 
-	const OPTION = 'upshift_settings';
+	const OPTION = 'qpucg_settings';
 
 	/**
 	 * Allowed "from" overrides. Empty string = use the running PHP version.
@@ -57,7 +57,7 @@ class Settings {
 			'email_crashes'         => false,
 			// Internal: Upgrade watch pauses itself after a DB failure, like the recorder. Not on the form.
 			'watch_paused_until'    => 0,
-			// Delete every table and option when Upshift is deleted (on by default; DECISIONS D58).
+			// Delete every table and option when Qpucg is deleted (on by default; DECISIONS D58).
 			'delete_on_uninstall'   => true,
 		);
 	}

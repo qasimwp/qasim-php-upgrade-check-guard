@@ -8,13 +8,13 @@
  * Loaded only on sampled requests (spec §5.3), so it uses $wpdb->prefix directly
  * instead of loading Install.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Usage;
+namespace Qpucg\Usage;
 
-use Upshift\Paths;
-use Upshift\Settings;
+use Qpucg\Paths;
+use Qpucg\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -28,13 +28,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Recorder {
 
-	const FLAGS   = 'upshift_recorder_flags';
+	const FLAGS   = 'qpucg_recorder_flags';
 	const SLOW_MS = 3.0;
 
-	// upshift_filesets.format (DECISIONS D55): how the `files` column stores the file list.
+	// qpucg_filesets.format (DECISIONS D55): how the `files` column stores the file list.
 	const FORMAT_KEYS  = 0; // Path keys, one per line (rows from before DB v5).
 	const FORMAT_PATHS = 1; // Raw paths as the recorder saw them, until Rollup converts them.
-	const FORMAT_IDS   = 2; // Packed runs of dictionary ids (upshift_files).
+	const FORMAT_IDS   = 2; // Packed runs of dictionary ids (qpucg_files).
 
 	// Upper edges (%) of the prep-time / request-time histogram buckets ovh_0..ovh_5; ovh_6 = 10 % and over (D38).
 	const OVERHEAD_EDGES = array( 0.5, 1, 2, 3, 5, 10 );
@@ -84,7 +84,7 @@ class Recorder {
 		global $wpdb;
 
 		$start = microtime( true );
-		if ( ( defined( 'UPSHIFT_SCANNING' ) && UPSHIFT_SCANNING ) || ! ( $wpdb instanceof \wpdb ) ) {
+		if ( ( defined( 'QPUCG_SCANNING' ) && QPUCG_SCANNING ) || ! ( $wpdb instanceof \wpdb ) ) {
 			return;
 		}
 		// After a fatal error (shutdown still runs): don't record the crashed request or risk a second fatal.
@@ -98,7 +98,7 @@ class Recorder {
 		$suppress = $wpdb->suppress_errors( true );
 		$limited  = false;
 		try {
-			$prep = self::prepare();
+			$prep = self::build_set();
 			if ( null !== $prep ) {
 				$limited = self::limit_lock_wait();
 				if ( ! self::write( $prep['hash'], current_time( 'Y-m-d' ), $prep['context'], $prep['prep_ms'], $prep['paths'], $req_ms ) ) {
@@ -153,14 +153,14 @@ class Recorder {
 	/**
 	 * Limits row-lock and table-lock (metadata) waits for this connection to 1 s (DECISIONS D18, D66): a table rebuild or
 	 * a backup can hold a table lock for minutes, and a visitor's page must not wait for it. The old values are kept in
-	 * the session variables @upshift_lwt and @upshift_mlwt. Callers suppress DB errors.
+	 * the session variables @qpucg_lwt and @qpucg_mlwt. Callers suppress DB errors.
 	 *
 	 * @return bool Whether the limit was set (only then call restore_lock_wait()).
 	 */
 	public static function limit_lock_wait() {
 		global $wpdb;
 		try {
-			return false !== $wpdb->query( 'SET @upshift_lwt = @@SESSION.innodb_lock_wait_timeout, @upshift_mlwt = @@SESSION.lock_wait_timeout, SESSION innodb_lock_wait_timeout = 1, SESSION lock_wait_timeout = 1' );
+			return false !== $wpdb->query( 'SET @qpucg_lwt = @@SESSION.innodb_lock_wait_timeout, @qpucg_mlwt = @@SESSION.lock_wait_timeout, SESSION innodb_lock_wait_timeout = 1, SESSION lock_wait_timeout = 1' );
 		} catch ( \Throwable $e ) {
 			return false;
 		}
@@ -172,7 +172,7 @@ class Recorder {
 	public static function restore_lock_wait() {
 		global $wpdb;
 		try {
-			$wpdb->query( 'SET SESSION innodb_lock_wait_timeout = @upshift_lwt, SESSION lock_wait_timeout = @upshift_mlwt' );
+			$wpdb->query( 'SET SESSION innodb_lock_wait_timeout = @qpucg_lwt, SESSION lock_wait_timeout = @qpucg_mlwt' );
 		} catch ( \Throwable $e ) {
 			return;
 		}
@@ -223,7 +223,7 @@ class Recorder {
 	 * @param string[]|null $files Included files; null = get_included_files().
 	 * @return array|null array( 'paths', 'hash', 'context', 'prep_ms' ), or null when no content files.
 	 */
-	public static function prepare( $files = null ) {
+	public static function build_set( $files = null ) {
 		$t0 = microtime( true );
 
 		if ( null === $files ) {
@@ -562,7 +562,7 @@ class Recorder {
 	private static function remove_hit( $hash, $day, $context ) {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'upshift_fileset_hits';
+		$table = $wpdb->prefix . 'qpucg_fileset_hits';
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
 		$hits = (int) $wpdb->get_var( $wpdb->prepare( "SELECT hits FROM {$table} WHERE set_hash = %s AND day = %s AND context = %d", $hash, $day, $context ) );
 		if ( $hits > 0 && 1 === (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE set_hash = %s AND day = %s AND context = %d AND hits = %d", $hash, $day, $context, $hits ) ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
@@ -609,7 +609,7 @@ class Recorder {
 			$req_ms = null;
 		}
 
-		$table  = $wpdb->prefix . 'upshift_fileset_hits';
+		$table  = $wpdb->prefix . 'qpucg_fileset_hits';
 		$result = $wpdb->query(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix; one query by design (spec §7.2).
@@ -659,7 +659,7 @@ class Recorder {
 	public static function store_new_set( $hash, array $paths ) {
 		global $wpdb;
 
-		$table  = $wpdb->prefix . 'upshift_filesets';
+		$table  = $wpdb->prefix . 'qpucg_filesets';
 		$exists = $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$table} WHERE set_hash = %s LIMIT 1", $hash ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
 		if ( '' !== (string) $wpdb->last_error ) {
 			self::set_error( 'filesets: ' . self::db_error() );
@@ -794,7 +794,7 @@ class Recorder {
 	}
 
 	/**
-	 * This plugin's directory, from UPSHIFT_DIR and its real path (a renamed folder still works).
+	 * This plugin's directory, from QPUCG_DIR and its real path (a renamed folder still works).
 	 *
 	 * @return array prefix => length.
 	 */
@@ -802,7 +802,7 @@ class Recorder {
 		if ( null === self::$own_prefixes ) {
 			$out = array();
 			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- realpath() warns under open_basedir when a symlinked plugin dir resolves outside the allowed paths; false is handled.
-			$dirs = array( UPSHIFT_DIR, @realpath( UPSHIFT_DIR ) );
+			$dirs = array( QPUCG_DIR, @realpath( QPUCG_DIR ) );
 			foreach ( $dirs as $dir ) {
 				if ( false !== $dir && '' !== $dir ) {
 					$prefix         = Paths::normalize( trailingslashit( $dir ) );
@@ -830,7 +830,7 @@ class Recorder {
 
 	/**
 	 * Builds the per-request prefix caches (incl. realpath()). Bench only: it times this as the
-	 * "setup" phase. On a real request blocks() builds the same caches lazily inside prepare().
+	 * "setup" phase. On a real request blocks() builds the same caches lazily inside build_set().
 	 */
 	public static function warm() {
 		self::content_prefixes();
@@ -867,18 +867,18 @@ class Recorder {
 	 */
 	public static function labels() {
 		return array(
-			self::FRONT       => __( 'front end', 'upshift' ),
-			self::ADMIN       => __( 'admin', 'upshift' ),
-			self::AJAX        => __( 'ajax', 'upshift' ),
-			self::REST        => __( 'rest', 'upshift' ),
-			self::CRON        => __( 'cron', 'upshift' ),
-			self::CLI         => __( 'cli', 'upshift' ),
-			self::LOGIN       => __( 'login', 'upshift' ),
-			self::WC_CHECKOUT => __( 'checkout', 'upshift' ),
-			self::WC_CART     => __( 'cart', 'upshift' ),
-			self::WC_PRODUCT  => __( 'product', 'upshift' ),
-			self::WC_SHOP     => __( 'shop', 'upshift' ),
-			self::WC_ACCOUNT  => __( 'account', 'upshift' ),
+			self::FRONT       => __( 'front end', 'qasim-php-upgrade-check-guard' ),
+			self::ADMIN       => __( 'admin', 'qasim-php-upgrade-check-guard' ),
+			self::AJAX        => __( 'ajax', 'qasim-php-upgrade-check-guard' ),
+			self::REST        => __( 'rest', 'qasim-php-upgrade-check-guard' ),
+			self::CRON        => __( 'cron', 'qasim-php-upgrade-check-guard' ),
+			self::CLI         => __( 'cli', 'qasim-php-upgrade-check-guard' ),
+			self::LOGIN       => __( 'login', 'qasim-php-upgrade-check-guard' ),
+			self::WC_CHECKOUT => __( 'checkout', 'qasim-php-upgrade-check-guard' ),
+			self::WC_CART     => __( 'cart', 'qasim-php-upgrade-check-guard' ),
+			self::WC_PRODUCT  => __( 'product', 'qasim-php-upgrade-check-guard' ),
+			self::WC_SHOP     => __( 'shop', 'qasim-php-upgrade-check-guard' ),
+			self::WC_ACCOUNT  => __( 'account', 'qasim-php-upgrade-check-guard' ),
 		);
 	}
 

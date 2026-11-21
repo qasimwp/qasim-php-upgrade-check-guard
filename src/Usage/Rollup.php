@@ -2,15 +2,15 @@
 /**
  * Rollup: filesets + hit counters → per-file usage table (spec §7.2), in time-budgeted steps (DECISIONS D48).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Usage;
+namespace Qpucg\Usage;
 
-use Upshift\Install;
-use Upshift\Paths;
-use Upshift\Scan\Runner;
-use Upshift\Settings;
+use Qpucg\Install;
+use Qpucg\Paths;
+use Qpucg\Scan\Runner;
+use Qpucg\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -20,21 +20,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
- * Builds `upshift_usage` and the rollup meta as a job of phases: init → sets → write → swap → purge.
+ * Builds `qpucg_usage` and the rollup meta as a job of phases: init → sets → write → swap → purge.
  *
- * The job row (option `upshift_rollup_job`, read and written with SQL only) holds the phase and the cursor.
- * The per-file totals built so far live in `upshift_rollup_state`; the new usage rows are built in
- * `upshift_usage_next` (tagged with the job id) and copied into `upshift_usage` in one transaction together with
+ * The job row (option `qpucg_rollup_job`, read and written with SQL only) holds the phase and the cursor.
+ * The per-file totals built so far live in `qpucg_rollup_state`; the new usage rows are built in
+ * `qpucg_usage_next` (tagged with the job id) and copied into `qpucg_usage` in one transaction together with
  * the meta. One step runs at a time (atomic lock option row, like the scan lock, DECISIONS D47), and every step
  * commits with a compare-and-swap on the job row, so a step that dies leaves the committed job unchanged and the
  * next step redoes its work. Admin pages only read the last swapped result.
  */
 class Rollup {
 
-	const META           = 'upshift_rollup_meta';
-	const LOCK           = 'upshift_rollup_lock';
-	const JOB            = 'upshift_rollup_job';
-	const STEP_HOOK      = 'upshift_rollup_step';
+	const META           = 'qpucg_rollup_meta';
+	const LOCK           = 'qpucg_rollup_lock';
+	const JOB            = 'qpucg_rollup_job';
+	const STEP_HOOK      = 'qpucg_rollup_step';
 	const MAX_AGE        = 3600;
 	const RETENTION_DAYS = 30; // DECISIONS D55 (was 60).
 	const MIN_REQUESTS   = 30;
@@ -47,10 +47,10 @@ class Rollup {
 	const RETRY_SECONDS  = 600;
 	const MEMORY_ROOM    = 33554432;
 	const MAX_RESTARTS   = 3;
-	const STOPPED        = 'upshift_rollup_stopped';
+	const STOPPED        = 'qpucg_rollup_stopped';
 	const RECENT_DAYS    = 3; // Days the "no list of files" notice looks at (DECISIONS D66).
 
-	const COMPACT_STEP_HOOK = 'upshift_compact_step';
+	const COMPACT_STEP_HOOK = 'qpucg_compact_step';
 	const COMPACT_RETRY     = 60;
 	const DICTIONARY_CHUNK  = 200;
 	const ORPHAN_PAGE       = 200;
@@ -216,7 +216,7 @@ class Rollup {
 		if ( $in_use + self::MEMORY_ROOM > $limit ) {
 			throw new \RuntimeException(
 				sprintf(
-					'not enough memory for a step (%s MB in use, limit %s MB). Raise WP_MAX_MEMORY_LIMIT or run wp upshift usage --rollup',
+					'not enough memory for a step (%s MB in use, limit %s MB). Raise WP_MAX_MEMORY_LIMIT or run wp qpucg usage --rollup',
 					number_format( $in_use / 1048576, 1 ),
 					number_format( $limit / 1048576, 1 )
 				)
@@ -443,7 +443,7 @@ class Rollup {
 	 * @return bool
 	 */
 	private static function stale_db() {
-		if ( UPSHIFT_DB_VERSION === get_option( 'upshift_db_version' ) ) {
+		if ( QPUCG_DB_VERSION === get_option( 'qpucg_db_version' ) ) {
 			return false;
 		}
 		return true !== self::guarded(
@@ -539,7 +539,7 @@ class Rollup {
 	}
 
 	/**
-	 * Last swapped rollup meta: option `upshift_rollup_meta` (JSON, SQL only, written in the swap transaction).
+	 * Last swapped rollup meta: option `qpucg_rollup_meta` (JSON, SQL only, written in the swap transaction).
 	 * Builds before T7.3 kept it in a transient of the same name, which is still read until the first new rollup.
 	 *
 	 * @return array|false
@@ -769,7 +769,7 @@ class Rollup {
 	}
 
 	/**
-	 * Takes the step lock: option row `upshift_rollup_lock` = "{token}|{expires}", SQL only. INSERT IGNORE on the
+	 * Takes the step lock: option row `qpucg_rollup_lock` = "{token}|{expires}", SQL only. INSERT IGNORE on the
 	 * unique option_name is atomic; an expired lock (a step that died) is taken over by compare-and-swap. Same
 	 * pattern as the scan lock (DECISIONS D47).
 	 *
@@ -932,7 +932,7 @@ class Rollup {
 			'meta'       => array(),
 			'cleaned'    => false,
 			'restarts'   => 0,
-			// A finished day still in the hit rows: this job folds it into upshift_usage_days (DECISIONS D63).
+			// A finished day still in the hit rows: this job folds it into qpucg_usage_days (DECISIONS D63).
 			'day'        => self::fold_day(),
 		);
 	}
@@ -1234,7 +1234,7 @@ class Rollup {
 	}
 
 	/**
-	 * Write (§7.2 steps 3 + 4): per-file rows with max_share into `upshift_usage_next`, tagged with the job id, in
+	 * Write (§7.2 steps 3 + 4): per-file rows with max_share into `qpucg_usage_next`, tagged with the job id, in
 	 * chunks of 200. REPLACE, so rows rewritten after a dead step are the same rows.
 	 *
 	 * @param string $raw      Raw job row.
@@ -1344,7 +1344,7 @@ class Rollup {
 	}
 
 	/**
-	 * Swap: replaces the rows of `upshift_usage` with this job's staged rows, stores the meta and moves the job on,
+	 * Swap: replaces the rows of `qpucg_usage` with this job's staged rows, stores the meta and moves the job on,
 	 * in one transaction, so readers see either the old rows and meta or all new ones (InnoDB; see DECISIONS D48
 	 * for MyISAM).
 	 *
@@ -1776,7 +1776,7 @@ class Rollup {
 	}
 
 	/**
-	 * Fold (DECISIONS D63): stores the finished day's per-file totals in `upshift_usage_days` and deletes its hit rows, in
+	 * Fold (DECISIONS D63): stores the finished day's per-file totals in `qpucg_usage_days` and deletes its hit rows, in
 	 * one transaction, then moves the job row on to the next job (another day, or the rollup itself). The day's sets go
 	 * with the rollup's orphan purge. A step that dies before the commit leaves everything as it was.
 	 *

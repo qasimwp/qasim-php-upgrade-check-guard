@@ -3,12 +3,12 @@
  * Upgrade watch: the crash email (DECISIONS D59). Sent at the end of the crashing request, after its row is written:
  * WP-Cron may never run on a site that crashes on every request. WordPress's recovery-mode email works the same way.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Watch;
+namespace Qpucg\Watch;
 
-use Upshift\Settings;
+use Qpucg\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Notify {
 
-	const OPTION = 'upshift_watch_mail_day';
+	const OPTION = 'qpucg_watch_mail_day';
 
 	/**
 	 * Sends the email if this is a new crash during a watch and none was sent today.
@@ -98,18 +98,18 @@ class Notify {
 		$where = Report::where( $context );
 		$lines = array(
 			/* translators: 1: plugin name, 2: number of crashes. */
-			sprintf( _n( '%1$s has crashed %2$s time since your PHP version changed.', '%1$s has crashed %2$s times since your PHP version changed.', $count, 'upshift' ), self::name( $row['component'] ), number_format_i18n( $count ) ),
+			sprintf( _n( '%1$s has crashed %2$s time since your PHP version changed.', '%1$s has crashed %2$s times since your PHP version changed.', $count, 'qasim-php-upgrade-check-guard' ), self::name( $row['component'] ), number_format_i18n( $count ) ),
 		);
 		if ( '' !== $where ) {
 			/* translators: %s: page type, e.g. checkout. */
-			$lines[] = sprintf( __( 'Where: %s.', 'upshift' ), $where );
+			$lines[] = sprintf( __( 'Where: %s.', 'qasim-php-upgrade-check-guard' ), $where );
 		}
 		$lines[] = '';
-		$lines[] = __( 'See what happened and what to do:', 'upshift' );
-		$lines[] = admin_url( 'tools.php?page=upshift&tab=watch' );
+		$lines[] = __( 'See what happened and what to do:', 'qasim-php-upgrade-check-guard' );
+		$lines[] = admin_url( 'tools.php?page=qpucg&tab=watch' );
 
 		return array(
-			'subject' => __( 'A plugin started crashing after a PHP change', 'upshift' ),
+			'subject' => __( 'A plugin started crashing after a PHP change', 'qasim-php-upgrade-check-guard' ),
 			'body'    => implode( "\n", $lines ),
 		);
 	}
@@ -139,8 +139,8 @@ class Notify {
 			return is_string( $name ) && '' !== $name ? $name : $slug;
 		}
 		if ( 'mu-plugins' === $component ) {
-			return __( 'Must-use plugins', 'upshift' );
+			return __( 'Must-use plugins', 'qasim-php-upgrade-check-guard' );
 		}
-		return Collector::CORE === $component ? __( 'WordPress or your server', 'upshift' ) : $slug;
+		return Collector::CORE === $component ? __( 'WordPress or your server', 'qasim-php-upgrade-check-guard' ) : $slug;
 	}
 }

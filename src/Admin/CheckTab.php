@@ -2,19 +2,19 @@
 /**
  * The Check tab (docs/UI-v1.md §3, 8a) and its report download.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Admin;
+namespace Qpucg\Admin;
 
-use Upshift\Engine\Requirements;
-use Upshift\Report\Check;
-use Upshift\Report\Explain;
-use Upshift\Report\Join;
-use Upshift\Report\Status;
-use Upshift\Scan\Runner;
-use Upshift\Settings;
-use Upshift\Usage\Rollup;
+use Qpucg\Engine\Requirements;
+use Qpucg\Report\Check;
+use Qpucg\Report\Explain;
+use Qpucg\Report\Join;
+use Qpucg\Report\Status;
+use Qpucg\Scan\Runner;
+use Qpucg\Settings;
+use Qpucg\Usage\Rollup;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -25,8 +25,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class CheckTab {
 
-	const EXPORT      = 'upshift_download_report';
-	const ACTIVITY_ON = 'upshift_activity_on';
+	const EXPORT      = 'qpucg_download_report';
+	const ACTIVITY_ON = 'qpucg_activity_on';
 
 	/**
 	 * Prints a decorative dashicon (the word is always next to it).
@@ -52,9 +52,9 @@ class CheckTab {
 		}
 
 		// Read-only notice selector after our own redirect.
-		$msg = isset( $_GET['upshift_msg'] ) ? sanitize_key( wp_unslash( $_GET['upshift_msg'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$msg = isset( $_GET['qpucg_msg'] ) ? sanitize_key( wp_unslash( $_GET['qpucg_msg'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( 'activity_on' === $msg ) {
-			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Smart results is on.', 'upshift' ) . '</p></div>';
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Smart results is on.', 'qasim-php-upgrade-check-guard' ) . '</p></div>';
 		}
 
 		Integrations::render_recording_notice();
@@ -71,7 +71,7 @@ class CheckTab {
 		self::render_strip( null !== $running, null !== $summary );
 		self::render_progress( $running );
 
-		echo '<div id="upshift-results"' . ( null !== $running ? ' hidden' : '' ) . '>';
+		echo '<div id="qpucg-results"' . ( null !== $running ? ' hidden' : '' ) . '>';
 		if ( null !== $done && null !== $summary ) {
 			self::render_report( Check::build( $done, $summary ) );
 		} else {
@@ -86,10 +86,10 @@ class CheckTab {
 	 * @param array $scan Scan row.
 	 */
 	private static function render_failed( array $scan ) {
-		echo '<div class="upshift-note upshift-note--warn">';
-		echo '<p>' . esc_html__( 'The last check did not finish. Please check again.', 'upshift' ) . '</p>';
+		echo '<div class="qpucg-note qpucg-note--warn">';
+		echo '<p>' . esc_html__( 'The last check did not finish. Please check again.', 'qasim-php-upgrade-check-guard' ) . '</p>';
 		if ( '' !== (string) $scan['error'] ) {
-			echo '<details class="upshift-tech"><summary>' . esc_html__( 'Technical details', 'upshift' ) . '</summary><p>' . esc_html( (string) $scan['error'] ) . '</p></details>';
+			echo '<details class="qpucg-tech"><summary>' . esc_html__( 'Technical details', 'qasim-php-upgrade-check-guard' ) . '</summary><p>' . esc_html( (string) $scan['error'] ) . '</p></details>';
 		}
 		echo '</div>';
 	}
@@ -148,29 +148,29 @@ class CheckTab {
 		$targets = self::targets( $from );
 		$target  = self::default_target( $targets );
 
-		echo '<form id="upshift-strip" class="upshift-strip' . ( $has_result ? ' upshift-strip--slim' : '' ) . '" onsubmit="return false;"' . ( $running ? ' hidden' : '' ) . '>';
-		echo '<input type="hidden" id="upshift-from" value="' . esc_attr( $from ) . '" />';
+		echo '<form id="qpucg-strip" class="qpucg-strip' . ( $has_result ? ' qpucg-strip--slim' : '' ) . '" onsubmit="return false;"' . ( $running ? ' hidden' : '' ) . '>';
+		echo '<input type="hidden" id="qpucg-from" value="' . esc_attr( $from ) . '" />';
 		/* translators: %s: PHP version. */
-		echo '<p class="upshift-strip__php">' . esc_html( sprintf( __( 'Your site runs PHP %s.', 'upshift' ), PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION ) ) . '</p>';
+		echo '<p class="qpucg-strip__php">' . esc_html( sprintf( __( 'Your site runs PHP %s.', 'qasim-php-upgrade-check-guard' ), PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION ) ) . '</p>';
 
 		if ( '' === $target ) {
-			echo '<p class="upshift-muted">' . esc_html__( 'There is no newer PHP version to check against.', 'upshift' ) . '</p></form>';
+			echo '<p class="qpucg-muted">' . esc_html__( 'There is no newer PHP version to check against.', 'qasim-php-upgrade-check-guard' ) . '</p></form>';
 			return;
 		}
 
-		echo '<p class="upshift-strip__target"><label for="upshift-target">' . esc_html__( 'Check against:', 'upshift' ) . '</label> ';
-		echo '<select id="upshift-target">';
+		echo '<p class="qpucg-strip__target"><label for="qpucg-target">' . esc_html__( 'Check against:', 'qasim-php-upgrade-check-guard' ) . '</label> ';
+		echo '<select id="qpucg-target">';
 		foreach ( $targets as $version => $allowed ) {
 			/* translators: %s: PHP version. */
-			echo '<option value="' . esc_attr( $version ) . '"' . selected( $target, (string) $version, false ) . disabled( ! $allowed, true, false ) . '>' . esc_html( sprintf( __( 'PHP %s', 'upshift' ), $version ) ) . '</option>';
+			echo '<option value="' . esc_attr( $version ) . '"' . selected( $target, (string) $version, false ) . disabled( ! $allowed, true, false ) . '>' . esc_html( sprintf( __( 'PHP %s', 'qasim-php-upgrade-check-guard' ), $version ) ) . '</option>';
 		}
 		echo '</select></p>';
 
-		echo '<fieldset class="upshift-strip__scope"><legend class="screen-reader-text">' . esc_html__( 'What to check', 'upshift' ) . '</legend>';
-		echo '<label><input type="radio" name="upshift_scope" value="active" checked /> ' . esc_html__( 'Active plugins and theme (recommended)', 'upshift' ) . '</label> ';
-		echo '<label><input type="radio" name="upshift_scope" value="all" id="upshift-scan-inactive" /> ' . esc_html__( 'Everything installed', 'upshift' ) . '</label>';
+		echo '<fieldset class="qpucg-strip__scope"><legend class="screen-reader-text">' . esc_html__( 'What to check', 'qasim-php-upgrade-check-guard' ) . '</legend>';
+		echo '<label><input type="radio" name="qpucg_scope" value="active" checked /> ' . esc_html__( 'Active plugins and theme (recommended)', 'qasim-php-upgrade-check-guard' ) . '</label> ';
+		echo '<label><input type="radio" name="qpucg_scope" value="all" id="qpucg-scan-inactive" /> ' . esc_html__( 'Everything installed', 'qasim-php-upgrade-check-guard' ) . '</label>';
 		echo '</fieldset>';
-		echo '<p class="upshift-muted upshift-strip__note" id="upshift-target-note"' . ( '8.5' === $target ? '' : ' style="display:none"' ) . '>' . esc_html__( 'PHP 8.5 rules may be incomplete.', 'upshift' ) . '</p>';
+		echo '<p class="qpucg-muted qpucg-strip__note" id="qpucg-target-note"' . ( '8.5' === $target ? '' : ' style="display:none"' ) . '>' . esc_html__( 'PHP 8.5 rules may be incomplete.', 'qasim-php-upgrade-check-guard' ) . '</p>';
 		echo '</form>';
 	}
 
@@ -182,7 +182,7 @@ class CheckTab {
 	private static function render_start_button( $label ) {
 		$from    = self::from_version();
 		$enabled = '' !== self::default_target( self::targets( $from ) );
-		echo '<button type="button" class="button button-primary button-hero" id="upshift-scan-start"' . disabled( ! $enabled, true, false ) . ' data-upshift-no-config="' . esc_attr( Page::no_config_message() ) . '">' . esc_html( $label ) . '</button>';
+		echo '<button type="button" class="button button-primary button-hero" id="qpucg-scan-start"' . disabled( ! $enabled, true, false ) . ' data-qpucg-no-config="' . esc_attr( Page::no_config_message() ) . '">' . esc_html( $label ) . '</button>';
 	}
 
 	/**
@@ -193,17 +193,17 @@ class CheckTab {
 	 */
 	public static function progress_line( array $progress ) {
 		if ( (int) $progress['components_total'] <= 0 ) {
-			return __( 'Getting ready…', 'upshift' );
+			return __( 'Getting ready…', 'qasim-php-upgrade-check-guard' );
 		}
 		$total = (int) $progress['components_total'];
 		$files = (int) $progress['component_files_total'];
 		/* translators: 1: plugins and themes checked so far, 2: how many there are in all. */
-		$checked = sprintf( _n( '%1$s of %2$s plugin checked.', '%1$s of %2$s plugins checked.', $total, 'upshift' ), number_format_i18n( (int) $progress['components_done'] ), number_format_i18n( $total ) );
+		$checked = sprintf( _n( '%1$s of %2$s plugin checked.', '%1$s of %2$s plugins checked.', $total, 'qasim-php-upgrade-check-guard' ), number_format_i18n( (int) $progress['components_done'] ), number_format_i18n( $total ) );
 		if ( '' === (string) $progress['current_component_label'] || $files <= 0 ) {
 			return $checked;
 		}
 		/* translators: 1: sentence "12 of 50 plugins checked.", 2: plugin or theme name, 3: files checked so far, 4: files in all. */
-		return sprintf( _n( '%1$s Now checking %2$s (%3$s of %4$s file).', '%1$s Now checking %2$s (%3$s of %4$s files).', $files, 'upshift' ), $checked, (string) $progress['current_component_label'], number_format_i18n( (int) $progress['component_files_done'] ), number_format_i18n( $files ) );
+		return sprintf( _n( '%1$s Now checking %2$s (%3$s of %4$s file).', '%1$s Now checking %2$s (%3$s of %4$s files).', $files, 'qasim-php-upgrade-check-guard' ), $checked, (string) $progress['current_component_label'], number_format_i18n( (int) $progress['component_files_done'] ), number_format_i18n( $files ) );
 	}
 
 	/**
@@ -213,9 +213,9 @@ class CheckTab {
 	 */
 	private static function background_note() {
 		if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
-			return __( 'Keep this page open until the check finishes.', 'upshift' );
+			return __( 'Keep this page open until the check finishes.', 'qasim-php-upgrade-check-guard' );
 		}
-		return __( 'You can leave this page. The check keeps running in the background and the result will be here when you come back.', 'upshift' );
+		return __( 'You can leave this page. The check keeps running in the background and the result will be here when you come back.', 'qasim-php-upgrade-check-guard' );
 	}
 
 	/**
@@ -234,25 +234,25 @@ class CheckTab {
 		$target     = null !== $running ? (string) $running['target_version'] : self::default_target( self::targets( $from ) );
 		$back       = admin_url( 'tools.php?page=' . Page::SLUG );
 
-		echo '<section id="upshift-scan-progress" class="upshift-hero upshift-hero--run upshift-progress"' . ( null === $running ? ' hidden' : '' ) . '>';
-		echo '<span class="upshift-hero__icon dashicons dashicons-update" aria-hidden="true"></span>';
-		echo '<div class="upshift-hero__body">';
-		echo '<h2 class="upshift-hero__answer">' . esc_html__( 'Checking your site', 'upshift' ) . '</h2>';
-		echo '<p class="upshift-path"><span class="upshift-pill" id="upshift-run-from">' . esc_html( $from ) . '</span>';
-		self::icon( 'dashicons-arrow-right-alt upshift-path__arrow' );
-		echo '<span class="upshift-pill" id="upshift-run-target">' . esc_html( $target ) . '</span></p>';
-		echo '<div class="upshift-bar-row"><progress class="upshift-bar" value="' . esc_attr( (string) $done ) . '" max="' . esc_attr( (string) max( 1, $total ) ) . '">' . esc_html__( 'Progress of the check', 'upshift' ) . '</progress>';
+		echo '<section id="qpucg-scan-progress" class="qpucg-hero qpucg-hero--run qpucg-progress"' . ( null === $running ? ' hidden' : '' ) . '>';
+		echo '<span class="qpucg-hero__icon dashicons dashicons-update" aria-hidden="true"></span>';
+		echo '<div class="qpucg-hero__body">';
+		echo '<h2 class="qpucg-hero__answer">' . esc_html__( 'Checking your site', 'qasim-php-upgrade-check-guard' ) . '</h2>';
+		echo '<p class="qpucg-path"><span class="qpucg-pill" id="qpucg-run-from">' . esc_html( $from ) . '</span>';
+		self::icon( 'dashicons-arrow-right-alt qpucg-path__arrow' );
+		echo '<span class="qpucg-pill" id="qpucg-run-target">' . esc_html( $target ) . '</span></p>';
+		echo '<div class="qpucg-bar-row"><progress class="qpucg-bar" value="' . esc_attr( (string) $done ) . '" max="' . esc_attr( (string) max( 1, $total ) ) . '">' . esc_html__( 'Progress of the check', 'qasim-php-upgrade-check-guard' ) . '</progress>';
 		/* translators: %s: percent done. */
-		echo '<span class="upshift-percent">' . esc_html( sprintf( __( '%s%%', 'upshift' ), number_format_i18n( $percent ) ) ) . '</span></div>';
-		echo '<p class="upshift-scan-message" role="status">' . esc_html( null !== $progress ? self::progress_line( $progress ) : '' ) . '</p>';
+		echo '<span class="qpucg-percent">' . esc_html( sprintf( __( '%s%%', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $percent ) ) ) . '</span></div>';
+		echo '<p class="qpucg-scan-message" role="status">' . esc_html( null !== $progress ? self::progress_line( $progress ) : '' ) . '</p>';
 		/* translators: %s: number of files. */
-		echo '<p class="upshift-muted upshift-reused"' . ( $reused > 0 ? '' : ' hidden' ) . '>' . esc_html( $reused > 0 ? sprintf( _n( 'Reused %s unchanged file.', 'Reused %s unchanged files.', $reused, 'upshift' ), number_format_i18n( $reused ) ) : '' ) . '</p>';
-		echo '<p class="upshift-muted">' . esc_html( self::background_note() ) . '</p>';
-		echo '<p class="upshift-muted" id="upshift-speedup-note"' . ( $background ? '' : ' hidden' ) . '>' . esc_html__( 'Keep this page open to finish faster.', 'upshift' ) . '</p>';
-		echo '</div><div class="upshift-hero__action upshift-controls" id="upshift-scan-controls" data-running="' . esc_attr( null !== $running ? (string) (int) $running['id'] : '0' ) . '">';
-		echo '<button type="button" class="button" id="upshift-scan-cancel"' . ( null === $running ? ' style="display:none"' : '' ) . '>' . esc_html__( 'Stop', 'upshift' ) . '</button>';
-		echo '<button type="button" class="button" id="upshift-scan-resume" data-speed="' . esc_attr__( 'Speed up', 'upshift' ) . '" data-continue="' . esc_attr__( 'Continue', 'upshift' ) . '"' . ( null === $running ? ' style="display:none"' : '' ) . '>' . esc_html( $background ? __( 'Speed up', 'upshift' ) : __( 'Continue', 'upshift' ) ) . '</button>';
-		echo '<a id="upshift-back" href="' . esc_url( $back ) . '" hidden>' . esc_html__( 'Back to the results', 'upshift' ) . '</a>';
+		echo '<p class="qpucg-muted qpucg-reused"' . ( $reused > 0 ? '' : ' hidden' ) . '>' . esc_html( $reused > 0 ? sprintf( _n( 'Reused %s unchanged file.', 'Reused %s unchanged files.', $reused, 'qasim-php-upgrade-check-guard' ), number_format_i18n( $reused ) ) : '' ) . '</p>';
+		echo '<p class="qpucg-muted">' . esc_html( self::background_note() ) . '</p>';
+		echo '<p class="qpucg-muted" id="qpucg-speedup-note"' . ( $background ? '' : ' hidden' ) . '>' . esc_html__( 'Keep this page open to finish faster.', 'qasim-php-upgrade-check-guard' ) . '</p>';
+		echo '</div><div class="qpucg-hero__action qpucg-controls" id="qpucg-scan-controls" data-running="' . esc_attr( null !== $running ? (string) (int) $running['id'] : '0' ) . '">';
+		echo '<button type="button" class="button" id="qpucg-scan-cancel"' . ( null === $running ? ' style="display:none"' : '' ) . '>' . esc_html__( 'Stop', 'qasim-php-upgrade-check-guard' ) . '</button>';
+		echo '<button type="button" class="button" id="qpucg-scan-resume" data-speed="' . esc_attr__( 'Speed up', 'qasim-php-upgrade-check-guard' ) . '" data-continue="' . esc_attr__( 'Continue', 'qasim-php-upgrade-check-guard' ) . '"' . ( null === $running ? ' style="display:none"' : '' ) . '>' . esc_html( $background ? __( 'Speed up', 'qasim-php-upgrade-check-guard' ) : __( 'Continue', 'qasim-php-upgrade-check-guard' ) ) . '</button>';
+		echo '<a id="qpucg-back" href="' . esc_url( $back ) . '" hidden>' . esc_html__( 'Back to the results', 'qasim-php-upgrade-check-guard' ) . '</a>';
 		echo '</div></section>';
 	}
 
@@ -260,23 +260,23 @@ class CheckTab {
 	 * Empty state: no finished check yet.
 	 */
 	private static function render_empty() {
-		echo '<section class="upshift-card upshift-empty">';
-		echo '<div class="upshift-empty__art" aria-hidden="true"><span class="dashicons dashicons-admin-plugins"></span><span class="dashicons dashicons-yes-alt"></span></div>';
-		echo '<p class="upshift-empty__text">' . esc_html__( 'Upshift reads your plugins and themes and tells you what a newer PHP version would break.', 'upshift' ) . '</p>';
-		self::render_start_button( __( 'Check my site', 'upshift' ) );
+		echo '<section class="qpucg-card qpucg-empty">';
+		echo '<div class="qpucg-empty__art" aria-hidden="true"><span class="dashicons dashicons-admin-plugins"></span><span class="dashicons dashicons-yes-alt"></span></div>';
+		echo '<p class="qpucg-empty__text">' . esc_html__( 'Qasim PHP Upgrade Check & Guard reads your plugins and themes and tells you what a newer PHP version would break.', 'qasim-php-upgrade-check-guard' ) . '</p>';
+		self::render_start_button( __( 'Check my site', 'qasim-php-upgrade-check-guard' ) );
 		echo '</section>';
 
 		if ( empty( Settings::get( 'usage_enabled' ) ) ) {
-			echo '<section class="upshift-card upshift-offer">';
+			echo '<section class="qpucg-card qpucg-offer">';
 			echo '<p>' . esc_html(
 				SettingsTab::has_shop()
-					? __( 'Turn on Smart results to see which plugins run on your checkout, shop and admin. It stores only file names and counts on your own site, and nothing is sent anywhere.', 'upshift' )
-					: __( 'Turn on Smart results to see which plugins run on your pages and admin. It stores only file names and counts on your own site, and nothing is sent anywhere.', 'upshift' )
+					? __( 'Turn on Smart results to see which plugins run on your checkout, shop and admin. It stores only file names and counts on your own site, and nothing is sent anywhere.', 'qasim-php-upgrade-check-guard' )
+					: __( 'Turn on Smart results to see which plugins run on your pages and admin. It stores only file names and counts on your own site, and nothing is sent anywhere.', 'qasim-php-upgrade-check-guard' )
 			) . '</p>';
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 			echo '<input type="hidden" name="action" value="' . esc_attr( self::ACTIVITY_ON ) . '" />';
 			wp_nonce_field( self::ACTIVITY_ON );
-			echo '<button type="submit" class="button">' . esc_html__( 'Turn on', 'upshift' ) . '</button></form></section>';
+			echo '<button type="submit" class="button">' . esc_html__( 'Turn on', 'qasim-php-upgrade-check-guard' ) . '</button></form></section>';
 		}
 	}
 
@@ -293,7 +293,7 @@ class CheckTab {
 		self::render_list( $report );
 		self::render_other_notes( $report );
 		self::render_buttons( $report );
-		echo '<p class="upshift-honest">' . esc_html__( "This check reads the code; it doesn't run it. 'Not seen running' doesn't mean 'never runs'. Test on a staging copy before you upgrade a live shop.", 'upshift' ) . '</p>';
+		echo '<p class="qpucg-honest">' . esc_html__( "This check reads the code; it doesn't run it. 'Not seen running' doesn't mean 'never runs'. Test on a staging copy before you upgrade a live shop.", 'qasim-php-upgrade-check-guard' ) . '</p>';
 	}
 
 	/**
@@ -304,34 +304,34 @@ class CheckTab {
 	private static function render_hero( array $report ) {
 		$answer = $report['answer'];
 		$total  = (int) $report['total'];
-		$date   = mysql2date( __( 'j M Y', 'upshift' ), (string) $report['scan']['finished'] );
+		$date   = mysql2date( __( 'j M Y', 'qasim-php-upgrade-check-guard' ), (string) $report['scan']['finished'] );
 
-		echo '<section class="upshift-hero upshift-hero--' . esc_attr( $answer['level'] ) . '">';
-		echo '<span class="upshift-hero__icon dashicons ' . esc_attr( Status::icon( $answer['status'] ) ) . '" aria-hidden="true"></span>';
-		echo '<div class="upshift-hero__body">';
-		echo '<h2 class="upshift-hero__answer">' . esc_html( $answer['sentence'] ) . '</h2>';
-		echo '<p class="upshift-path">';
+		echo '<section class="qpucg-hero qpucg-hero--' . esc_attr( $answer['level'] ) . '">';
+		echo '<span class="qpucg-hero__icon dashicons ' . esc_attr( Status::icon( $answer['status'] ) ) . '" aria-hidden="true"></span>';
+		echo '<div class="qpucg-hero__body">';
+		echo '<h2 class="qpucg-hero__answer">' . esc_html( $answer['sentence'] ) . '</h2>';
+		echo '<p class="qpucg-path">';
 		/* translators: 1: current PHP version, 2: target PHP version. */
-		echo '<span class="screen-reader-text">' . esc_html( sprintf( __( 'From PHP %1$s to PHP %2$s', 'upshift' ), $report['from'], $report['target'] ) ) . '</span>';
-		echo '<span class="upshift-pill" aria-hidden="true">' . esc_html( $report['from'] ) . '</span>';
-		self::icon( 'dashicons-arrow-right-alt upshift-path__arrow' );
-		echo '<span class="upshift-pill" aria-hidden="true">' . esc_html( $report['target'] ) . '</span></p>';
-		echo '<p class="upshift-muted">';
+		echo '<span class="screen-reader-text">' . esc_html( sprintf( __( 'From PHP %1$s to PHP %2$s', 'qasim-php-upgrade-check-guard' ), $report['from'], $report['target'] ) ) . '</span>';
+		echo '<span class="qpucg-pill" aria-hidden="true">' . esc_html( $report['from'] ) . '</span>';
+		self::icon( 'dashicons-arrow-right-alt qpucg-path__arrow' );
+		echo '<span class="qpucg-pill" aria-hidden="true">' . esc_html( $report['target'] ) . '</span></p>';
+		echo '<p class="qpucg-muted">';
 		/* translators: 1: number of plugins and themes, 2: date. */
-		echo esc_html( sprintf( _n( 'Checked %1$s plugin or theme on %2$s.', 'Checked %1$s plugins and themes on %2$s.', $total, 'upshift' ), number_format_i18n( $total ), $date ) );
+		echo esc_html( sprintf( _n( 'Checked %1$s plugin or theme on %2$s.', 'Checked %1$s plugins and themes on %2$s.', $total, 'qasim-php-upgrade-check-guard' ), number_format_i18n( $total ), $date ) );
 		if ( $report['watch_on'] ) {
 			$days = (int) $report['days'];
 			/* translators: %s: number of days. */
-			echo ' ' . esc_html( sprintf( _n( 'Smart results: %s day.', 'Smart results: %s days.', $days, 'upshift' ), number_format_i18n( $days ) ) );
+			echo ' ' . esc_html( sprintf( _n( 'Smart results: %s day.', 'Smart results: %s days.', $days, 'qasim-php-upgrade-check-guard' ), number_format_i18n( $days ) ) );
 		}
 		echo '</p>';
 		if ( $report['changed'] ) {
-			echo '<p class="upshift-hero__changed">';
+			echo '<p class="qpucg-hero__changed">';
 			self::icon( 'dashicons-update' );
-			echo ' ' . esc_html__( 'Your site changed since the last check. Check again for an up-to-date answer.', 'upshift' ) . '</p>';
+			echo ' ' . esc_html__( 'Your site changed since the last check. Check again for an up-to-date answer.', 'qasim-php-upgrade-check-guard' ) . '</p>';
 		}
-		echo '</div><div class="upshift-hero__action">';
-		self::render_start_button( __( 'Check again', 'upshift' ) );
+		echo '</div><div class="qpucg-hero__action">';
+		self::render_start_button( __( 'Check again', 'qasim-php-upgrade-check-guard' ) );
 		echo '</div></section>';
 	}
 
@@ -342,18 +342,18 @@ class CheckTab {
 	 */
 	private static function render_notes( array $report ) {
 		if ( ! $report['checked'] ) {
-			echo '<div class="upshift-note upshift-note--warn"><p>' . esc_html__( 'This result comes from an older version of the check, so it may list problems your site already handles today. Check again for an exact answer.', 'upshift' ) . '</p></div>';
+			echo '<div class="qpucg-note qpucg-note--warn"><p>' . esc_html__( 'This result comes from an older version of the check, so it may list problems your site already handles today. Check again for an exact answer.', 'qasim-php-upgrade-check-guard' ) . '</p></div>';
 		}
 		$not_checked = $report['not_checked'];
 		if ( $not_checked['total'] <= 0 ) {
 			return;
 		}
-		echo '<div class="upshift-note upshift-note--warn">';
+		echo '<div class="qpucg-note qpucg-note--warn">';
 		/* translators: %s: number of files. */
-		echo '<p><strong>' . esc_html( sprintf( _n( '%s code file could not be fully checked, so a problem in it could be missing here.', '%s code files could not be fully checked, so problems in them could be missing here.', (int) $not_checked['total'], 'upshift' ), number_format_i18n( (int) $not_checked['total'] ) ) ) . '</strong></p>';
+		echo '<p><strong>' . esc_html( sprintf( _n( '%s code file could not be fully checked, so a problem in it could be missing here.', '%s code files could not be fully checked, so problems in them could be missing here.', (int) $not_checked['total'], 'qasim-php-upgrade-check-guard' ), number_format_i18n( (int) $not_checked['total'] ) ) ) . '</strong></p>';
 		echo '<ul>';
 		foreach ( $not_checked['reasons'] as $reason ) {
-			echo '<li>' . esc_html( $reason['text'] ) . ' <span class="upshift-muted">' . esc_html( implode( ', ', $reason['files'] ) ) . '</span></li>';
+			echo '<li>' . esc_html( $reason['text'] ) . ' <span class="qpucg-muted">' . esc_html( implode( ', ', $reason['files'] ) ) . '</span></li>';
 		}
 		echo '</ul></div>';
 	}
@@ -364,15 +364,15 @@ class CheckTab {
 	 * @param array $report Check::build().
 	 */
 	private static function render_counts( array $report ) {
-		echo '<div class="upshift-cards" role="group" aria-label="' . esc_attr__( 'Show only plugins with this result', 'upshift' ) . '">';
+		echo '<div class="qpucg-cards" role="group" aria-label="' . esc_attr__( 'Show only plugins with this result', 'qasim-php-upgrade-check-guard' ) . '">';
 		foreach ( Status::ORDER as $status ) {
 			$n = (int) $report['counts'][ $status ]['all'];
-			echo '<button type="button" class="upshift-count upshift-count--' . esc_attr( $status ) . '" data-filter="' . esc_attr( $status ) . '" aria-pressed="false"' . disabled( 0 === $n, true, false ) . '>';
-			echo '<span class="upshift-count__top"><span class="upshift-count__number">' . esc_html( number_format_i18n( $n ) ) . '</span>';
+			echo '<button type="button" class="qpucg-count qpucg-count--' . esc_attr( $status ) . '" data-filter="' . esc_attr( $status ) . '" aria-pressed="false"' . disabled( 0 === $n, true, false ) . '>';
+			echo '<span class="qpucg-count__top"><span class="qpucg-count__number">' . esc_html( number_format_i18n( $n ) ) . '</span>';
 			self::icon( Status::icon( $status ) );
-			echo '</span><span class="upshift-count__label">' . esc_html( Status::label( $status ) ) . '</span>';
+			echo '</span><span class="qpucg-count__label">' . esc_html( Status::label( $status ) ) . '</span>';
 			if ( $n > 0 ) {
-				echo '<span class="upshift-count__show" data-show="' . esc_attr__( 'Show these', 'upshift' ) . '" data-showall="' . esc_attr__( 'Show all plugins', 'upshift' ) . '">' . esc_html__( 'Show these', 'upshift' ) . '</span>';
+				echo '<span class="qpucg-count__show" data-show="' . esc_attr__( 'Show these', 'qasim-php-upgrade-check-guard' ) . '" data-showall="' . esc_attr__( 'Show all plugins', 'qasim-php-upgrade-check-guard' ) . '">' . esc_html__( 'Show these', 'qasim-php-upgrade-check-guard' ) . '</span>';
 			}
 			echo '</button>';
 		}
@@ -385,8 +385,8 @@ class CheckTab {
 	 * @param array $report Check::build().
 	 */
 	private static function render_steps( array $report ) {
-		self::render_step_list( __( 'Do this first', 'upshift' ), $report['steps'] );
-		self::render_step_list( __( 'When you have time', 'upshift' ), $report['later_steps'] );
+		self::render_step_list( __( 'Do this first', 'qasim-php-upgrade-check-guard' ), $report['steps'] );
+		self::render_step_list( __( 'When you have time', 'qasim-php-upgrade-check-guard' ), $report['later_steps'] );
 	}
 
 	/**
@@ -399,11 +399,11 @@ class CheckTab {
 		if ( ! $steps ) {
 			return;
 		}
-		echo '<section class="upshift-section"><h2>' . esc_html( $title ) . '</h2><ol class="upshift-steps">';
+		echo '<section class="qpucg-section"><h2>' . esc_html( $title ) . '</h2><ol class="qpucg-steps">';
 		foreach ( $steps as $step ) {
-			echo '<li class="upshift-step"><div class="upshift-step__text"><strong>' . esc_html( $step['action'] ) . '</strong><span>' . esc_html( $step['reason'] ) . '</span></div>';
+			echo '<li class="qpucg-step"><div class="qpucg-step__text"><strong>' . esc_html( $step['action'] ) . '</strong><span>' . esc_html( $step['reason'] ) . '</span></div>';
 			if ( '' !== $step['copy'] ) {
-				echo '<button type="button" class="button upshift-copy" data-copy="' . esc_attr( $step['copy'] ) . '">' . esc_html( $step['link_text'] ) . '</button>';
+				echo '<button type="button" class="button qpucg-copy" data-copy="' . esc_attr( $step['copy'] ) . '">' . esc_html( $step['link_text'] ) . '</button>';
 			} elseif ( '' !== $step['link'] ) {
 				echo '<a class="button" href="' . esc_url( $step['link'] ) . '">' . esc_html( $step['link_text'] ) . '</a>';
 			}
@@ -429,16 +429,16 @@ class CheckTab {
 			}
 		}
 
-		echo '<section class="upshift-section"><h2>' . esc_html__( 'Your plugins and themes', 'upshift' ) . '</h2>';
-		echo '<p class="upshift-filter"><span id="upshift-filter-status" class="upshift-muted" role="status"></span> <button type="button" class="button-link" id="upshift-show-all" hidden>' . esc_html__( 'Show all plugins', 'upshift' ) . '</button></p>';
-		echo '<div class="upshift-list" id="upshift-active-list">';
+		echo '<section class="qpucg-section"><h2>' . esc_html__( 'Your plugins and themes', 'qasim-php-upgrade-check-guard' ) . '</h2>';
+		echo '<p class="qpucg-filter"><span id="qpucg-filter-status" class="qpucg-muted" role="status"></span> <button type="button" class="button-link" id="qpucg-show-all" hidden>' . esc_html__( 'Show all plugins', 'qasim-php-upgrade-check-guard' ) . '</button></p>';
+		echo '<div class="qpucg-list" id="qpucg-active-list">';
 		foreach ( $problems as $item ) {
 			self::render_item( $item );
 		}
 		if ( $ready && $problems ) {
 			$n = count( $ready );
 			/* translators: %s: number of plugins and themes. */
-			echo '<details class="upshift-ready-group" id="upshift-ready-group"><summary>' . esc_html( sprintf( _n( '%s plugin or theme is ready (show)', '%s plugins and themes are ready (show)', $n, 'upshift' ), number_format_i18n( $n ) ) ) . '</summary><div class="upshift-list">';
+			echo '<details class="qpucg-ready-group" id="qpucg-ready-group"><summary>' . esc_html( sprintf( _n( '%s plugin or theme is ready (show)', '%s plugins and themes are ready (show)', $n, 'qasim-php-upgrade-check-guard' ), number_format_i18n( $n ) ) ) . '</summary><div class="qpucg-list">';
 			foreach ( $ready as $item ) {
 				self::render_item( $item );
 			}
@@ -451,8 +451,8 @@ class CheckTab {
 		echo '</div></section>';
 
 		if ( $report['inactive'] ) {
-			echo '<section class="upshift-section"><h2>' . esc_html__( 'Not active', 'upshift' ) . '</h2>';
-			echo '<p class="upshift-muted">' . esc_html__( 'These are turned off, so they cannot affect your site right now. The result applies if you turn one on.', 'upshift' ) . '</p><div class="upshift-list">';
+			echo '<section class="qpucg-section"><h2>' . esc_html__( 'Not active', 'qasim-php-upgrade-check-guard' ) . '</h2>';
+			echo '<p class="qpucg-muted">' . esc_html__( 'These are turned off, so they cannot affect your site right now. The result applies if you turn one on.', 'qasim-php-upgrade-check-guard' ) . '</p><div class="qpucg-list">';
 			foreach ( $report['inactive'] as $item ) {
 				self::render_item( $item );
 			}
@@ -471,24 +471,24 @@ class CheckTab {
 		$inner    = $has_body ? 'summary' : 'div';
 		$compact  = ! $has_body && Status::READY === $item['status'];
 
-		echo '<' . tag_escape( $tag ) . ' class="upshift-item' . ( $compact ? ' upshift-item--compact' : '' ) . '" data-status="' . esc_attr( $item['status'] ) . '">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- tag_escape().
-		echo '<' . tag_escape( $inner ) . ' class="upshift-item__row">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- tag_escape().
-		echo '<span class="upshift-badge upshift-badge--' . esc_attr( $item['status'] ) . '">';
+		echo '<' . tag_escape( $tag ) . ' class="qpucg-item' . ( $compact ? ' qpucg-item--compact' : '' ) . '" data-status="' . esc_attr( $item['status'] ) . '">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- tag_escape().
+		echo '<' . tag_escape( $inner ) . ' class="qpucg-item__row">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- tag_escape().
+		echo '<span class="qpucg-badge qpucg-badge--' . esc_attr( $item['status'] ) . '">';
 		self::icon( Status::icon( $item['status'] ) );
 		echo esc_html( Status::label( $item['status'] ) ) . '</span>';
 
-		echo '<span class="upshift-item__main"><span class="upshift-item__name">' . esc_html( $item['name'] ) . '</span>';
+		echo '<span class="qpucg-item__main"><span class="qpucg-item__name">' . esc_html( $item['name'] ) . '</span>';
 		if ( '' !== $item['version'] ) {
-			echo ' <span class="upshift-muted">' . esc_html( $item['version'] ) . '</span>';
+			echo ' <span class="qpucg-muted">' . esc_html( $item['version'] ) . '</span>';
 		}
 		self::render_chips( $item['where'] );
 		echo '</span>';
 
 		if ( ! $compact ) {
-			echo '<span class="upshift-item__todo">' . esc_html( $item['advice']['todo'] ) . '</span>';
+			echo '<span class="qpucg-item__todo">' . esc_html( $item['advice']['todo'] ) . '</span>';
 		}
 		if ( $has_body ) {
-			echo '<span class="dashicons dashicons-arrow-down-alt2 upshift-item__chevron" aria-hidden="true"></span>';
+			echo '<span class="dashicons dashicons-arrow-down-alt2 qpucg-item__chevron" aria-hidden="true"></span>';
 		}
 		echo '</' . tag_escape( $inner ) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- tag_escape().
 
@@ -507,12 +507,12 @@ class CheckTab {
 		if ( ! $where['chips'] ) {
 			return;
 		}
-		echo '<span class="upshift-chips">';
+		echo '<span class="qpucg-chips">';
 		if ( in_array( $where['kind'], array( 'some', 'every', 'almost', 'checkout' ), true ) ) {
-			echo '<span class="upshift-chips__label">' . esc_html__( 'Runs on:', 'upshift' ) . '</span>';
+			echo '<span class="qpucg-chips__label">' . esc_html__( 'Runs on:', 'qasim-php-upgrade-check-guard' ) . '</span>';
 		}
 		foreach ( $where['chips'] as $chip ) {
-			echo '<span class="upshift-chip">';
+			echo '<span class="qpucg-chip">';
 			self::icon( $chip[0] );
 			echo esc_html( $chip[1] ) . '</span>';
 		}
@@ -526,37 +526,37 @@ class CheckTab {
 	 */
 	private static function render_body( array $item ) {
 		$file = null;
-		echo '<div class="upshift-item__body">';
-		echo '<p class="upshift-item__copy"><button type="button" class="button upshift-copy" data-copy="' . esc_attr( $item['developer_text'] ) . '">' . esc_html__( 'Copy for this developer', 'upshift' ) . '</button></p>';
-		echo '<table class="upshift-problems"><thead><tr>';
-		foreach ( array( __( 'File and line', 'upshift' ), __( 'What it is', 'upshift' ), __( 'How to fix', 'upshift' ), __( 'What it means for your site', 'upshift' ), __( 'Runs on', 'upshift' ) ) as $head ) {
+		echo '<div class="qpucg-item__body">';
+		echo '<p class="qpucg-item__copy"><button type="button" class="button qpucg-copy" data-copy="' . esc_attr( $item['developer_text'] ) . '">' . esc_html__( 'Copy for this developer', 'qasim-php-upgrade-check-guard' ) . '</button></p>';
+		echo '<table class="qpucg-problems"><thead><tr>';
+		foreach ( array( __( 'File and line', 'qasim-php-upgrade-check-guard' ), __( 'What it is', 'qasim-php-upgrade-check-guard' ), __( 'How to fix', 'qasim-php-upgrade-check-guard' ), __( 'What it means for your site', 'qasim-php-upgrade-check-guard' ), __( 'Runs on', 'qasim-php-upgrade-check-guard' ) ) as $head ) {
 			echo '<th scope="col">' . esc_html( $head ) . '</th>';
 		}
 		echo '</tr></thead><tbody>';
 		foreach ( $item['groups'] as $group ) {
 			if ( $file !== $group['file'] ) {
 				$file = $group['file'];
-				echo '<tr class="upshift-problems__file"><th colspan="5" scope="colgroup"><code>' . esc_html( $file ) . '</code></th></tr>';
+				echo '<tr class="qpucg-problems__file"><th colspan="5" scope="colgroup"><code>' . esc_html( $file ) . '</code></th></tr>';
 			}
 			echo '<tr>';
-			echo '<td data-label="' . esc_attr__( 'File and line', 'upshift' ) . '">' . esc_html( self::lines_label( $group['lines'] ) ) . '</td>';
-			echo '<td data-label="' . esc_attr__( 'What it is', 'upshift' ) . '">' . esc_html( $group['text']['problem'] ) . '</td>';
-			echo '<td data-label="' . esc_attr__( 'How to fix', 'upshift' ) . '">' . esc_html( $group['text']['how_to_fix'] ) . '</td>';
-			echo '<td data-label="' . esc_attr__( 'What it means for your site', 'upshift' ) . '">' . esc_html( $group['text']['impact'] ) . '</td>';
-			echo '<td data-label="' . esc_attr__( 'Runs on', 'upshift' ) . '">' . esc_html( $group['runs'] ) . '</td>';
+			echo '<td data-label="' . esc_attr__( 'File and line', 'qasim-php-upgrade-check-guard' ) . '">' . esc_html( self::lines_label( $group['lines'] ) ) . '</td>';
+			echo '<td data-label="' . esc_attr__( 'What it is', 'qasim-php-upgrade-check-guard' ) . '">' . esc_html( $group['text']['problem'] ) . '</td>';
+			echo '<td data-label="' . esc_attr__( 'How to fix', 'qasim-php-upgrade-check-guard' ) . '">' . esc_html( $group['text']['how_to_fix'] ) . '</td>';
+			echo '<td data-label="' . esc_attr__( 'What it means for your site', 'qasim-php-upgrade-check-guard' ) . '">' . esc_html( $group['text']['impact'] ) . '</td>';
+			echo '<td data-label="' . esc_attr__( 'Runs on', 'qasim-php-upgrade-check-guard' ) . '">' . esc_html( $group['runs'] ) . '</td>';
 			echo '</tr>';
 		}
 		echo '</tbody></table>';
 
 		if ( $item['more'] > 0 ) {
 			/* translators: %s: number of places. */
-			echo '<p class="upshift-muted">' . esc_html( sprintf( _n( '%s more place is in the CSV report.', '%s more places are in the CSV report.', (int) $item['more'], 'upshift' ), number_format_i18n( (int) $item['more'] ) ) ) . '</p>';
+			echo '<p class="qpucg-muted">' . esc_html( sprintf( _n( '%s more place is in the CSV report.', '%s more places are in the CSV report.', (int) $item['more'], 'qasim-php-upgrade-check-guard' ), number_format_i18n( (int) $item['more'] ) ) ) . '</p>';
 		}
 
-		echo '<details class="upshift-tech"><summary>' . esc_html__( 'Technical details', 'upshift' ) . '</summary><ul>';
+		echo '<details class="qpucg-tech"><summary>' . esc_html__( 'Technical details', 'qasim-php-upgrade-check-guard' ) . '</summary><ul>';
 		if ( ! empty( $item['where']['almost'] ) ) {
 			/* translators: %s: list of places, e.g. "checkout, cart and admin". */
-			echo '<li>' . esc_html( sprintf( __( 'Runs on: %s', 'upshift' ), $item['where']['list'] ) ) . '</li>';
+			echo '<li>' . esc_html( sprintf( __( 'Runs on: %s', 'qasim-php-upgrade-check-guard' ), $item['where']['list'] ) ) . '</li>';
 		}
 		foreach ( $item['groups'] as $group ) {
 			foreach ( $group['tech'] as $rule => $message ) {
@@ -576,11 +576,11 @@ class CheckTab {
 		$count = count( $lines );
 		if ( 1 === $count ) {
 			/* translators: %s: line number. */
-			return sprintf( __( 'Line %s', 'upshift' ), number_format_i18n( $lines[0] ) );
+			return sprintf( __( 'Line %s', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $lines[0] ) );
 		}
 		sort( $lines );
 		/* translators: 1: number of places, 2: list of line numbers (at most five). */
-		return sprintf( _n( '%1$s place in this file (lines %2$s)', '%1$s places in this file (lines %2$s)', $count, 'upshift' ), number_format_i18n( $count ), implode( ', ', array_slice( $lines, 0, 5 ) ) );
+		return sprintf( _n( '%1$s place in this file (lines %2$s)', '%1$s places in this file (lines %2$s)', $count, 'qasim-php-upgrade-check-guard' ), number_format_i18n( $count ), implode( ', ', array_slice( $lines, 0, 5 ) ) );
 	}
 
 	/**
@@ -594,7 +594,7 @@ class CheckTab {
 			return;
 		}
 		/* translators: %s: number of notes. */
-		echo '<p class="upshift-muted upshift-other-notes">' . esc_html( sprintf( _n( "%s other note doesn't affect this upgrade. It's in the CSV report.", "%s other notes don't affect this upgrade. They're in the CSV report.", $count, 'upshift' ), number_format_i18n( $count ) ) ) . '</p>';
+		echo '<p class="qpucg-muted qpucg-other-notes">' . esc_html( sprintf( _n( "%s other note doesn't affect this upgrade. It's in the CSV report.", "%s other notes don't affect this upgrade. They're in the CSV report.", $count, 'qasim-php-upgrade-check-guard' ), number_format_i18n( $count ) ) ) . '</p>';
 	}
 
 	/**
@@ -603,16 +603,16 @@ class CheckTab {
 	 * @param array $report Check::build().
 	 */
 	private static function render_buttons( array $report ) {
-		echo '<div class="upshift-actions">';
+		echo '<div class="qpucg-actions">';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( self::EXPORT ) . '" />';
 		wp_nonce_field( self::EXPORT );
-		echo '<button type="submit" class="button">' . esc_html__( 'Download report (CSV)', 'upshift' ) . '</button></form>';
-		echo '<button type="button" class="button upshift-copy" data-copy-from="upshift-report-text">' . esc_html__( 'Copy text for your developer or host', 'upshift' ) . '</button>';
-		echo '<button type="button" class="button" id="upshift-print">' . esc_html__( 'Print report', 'upshift' ) . '</button>';
-		echo '<span id="upshift-copy-status" class="upshift-muted" role="status"></span>';
+		echo '<button type="submit" class="button">' . esc_html__( 'Download report (CSV)', 'qasim-php-upgrade-check-guard' ) . '</button></form>';
+		echo '<button type="button" class="button qpucg-copy" data-copy-from="qpucg-report-text">' . esc_html__( 'Copy text for your developer or host', 'qasim-php-upgrade-check-guard' ) . '</button>';
+		echo '<button type="button" class="button" id="qpucg-print">' . esc_html__( 'Print report', 'qasim-php-upgrade-check-guard' ) . '</button>';
+		echo '<span id="qpucg-copy-status" class="qpucg-muted" role="status"></span>';
 		echo '</div>';
-		echo '<textarea id="upshift-report-text" class="upshift-offscreen" readonly tabindex="-1" aria-hidden="true">' . esc_textarea( Check::text_report( $report ) ) . '</textarea>';
+		echo '<textarea id="qpucg-report-text" class="qpucg-offscreen" readonly tabindex="-1" aria-hidden="true">' . esc_textarea( Check::text_report( $report ) ) . '</textarea>';
 	}
 
 	/**
@@ -620,7 +620,7 @@ class CheckTab {
 	 */
 	public static function handle_activity_on() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to do this.', 'upshift' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to do this.', 'qasim-php-upgrade-check-guard' ), 403 );
 		}
 		check_admin_referer( self::ACTIVITY_ON );
 
@@ -635,7 +635,7 @@ class CheckTab {
 			add_query_arg(
 				array(
 					'tab'         => 'check',
-					'upshift_msg' => 'activity_on',
+					'qpucg_msg' => 'activity_on',
 				),
 				admin_url( 'tools.php?page=' . Page::SLUG )
 			)
@@ -648,13 +648,13 @@ class CheckTab {
 	 */
 	public static function handle_export() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to do this.', 'upshift' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to do this.', 'qasim-php-upgrade-check-guard' ), 403 );
 		}
 		check_admin_referer( self::EXPORT );
 
 		$scan = Runner::latest( 'done' );
 		if ( null === $scan ) {
-			wp_die( esc_html__( 'There is no finished check yet.', 'upshift' ) );
+			wp_die( esc_html__( 'There is no finished check yet.', 'qasim-php-upgrade-check-guard' ) );
 		}
 		$rows = self::csv_rows( $scan );
 

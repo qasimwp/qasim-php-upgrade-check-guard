@@ -4,15 +4,15 @@
  *
  * Class and method names are taken from the scoped PHPCS 4.0.4 source in vendor-prefixed/.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Engine;
+namespace Qpucg\Engine;
 
-use Upshift\Settings;
-use Upshift\Vendor\PHP_CodeSniffer\Config;
-use Upshift\Vendor\PHP_CodeSniffer\Files\LocalFile;
-use Upshift\Vendor\PHP_CodeSniffer\Runner;
+use Qpucg\Settings;
+use Qpucg\Vendor\PHP_CodeSniffer\Config;
+use Qpucg\Vendor\PHP_CodeSniffer\Files\LocalFile;
+use Qpucg\Vendor\PHP_CodeSniffer\Runner;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -88,12 +88,12 @@ class Engine {
 		$running = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
 		if ( '' === $from || ( ! in_array( $from, Settings::FROM_VERSIONS, true ) && $running !== $from ) ) {
 			/* translators: %s: PHP version string as given. */
-			return sprintf( __( 'Unsupported "from" version: %s.', 'upshift' ), $from );
+			return sprintf( __( 'Unsupported "from" version: %s.', 'qasim-php-upgrade-check-guard' ), $from );
 		}
 		if ( ! in_array( $target, Settings::TARGET_VERSIONS, true ) ) {
 			return sprintf(
 				/* translators: 1: PHP version string as given, 2: comma-separated list of allowed versions. */
-				__( 'Unsupported target version: %1$s. Allowed: %2$s.', 'upshift' ),
+				__( 'Unsupported target version: %1$s. Allowed: %2$s.', 'qasim-php-upgrade-check-guard' ),
 				$target,
 				implode( ', ', Settings::TARGET_VERSIONS )
 			);
@@ -101,7 +101,7 @@ class Engine {
 		if ( version_compare( $from, $target, '>=' ) ) {
 			return sprintf(
 				/* translators: 1: target PHP version, 2: from PHP version. */
-				__( 'The target version (%1$s) must be newer than the from version (%2$s). Nothing to check.', 'upshift' ),
+				__( 'The target version (%1$s) must be newer than the from version (%2$s). Nothing to check.', 'qasim-php-upgrade-check-guard' ),
 				$target,
 				$from
 			);
@@ -142,7 +142,7 @@ class Engine {
 		$from = (string) $from;
 		if ( '' === $from || ( ! in_array( $from, Settings::FROM_VERSIONS, true ) && PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION !== $from ) ) {
 			/* translators: %s: PHP version string as given. */
-			throw new \InvalidArgumentException( sprintf( __( 'Unsupported "from" version: %s.', 'upshift' ), $from ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- escaped where displayed.
+			throw new \InvalidArgumentException( sprintf( __( 'Unsupported "from" version: %s.', 'qasim-php-upgrade-check-guard' ), $from ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- escaped where displayed.
 		}
 		return self::instance( $from );
 	}
@@ -270,7 +270,7 @@ class Engine {
 		if ( Config::getConfigData( 'testVersion' ) !== $this->range ) {
 			$this->runner->config->setConfigData( 'testVersion', $this->range, true );
 		}
-		$class = 'Upshift\\Vendor\\PHPCompatibility\\Helpers\\ScannedCode';
+		$class = 'Qpucg\\Vendor\\PHPCompatibility\\Helpers\\ScannedCode';
 		if ( class_exists( $class, false ) ) {
 			foreach ( array( 'testVersion', 'testVersions' ) as $name ) {
 				$property = new \ReflectionProperty( $class, $name );
@@ -316,7 +316,7 @@ class Engine {
 		require_once $vendor . '/autoload.php';
 		require_once $vendor . '/squizlabs/php_codesniffer/autoload.php';
 		// Defines PHPCS's global T_* token constants.
-		class_exists( 'Upshift\\Vendor\\PHP_CodeSniffer\\Util\\Tokens' );
+		class_exists( 'Qpucg\\Vendor\\PHP_CodeSniffer\\Util\\Tokens' );
 	}
 
 	/**
@@ -383,7 +383,7 @@ class Engine {
 	 * Clears PHPCSUtils' static caches after each file (spec §7.4 rule 5).
 	 */
 	private static function clear_caches() {
-		foreach ( array( 'Upshift\\Vendor\\PHPCSUtils\\Internal\\Cache', 'Upshift\\Vendor\\PHPCSUtils\\Internal\\NoFileCache' ) as $class ) {
+		foreach ( array( 'Qpucg\\Vendor\\PHPCSUtils\\Internal\\Cache', 'Qpucg\\Vendor\\PHPCSUtils\\Internal\\NoFileCache' ) as $class ) {
 			if ( class_exists( $class, false ) ) {
 				$class::clear();
 			}

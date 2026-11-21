@@ -2,17 +2,17 @@
 /**
  * Findings × usage: buckets, priority, filters, spike metrics (spec §7.8, §2).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Report;
+namespace Qpucg\Report;
 
-use Upshift\Install;
-use Upshift\Scan\Categories;
-use Upshift\Scan\Runner;
-use Upshift\Usage\Bench;
-use Upshift\Usage\Recorder;
-use Upshift\Usage\Rollup;
+use Qpucg\Install;
+use Qpucg\Scan\Categories;
+use Qpucg\Scan\Runner;
+use Qpucg\Usage\Bench;
+use Qpucg\Usage\Recorder;
+use Qpucg\Usage\Rollup;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -95,9 +95,9 @@ class Join {
 	 */
 	public static function row_tier( array $row, $target ) {
 		if ( ! empty( $row['guarded'] ) ) {
-			return __( 'guarded: only runs where it is safe', 'upshift' );
+			return __( 'guarded: only runs where it is safe', 'qasim-php-upgrade-check-guard' );
 		}
-		return ! empty( $row['baseline'] ) ? __( 'already true on the from version', 'upshift' ) : self::tier_label( $row['category'], $target );
+		return ! empty( $row['baseline'] ) ? __( 'already true on the from version', 'qasim-php-upgrade-check-guard' ) : self::tier_label( $row['category'], $target );
 	}
 
 	/**
@@ -112,13 +112,13 @@ class Join {
 		switch ( $category ) {
 			case Categories::REMOVED:
 				/* translators: %s: target PHP version. */
-				return sprintf( __( 'will break on PHP %s', 'upshift' ), $target );
+				return sprintf( __( 'will break on PHP %s', 'qasim-php-upgrade-check-guard' ), $target );
 			case Categories::NEEDS_EXTENSION:
-				return __( 'needs a PHP extension', 'upshift' );
+				return __( 'needs a PHP extension', 'qasim-php-upgrade-check-guard' );
 			case Categories::DEPRECATED:
-				return __( 'deprecation notice', 'upshift' );
+				return __( 'deprecation notice', 'qasim-php-upgrade-check-guard' );
 			case Categories::CHANGED:
-				return __( 'behaviour change', 'upshift' );
+				return __( 'behaviour change', 'qasim-php-upgrade-check-guard' );
 			default:
 				return '';
 		}
@@ -138,20 +138,20 @@ class Join {
 		$tiers = array_merge( array_fill_keys( self::counted_categories(), 0 ), $tiers );
 		if ( 0 === (int) $tiers[ Categories::REMOVED ] ) {
 			/* translators: 1: target PHP version, 2: from PHP version. */
-			$line = sprintf( __( 'Will break on PHP %1$s: 0. No code was found that works on PHP %2$s today and stops working on %1$s.', 'upshift' ), $target, $from );
+			$line = sprintf( __( 'Will break on PHP %1$s: 0. No code was found that works on PHP %2$s today and stops working on %1$s.', 'qasim-php-upgrade-check-guard' ), $target, $from );
 		} else {
 			/* translators: 1: target PHP version, 2: number of findings, 3: from PHP version. */
-			$line = sprintf( __( 'Will break on PHP %1$s: %2$s (code that works on PHP %3$s today and is removed by %1$s).', 'upshift' ), $target, number_format_i18n( $tiers[ Categories::REMOVED ] ), $from );
+			$line = sprintf( __( 'Will break on PHP %1$s: %2$s (code that works on PHP %3$s today and is removed by %1$s).', 'qasim-php-upgrade-check-guard' ), $target, number_format_i18n( $tiers[ Categories::REMOVED ] ), $from );
 		}
 		if ( $unchecked > 0 ) {
 			/* translators: %s: number of files. */
-			$line .= ' ' . sprintf( _n( 'This result excludes %s active code file that was not checked (listed on the Scan tab).', 'This result excludes %s active code files that were not checked (listed on the Scan tab).', $unchecked, 'upshift' ), number_format_i18n( $unchecked ) );
+			$line .= ' ' . sprintf( _n( 'This result excludes %s active code file that was not checked (listed on the Scan tab).', 'This result excludes %s active code files that were not checked (listed on the Scan tab).', $unchecked, 'qasim-php-upgrade-check-guard' ), number_format_i18n( $unchecked ) );
 		}
 		/* translators: 1: findings that need a PHP extension, 2: deprecation notices, 3: behaviour changes. */
-		$line .= ' ' . sprintf( __( 'Needs a PHP extension: %1$s. Deprecation notices: %2$s. Behaviour changes: %3$s.', 'upshift' ), number_format_i18n( $tiers[ Categories::NEEDS_EXTENSION ] ), number_format_i18n( $tiers[ Categories::DEPRECATED ] ), number_format_i18n( $tiers[ Categories::CHANGED ] ) );
+		$line .= ' ' . sprintf( __( 'Needs a PHP extension: %1$s. Deprecation notices: %2$s. Behaviour changes: %3$s.', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $tiers[ Categories::NEEDS_EXTENSION ] ), number_format_i18n( $tiers[ Categories::DEPRECATED ] ), number_format_i18n( $tiers[ Categories::CHANGED ] ) );
 		if ( ! $checked ) {
 			/* translators: %s: from PHP version. */
-			$line .= ' ' . sprintf( __( 'This scan was made before the new-risk check: these totals still include problems that are already true on PHP %s. Run a new scan for the exact numbers.', 'upshift' ), $from );
+			$line .= ' ' . sprintf( __( 'This scan was made before the new-risk check: these totals still include problems that are already true on PHP %s. Run a new scan for the exact numbers.', 'qasim-php-upgrade-check-guard' ), $from );
 		}
 		return $line;
 	}
@@ -209,7 +209,7 @@ class Join {
 	 * totals (DECISIONS D53). WP-CLI is never in `counted` (it isn't site
 	 * traffic), at any request count, but can be in `mask` for the label.
 	 *
-	 * @param string|null $hits_by_context JSON from upshift_usage (bit => hits).
+	 * @param string|null $hits_by_context JSON from qpucg_usage (bit => hits).
 	 * @param array       $requests        Meta 'requests' (primary bit => sampled requests).
 	 * @return array mask (always-loaded contexts), counted (contexts the whole-site check needs), near (80% or more).
 	 */
@@ -327,23 +327,23 @@ class Join {
 	 */
 	public static function usage_label( array $row, $days ) {
 		if ( self::INACTIVE === $row['bucket'] ) {
-			return __( 'component inactive', 'upshift' );
+			return __( 'component inactive', 'qasim-php-upgrade-check-guard' );
 		}
 		if ( self::NEVER === $row['bucket'] ) {
 			if ( $days <= 0 ) {
-				return __( 'no usage data yet', 'upshift' );
+				return __( 'no usage data yet', 'qasim-php-upgrade-check-guard' );
 			}
 			/* translators: %d: number of days. */
-			return sprintf( _n( 'not seen during %d day of observation', 'not seen during %d days of observation', $days, 'upshift' ), $days );
+			return sprintf( _n( 'not seen during %d day of observation', 'not seen during %d days of observation', $days, 'qasim-php-upgrade-check-guard' ), $days );
 		}
 		$label = Recorder::label( $row['contexts'] );
 		if ( ! empty( $row['whole_site'] ) ) {
 			/* translators: %s: contexts the file was seen in. */
-			return sprintf( __( 'every request on the whole site · seen in: %s', 'upshift' ), $label );
+			return sprintf( __( 'every request on the whole site · seen in: %s', 'qasim-php-upgrade-check-guard' ), $label );
 		}
 		if ( ! empty( $row['always_in'] ) ) {
 			/* translators: 1: contexts with every request, e.g. "admin", 2: contexts the file was seen in. */
-			return sprintf( __( 'every %1$s request · seen in: %2$s', 'upshift' ), Recorder::label( $row['always_in'] ), $label );
+			return sprintf( __( 'every %1$s request · seen in: %2$s', 'qasim-php-upgrade-check-guard' ), Recorder::label( $row['always_in'] ), $label );
 		}
 		return $label;
 	}
@@ -459,12 +459,12 @@ class Join {
 			'usage'     => self::usage_metrics( $meta ),
 			'm1'        => array(
 				'result' => self::NOT_MEASURED,
-				'note'   => __( 'No completed scan.', 'upshift' ),
+				'note'   => __( 'No completed scan.', 'qasim-php-upgrade-check-guard' ),
 			),
 			'm3a'       => null,
 			'm4'        => array(
 				'result' => self::NOT_MEASURED,
-				'note'   => __( 'No completed scan.', 'upshift' ),
+				'note'   => __( 'No completed scan.', 'qasim-php-upgrade-check-guard' ),
 			),
 		);
 		$m['m3a']      = self::m3a( $m['usage'] );
@@ -599,7 +599,7 @@ class Join {
 		if ( $usage['req_hits'] <= 0 ) {
 			return array(
 				'result' => self::NOT_MEASURED,
-				'note'   => __( 'No sampled requests with a request time yet (recorded from DB version 2 on).', 'upshift' ),
+				'note'   => __( 'No sampled requests with a request time yet (recorded from DB version 2 on).', 'qasim-php-upgrade-check-guard' ),
 			);
 		}
 		$edges  = Recorder::OVERHEAD_EDGES;
@@ -609,7 +609,7 @@ class Join {
 			'result' => $med_ok && $p95_ok ? self::PASS : self::FAIL,
 			'note'   => sprintf(
 				/* translators: 1: median range, 2: p95 range, 3: requests, 4: average request ms, 5: median limit, 6: p95 limit. */
-				__( 'Prep / request time: median %1$s, p95 %2$s over %3$s requests (avg request %4$s ms). Limit: median ≤ %5$s%%, p95 ≤ %6$s%%.', 'upshift' ),
+				__( 'Prep / request time: median %1$s, p95 %2$s over %3$s requests (avg request %4$s ms). Limit: median ≤ %5$s%%, p95 ≤ %6$s%%.', 'qasim-php-upgrade-check-guard' ),
 				$usage['rel_median'],
 				$usage['rel_p95'],
 				number_format_i18n( $usage['req_hits'] ),
@@ -635,18 +635,18 @@ class Join {
 			$db      = (float) $bench['stats']['db']['median'];
 			$parts[] = sprintf(
 				/* translators: 1: total ms, 2: prep ms, 3: DB write ms, 4: human time difference. */
-				__( 'Absolute cost per sampled request ≈ %1$s ms (prep median %2$s + DB-write median %3$s, benchmark %4$s ago).', 'upshift' ),
+				__( 'Absolute cost per sampled request ≈ %1$s ms (prep median %2$s + DB-write median %3$s, benchmark %4$s ago).', 'qasim-php-upgrade-check-guard' ),
 				number_format_i18n( $prep + $db, 2 ),
 				number_format_i18n( $prep, 2 ),
 				number_format_i18n( $db, 2 ),
 				human_time_diff( (int) $bench['time'] )
 			);
 		} else {
-			$parts[] = __( 'Absolute cost: no benchmark run yet (Usage tab → Run recorder benchmark).', 'upshift' );
+			$parts[] = __( 'Absolute cost: no benchmark run yet (Usage tab → Run recorder benchmark).', 'qasim-php-upgrade-check-guard' );
 		}
 		if ( $usage['sampled_requests'] > 0 ) {
 			/* translators: 1: percent, 2: number of sampled requests. */
-			$parts[] = sprintf( __( '%1$s%% of %2$s sampled requests had prep ≥ 3 ms (old absolute rule, information).', 'upshift' ), number_format_i18n( 100 * $usage['slow_share'], 1 ), number_format_i18n( $usage['sampled_requests'] ) );
+			$parts[] = sprintf( __( '%1$s%% of %2$s sampled requests had prep ≥ 3 ms (old absolute rule, information).', 'qasim-php-upgrade-check-guard' ), number_format_i18n( 100 * $usage['slow_share'], 1 ), number_format_i18n( $usage['sampled_requests'] ) );
 		}
 		return implode( ' ', $parts );
 	}
@@ -792,20 +792,20 @@ class Join {
 	private static function m1( array $scan ) {
 		$share = $scan['memory_limit'] > 0 ? $scan['peak_memory'] / $scan['memory_limit'] : 1.0;
 		/* translators: 1: scan id, 2: peak memory MB, 3: percent of memory_limit, 4: memory_limit MB. */
-		$note = sprintf( __( 'Scan #%1$d finished; peak memory %2$s MB, %3$s%% of memory_limit %4$s MB.', 'upshift' ), $scan['id'], number_format_i18n( $scan['peak_memory'] / 1048576, 1 ), number_format_i18n( 100 * $share, 1 ), number_format_i18n( $scan['memory_limit'] / 1048576 ) );
+		$note = sprintf( __( 'Scan #%1$d finished; peak memory %2$s MB, %3$s%% of memory_limit %4$s MB.', 'qasim-php-upgrade-check-guard' ), $scan['id'], number_format_i18n( $scan['peak_memory'] / 1048576, 1 ), number_format_i18n( 100 * $share, 1 ), number_format_i18n( $scan['memory_limit'] / 1048576 ) );
 		if ( ! $scan['memory_limit_recorded'] || ( $scan['unlimited'] && 'cli' === $scan['sapi'] ) ) {
 			return array(
 				'result' => self::NOT_MEASURED,
 				'note'   => sprintf(
 					/* translators: 1: scan id, 2: peak memory MB. */
-					__( 'Scan #%1$d finished; peak memory %2$s MB, but its memory_limit was not recorded (scan from before T6, or a later scan replaced the record) or it ran in WP-CLI with memory_limit -1. Run a scan from the Scan tab to measure M1 with the host limits.', 'upshift' ),
+					__( 'Scan #%1$d finished; peak memory %2$s MB, but its memory_limit was not recorded (scan from before T6, or a later scan replaced the record) or it ran in WP-CLI with memory_limit -1. Run a scan from the Scan tab to measure M1 with the host limits.', 'qasim-php-upgrade-check-guard' ),
 					$scan['id'],
 					number_format_i18n( $scan['peak_memory'] / 1048576, 1 )
 				),
 			);
 		}
 		if ( $scan['unlimited'] ) {
-			$note .= ' ' . __( 'memory_limit was -1 (unlimited) during the scan; the scan budgeted with this limit.', 'upshift' );
+			$note .= ' ' . __( 'memory_limit was -1 (unlimited) during the scan; the scan budgeted with this limit.', 'qasim-php-upgrade-check-guard' );
 		}
 		return array(
 			'result' => $share < self::M1_MEMORY_SHARE ? self::PASS : self::FAIL,
@@ -827,22 +827,22 @@ class Join {
 		$share      = $findings['share'];
 		$not_always = $findings['not_always'];
 		/* translators: 1: percent, 2: findings not always loaded, 3: counted findings. */
-		$note    = sprintf( __( '%1$s%% not always loaded (%2$s of %3$s counted findings).', 'upshift' ), number_format_i18n( 100 * $share, 1 ), number_format_i18n( $not_always ), number_format_i18n( $findings['counted'] ) );
+		$note    = sprintf( __( '%1$s%% not always loaded (%2$s of %3$s counted findings).', 'qasim-php-upgrade-check-guard' ), number_format_i18n( 100 * $share, 1 ), number_format_i18n( $not_always ), number_format_i18n( $findings['counted'] ) );
 		$reasons = array();
 		if ( empty( $findings['checked'] ) ) {
-			$reasons[] = __( 'the scan was made before the new-risk check, so a new scan is needed', 'upshift' );
+			$reasons[] = __( 'the scan was made before the new-risk check, so a new scan is needed', 'qasim-php-upgrade-check-guard' );
 		}
 		if ( $findings['counted'] < self::MIN_COUNTED ) {
 			/* translators: %d: minimum. */
-			$reasons[] = sprintf( __( 'under %d counted findings', 'upshift' ), self::MIN_COUNTED );
+			$reasons[] = sprintf( __( 'under %d counted findings', 'qasim-php-upgrade-check-guard' ), self::MIN_COUNTED );
 		}
 		if ( $usage['sampled_requests'] < self::MIN_SAMPLED ) {
 			/* translators: %d: minimum. */
-			$reasons[] = sprintf( __( 'under %d sampled requests', 'upshift' ), self::MIN_SAMPLED );
+			$reasons[] = sprintf( __( 'under %d sampled requests', 'qasim-php-upgrade-check-guard' ), self::MIN_SAMPLED );
 		}
 		if ( $usage['days_observed'] < self::MIN_DAYS ) {
 			/* translators: %d: minimum. */
-			$reasons[] = sprintf( __( 'under %d days observed', 'upshift' ), self::MIN_DAYS );
+			$reasons[] = sprintf( __( 'under %d days observed', 'qasim-php-upgrade-check-guard' ), self::MIN_DAYS );
 		}
 		if ( $reasons ) {
 			return array(
@@ -862,7 +862,7 @@ class Join {
 	 * @return string
 	 */
 	public static function inactive_note() {
-		return __( 'Inactive plugins were not scanned (the Scan tab scans active plugins unless "Also scan inactive plugins" is ticked), or the site has none. This report says nothing about problems in inactive plugins.', 'upshift' );
+		return __( 'Inactive plugins were not scanned (the Scan tab scans active plugins unless "Also scan inactive plugins" is ticked), or the site has none. This report says nothing about problems in inactive plugins.', 'qasim-php-upgrade-check-guard' );
 	}
 
 	/**
@@ -874,13 +874,13 @@ class Join {
 	public static function result_label( $result ) {
 		switch ( $result ) {
 			case self::PASS:
-				return '✅ ' . __( 'PASS', 'upshift' );
+				return '✅ ' . __( 'PASS', 'qasim-php-upgrade-check-guard' );
 			case self::FAIL:
-				return '❌ ' . __( 'FAIL', 'upshift' );
+				return '❌ ' . __( 'FAIL', 'qasim-php-upgrade-check-guard' );
 			case self::INCONCLUSIVE:
-				return '⚠️ ' . __( 'INCONCLUSIVE', 'upshift' );
+				return '⚠️ ' . __( 'INCONCLUSIVE', 'qasim-php-upgrade-check-guard' );
 			default:
-				return '— ' . __( 'not measured', 'upshift' );
+				return '— ' . __( 'not measured', 'qasim-php-upgrade-check-guard' );
 		}
 	}
 
@@ -897,7 +897,7 @@ class Join {
 		};
 
 		$lines   = array();
-		$lines[] = sprintf( '## Upshift spike metrics: %s (%s)', $m['site'], $m['generated'] );
+		$lines[] = sprintf( '## Qasim PHP Upgrade Check & Guard spike metrics: %s (%s)', $m['site'], $m['generated'] );
 		$lines[] = '';
 		if ( isset( $m['headline'] ) ) {
 			$lines[] = '**' . $m['headline'] . '**';

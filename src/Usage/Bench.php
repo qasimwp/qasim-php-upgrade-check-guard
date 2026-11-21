@@ -1,6 +1,6 @@
 <?php
 /**
- * Recorder benchmark (spec §7.2, M3 / DECISIONS D14). Used by `wp upshift bench-recorder`
+ * Recorder benchmark (spec §7.2, M3 / DECISIONS D14). Used by `wp qpucg bench-recorder`
  * and the "Run recorder benchmark" button on the Usage tab.
  *
  * Measures three parts separately, on this request's own included files:
@@ -8,13 +8,13 @@
  * (c) the new-set cost (exists check + key building + fileset insert).
  * Fake rows use the day 1970-01-01 and fake hashes, and are deleted afterwards.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Usage;
+namespace Qpucg\Usage;
 
-use Upshift\Install;
-use Upshift\Paths;
+use Qpucg\Install;
+use Qpucg\Paths;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -29,11 +29,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Bench {
 
 	const FAKE_DAY     = '1970-01-01';
-	const RESULT       = 'upshift_bench_result';
+	const RESULT       = 'qpucg_bench_result';
 	const PREP_GATE_MS = 3.0;
 	const DB_WARN_MS   = 20.0;
 	const DELETE_CHUNK = 100;
-	const HASH_PREFIX  = 'upshiftbench';
+	const HASH_PREFIX  = 'qpucgbench';
 
 	/**
 	 * Prep phases timed by prep_split(), in order.
@@ -80,7 +80,7 @@ class Bench {
 
 		$iterations = max( 1, (int) $iterations );
 		$files      = get_included_files();
-		$run        = md5( uniqid( 'upshift-bench', true ) );
+		$run        = md5( uniqid( 'qpucg-bench', true ) );
 		$hit_hash   = self::fake_hash( $run . '-hit' );
 		$set_hashes = array();
 		$prep       = array();
@@ -109,7 +109,7 @@ class Bench {
 				Recorder::reset();
 
 				$t0       = microtime( true );
-				$prepared = Recorder::prepare( $files );
+				$prepared = Recorder::build_set( $files );
 				$t1       = microtime( true );
 				if ( null === $prepared ) {
 					$error = 'No content files are loaded in this request.';
@@ -181,7 +181,7 @@ class Bench {
 	}
 
 	/**
-	 * Times the hot-path prep phase by phase, like Recorder::prepare(): setup (prefix caches,
+	 * Times the hot-path prep phase by phase, like Recorder::build_set(): setup (prefix caches,
 	 * incl. realpath()), sort (normalize + sort all included files), filter (binary-search
 	 * blocks), hash, context (DECISIONS D46). Call with cold caches.
 	 *
@@ -230,7 +230,7 @@ class Bench {
 		);
 		try {
 			// A unique pattern string, so PHP's compiled-pattern cache can't answer from an earlier compile.
-			$matched = preg_match( '#^upshift-jit-' . md5( uniqid( '', true ) ) . '|(?:ab)+c\z#', str_repeat( 'ab', 50 ) . 'c' );
+			$matched = preg_match( '#^qpucg-jit-' . md5( uniqid( '', true ) ) . '|(?:ab)+c\z#', str_repeat( 'ab', 50 ) . 'c' );
 			$error   = preg_last_error();
 		} finally {
 			restore_error_handler();

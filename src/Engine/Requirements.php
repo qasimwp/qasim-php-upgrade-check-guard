@@ -2,10 +2,10 @@
 /**
  * Extension and engine availability checks (spec §4, §7.4).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Engine;
+namespace Qpucg\Engine;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -38,13 +38,13 @@ class Requirements {
 		if ( $missing ) {
 			$problems[] = sprintf(
 				/* translators: %s: comma-separated list of PHP extension names. */
-				__( 'Scanning needs these PHP extensions, which are missing: %s. Ask your host to enable them.', 'upshift' ),
+				__( 'Scanning needs these PHP extensions, which are missing: %s. Ask your host to enable them.', 'qasim-php-upgrade-check-guard' ),
 				implode( ', ', $missing )
 			);
 		}
 
 		if ( ! is_file( self::vendor_dir() . '/autoload.php' ) || ! is_file( self::vendor_dir() . '/squizlabs/php_codesniffer/autoload.php' ) ) {
-			$problems[] = __( 'The scan engine (vendor-prefixed folder) is missing. Reinstall the plugin from the release zip.', 'upshift' );
+			$problems[] = __( 'The scan engine (vendor-prefixed folder) is missing. Reinstall the plugin from the release zip.', 'qasim-php-upgrade-check-guard' );
 		}
 
 		return $problems;
@@ -65,6 +65,6 @@ class Requirements {
 	 * @return string
 	 */
 	public static function vendor_dir() {
-		return UPSHIFT_DIR . '/vendor-prefixed';
+		return QPUCG_DIR . '/vendor-prefixed';
 	}
 }

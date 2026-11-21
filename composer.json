@@ -1,6 +1,6 @@
 {
-	"name": "upshift/upshift",
-	"description": "Dev tools for linting the Upshift plugin (not shipped).",
+	"name": "qasim/qasim-php-upgrade-check-guard",
+	"description": "Dev tools for linting the Qasim PHP Upgrade Check & Guard plugin (not shipped).",
 	"type": "project",
 	"license": "GPL-3.0-or-later",
 	"minimum-stability": "alpha",

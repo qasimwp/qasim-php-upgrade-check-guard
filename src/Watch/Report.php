@@ -2,14 +2,14 @@
 /**
  * Upgrade watch: what the tab shows, compared with the days before (DECISIONS D59). Reads only.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Watch;
+namespace Qpucg\Watch;
 
-use Upshift\Report\Check;
-use Upshift\Settings;
-use Upshift\Usage\Recorder;
+use Qpucg\Report\Check;
+use Qpucg\Settings;
+use Qpucg\Usage\Recorder;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -285,7 +285,7 @@ class Report {
 		}
 		$names = Check::names( array( 'components' => $components ) );
 		if ( isset( $names[ Collector::CORE ] ) ) {
-			$names[ Collector::CORE ] = __( 'WordPress or your server', 'upshift' );
+			$names[ Collector::CORE ] = __( 'WordPress or your server', 'qasim-php-upgrade-check-guard' );
 		}
 		return $names;
 	}
@@ -365,19 +365,19 @@ class Report {
 				$name = $bad[0]['name'];
 				if ( Collector::CRASH === $kind ) {
 					/* translators: 1: plugin name, 2: number of crashes, 3: "since the upgrade", 4: where, e.g. " (checkout)". */
-					$text = _n( '%1$s caused %2$s crash %3$s%4$s.', '%1$s caused %2$s crashes %3$s%4$s.', $count, 'upshift' );
+					$text = _n( '%1$s caused %2$s crash %3$s%4$s.', '%1$s caused %2$s crashes %3$s%4$s.', $count, 'qasim-php-upgrade-check-guard' );
 				} else {
 					/* translators: 1: plugin name, 2: number of errors, 3: "since the upgrade", 4: where, e.g. " (checkout)". */
-					$text = _n( '%1$s caused %2$s error %3$s%4$s.', '%1$s caused %2$s errors %3$s%4$s.', $count, 'upshift' );
+					$text = _n( '%1$s caused %2$s error %3$s%4$s.', '%1$s caused %2$s errors %3$s%4$s.', $count, 'qasim-php-upgrade-check-guard' );
 				}
 				$sentence = sprintf( $text, $name, number_format_i18n( $count ), $since, $place );
 			} else {
 				if ( Collector::CRASH === $kind ) {
 					/* translators: 1: number of plugins, 2: number of crashes, 3: "since the upgrade", 4: where, e.g. " (checkout)". */
-					$text = _n( '%1$s plugins caused %2$s crash %3$s%4$s.', '%1$s plugins caused %2$s crashes %3$s%4$s.', $count, 'upshift' );
+					$text = _n( '%1$s plugins caused %2$s crash %3$s%4$s.', '%1$s plugins caused %2$s crashes %3$s%4$s.', $count, 'qasim-php-upgrade-check-guard' );
 				} else {
 					/* translators: 1: number of plugins, 2: number of errors, 3: "since the upgrade", 4: where, e.g. " (checkout)". */
-					$text = _n( '%1$s plugins caused %2$s error %3$s%4$s.', '%1$s plugins caused %2$s errors %3$s%4$s.', $count, 'upshift' );
+					$text = _n( '%1$s plugins caused %2$s error %3$s%4$s.', '%1$s plugins caused %2$s errors %3$s%4$s.', $count, 'qasim-php-upgrade-check-guard' );
 				}
 				$sentence = sprintf( $text, number_format_i18n( count( $bad ) ), number_format_i18n( $count ), $since, $place );
 			}
@@ -397,10 +397,10 @@ class Report {
 		);
 		if ( $warned > 0 ) {
 			/* translators: 1: "since the upgrade", 2: number of plugins. */
-			$sentence = sprintf( _n( 'No new crashes or errors %1$s. %2$s plugin shows new warnings.', 'No new crashes or errors %1$s. %2$s plugins show new warnings.', $warned, 'upshift' ), $since, number_format_i18n( $warned ) );
+			$sentence = sprintf( _n( 'No new crashes or errors %1$s. %2$s plugin shows new warnings.', 'No new crashes or errors %1$s. %2$s plugins show new warnings.', $warned, 'qasim-php-upgrade-check-guard' ), $since, number_format_i18n( $warned ) );
 		} else {
 			/* translators: %s: "since the upgrade". */
-			$sentence = sprintf( __( 'No new problems %s.', 'upshift' ), $since );
+			$sentence = sprintf( __( 'No new problems %s.', 'qasim-php-upgrade-check-guard' ), $since );
 		}
 		return array(
 			'level'    => 'green',
@@ -418,13 +418,13 @@ class Report {
 	private static function since_words( $phase, array $state ) {
 		if ( self::BACK === $phase ) {
 			/* translators: %s: PHP version. */
-			return sprintf( __( 'while on PHP %s', 'upshift' ), $state['back']['from'] );
+			return sprintf( __( 'while on PHP %s', 'qasim-php-upgrade-check-guard' ), $state['back']['from'] );
 		}
 		// While the 7 days run the verdict is not final, so it says "so far"; "since ..." only once they ended.
 		if ( self::WATCHING === $phase ) {
-			return __( 'so far', 'upshift' );
+			return __( 'so far', 'qasim-php-upgrade-check-guard' );
 		}
-		return 'manual' === $state['source'] ? __( 'since you started comparing', 'upshift' ) : __( 'since the upgrade', 'upshift' );
+		return 'manual' === $state['source'] ? __( 'since you started comparing', 'qasim-php-upgrade-check-guard' ) : __( 'since the upgrade', 'qasim-php-upgrade-check-guard' );
 	}
 
 	/**
@@ -434,7 +434,7 @@ class Report {
 	 * @return string
 	 */
 	public static function date( $day ) {
-		return (string) mysql2date( __( 'j M', 'upshift' ), $day . ' 12:00:00' );
+		return (string) mysql2date( __( 'j M', 'qasim-php-upgrade-check-guard' ), $day . ' 12:00:00' );
 	}
 
 	/**
@@ -447,28 +447,28 @@ class Report {
 		$state = $report['state'];
 		if ( self::BACK === $report['phase'] ) {
 			/* translators: 1: PHP version, 2: date. */
-			return sprintf( __( 'You moved back to PHP %1$s on %2$s.', 'upshift' ), $state['back']['to'], self::date( $state['back']['day'] ) );
+			return sprintf( __( 'You moved back to PHP %1$s on %2$s.', 'qasim-php-upgrade-check-guard' ), $state['back']['to'], self::date( $state['back']['day'] ) );
 		}
 		if ( 'manual' === $state['source'] ) {
 			/* translators: %s: date. */
-			$first = sprintf( __( 'You started comparing on %s.', 'upshift' ), self::date( $state['start'] ) );
+			$first = sprintf( __( 'You started comparing on %s.', 'qasim-php-upgrade-check-guard' ), self::date( $state['start'] ) );
 			if ( self::unchanged( $report ) ) {
-				$first .= ' ' . __( 'Your PHP version has not changed yet.', 'upshift' );
+				$first .= ' ' . __( 'Your PHP version has not changed yet.', 'qasim-php-upgrade-check-guard' );
 			}
 		} else {
 			/* translators: 1: old PHP version, 2: new PHP version, 3: date. */
-			$first = sprintf( __( 'You moved from PHP %1$s to PHP %2$s on %3$s.', 'upshift' ), $state['from'], $state['to'], self::date( $state['start'] ) );
+			$first = sprintf( __( 'You moved from PHP %1$s to PHP %2$s on %3$s.', 'qasim-php-upgrade-check-guard' ), $state['from'], $state['to'], self::date( $state['start'] ) );
 		}
 		if ( self::FINISHED === $report['phase'] ) {
 			/* translators: %s: date. */
-			return $first . ' ' . sprintf( __( 'The 7-day comparison ended on %s.', 'upshift' ), self::date( $state['end'] ) );
+			return $first . ' ' . sprintf( __( 'The 7-day comparison ended on %s.', 'qasim-php-upgrade-check-guard' ), self::date( $state['end'] ) );
 		}
 		/* translators: 1: day number, 2: number of days. */
-		return $first . ' ' . sprintf( __( 'Day %1$s of %2$s.', 'upshift' ), number_format_i18n( (int) $report['day'] ), number_format_i18n( State::WATCH_DAYS ) );
+		return $first . ' ' . sprintf( __( 'Day %1$s of %2$s.', 'qasim-php-upgrade-check-guard' ), number_format_i18n( (int) $report['day'] ), number_format_i18n( State::WATCH_DAYS ) );
 	}
 
 	/**
-	 * Whether a comparison started by hand runs on a version Upshift has watched since before the button was pressed,
+	 * Whether a comparison started by hand runs on a version Qpucg has watched since before the button was pressed,
 	 * with no change seen since the switch was turned on (a change during the comparison starts a new one by itself).
 	 *
 	 * @param array $report build().
@@ -492,16 +492,16 @@ class Report {
 		switch ( $level ) {
 			case Collector::CRASH:
 				/* translators: %s: number of crashes. */
-				return sprintf( _n( '%s crash', '%s crashes', $count, 'upshift' ), $n );
+				return sprintf( _n( '%s crash', '%s crashes', $count, 'qasim-php-upgrade-check-guard' ), $n );
 			case Collector::ERROR:
 				/* translators: %s: number of errors. */
-				return sprintf( _n( '%s error', '%s errors', $count, 'upshift' ), $n );
+				return sprintf( _n( '%s error', '%s errors', $count, 'qasim-php-upgrade-check-guard' ), $n );
 			case Collector::WARNING:
 				/* translators: %s: number of warnings. */
-				return sprintf( _n( '%s warning', '%s warnings', $count, 'upshift' ), $n );
+				return sprintf( _n( '%s warning', '%s warnings', $count, 'qasim-php-upgrade-check-guard' ), $n );
 		}
 		/* translators: %s: number of notes. */
-		return sprintf( _n( '%s note about old code that still works', '%s notes about old code that still work', $count, 'upshift' ), $n );
+		return sprintf( _n( '%s note about old code that still works', '%s notes about old code that still work', $count, 'qasim-php-upgrade-check-guard' ), $n );
 	}
 
 	/**
@@ -532,15 +532,15 @@ class Report {
 		if ( $has( Collector::CRASH ) ) {
 			if ( self::BACK !== $report['phase'] && 'switch' === $report['state']['source'] ) {
 				/* translators: %s: PHP version. */
-				return sprintf( __( 'Ask your host to switch back to PHP %s and contact the plugin developer.', 'upshift' ), $report['state']['from'] );
+				return sprintf( __( 'Ask your host to switch back to PHP %s and contact the plugin developer.', 'qasim-php-upgrade-check-guard' ), $report['state']['from'] );
 			}
-			return __( 'Contact the plugin developer and send them this report.', 'upshift' );
+			return __( 'Contact the plugin developer and send them this report.', 'qasim-php-upgrade-check-guard' );
 		}
 		if ( $has( Collector::ERROR ) ) {
-			return __( 'Contact the plugin developer and send them this report.', 'upshift' );
+			return __( 'Contact the plugin developer and send them this report.', 'qasim-php-upgrade-check-guard' );
 		}
 		if ( $has( Collector::WARNING ) ) {
-			return __( 'Nothing to do right away. Send this report to the plugin developer when you have time.', 'upshift' );
+			return __( 'Nothing to do right away. Send this report to the plugin developer when you have time.', 'qasim-php-upgrade-check-guard' );
 		}
 		return '';
 	}
@@ -552,11 +552,11 @@ class Report {
 	 * @return string
 	 */
 	public static function text( array $report ) {
-		$lines = array( __( 'Upgrade guard report', 'upshift' ), self::headline( $report ), $report['answer']['sentence'], '' );
+		$lines = array( __( 'Upgrade guard report', 'qasim-php-upgrade-check-guard' ), self::headline( $report ), $report['answer']['sentence'], '' );
 		foreach ( $report['items'] as $item ) {
 			$lines[] = sprintf(
 				/* translators: 1: plugin name, 2: number of crashes in words, 3: number of errors in words, 4: number of warnings in words, 5: page types, 6: date. */
-				__( '%1$s: new: %2$s, %3$s, %4$s. Where: %5$s. Last seen: %6$s.', 'upshift' ),
+				__( '%1$s: new: %2$s, %3$s, %4$s. Where: %5$s. Last seen: %6$s.', 'qasim-php-upgrade-check-guard' ),
 				$item['name'],
 				self::count_words( $item[ Collector::CRASH ], Collector::CRASH ),
 				self::count_words( $item[ Collector::ERROR ], Collector::ERROR ),

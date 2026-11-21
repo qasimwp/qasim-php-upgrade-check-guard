@@ -2,10 +2,10 @@
 /**
  * Wires hooks and decides what loads per request (spec §5.3).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift;
+namespace Qpucg;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -20,61 +20,61 @@ class Plugin {
 	 * Registers hooks. Loads nothing beyond this class and Settings on normal requests.
 	 */
 	public static function boot() {
-		register_activation_hook( UPSHIFT_FILE, array( __NAMESPACE__ . '\\Install', 'activate' ) );
-		register_deactivation_hook( UPSHIFT_FILE, array( __NAMESPACE__ . '\\Install', 'deactivate' ) );
+		register_activation_hook( QPUCG_FILE, array( __NAMESPACE__ . '\\Install', 'activate' ) );
+		register_deactivation_hook( QPUCG_FILE, array( __NAMESPACE__ . '\\Install', 'deactivate' ) );
 
 		// Literal hook name (= Install::CRON_HOOK) so Install isn't loaded on every request (§5.3).
-		add_action( 'upshift_daily', array( __NAMESPACE__ . '\\Usage\\Rollup', 'daily' ) );
+		add_action( 'qpucg_daily', array( __NAMESPACE__ . '\\Usage\\Rollup', 'daily' ) );
 		// Single event: one rollup step, re-scheduled until the job is done (= Rollup::STEP_HOOK, DECISIONS D48).
-		add_action( 'upshift_rollup_step', array( __NAMESPACE__ . '\\Usage\\Rollup', 'cron_step' ) );
+		add_action( 'qpucg_rollup_step', array( __NAMESPACE__ . '\\Usage\\Rollup', 'cron_step' ) );
 		// Hourly, and again while a backlog remains: new file lists become dictionary ids (DECISIONS D55).
-		add_action( 'upshift_compact', array( __NAMESPACE__ . '\\Usage\\Rollup', 'compact' ) );
-		add_action( 'upshift_compact_step', array( __NAMESPACE__ . '\\Usage\\Rollup', 'compact' ) );
+		add_action( 'qpucg_compact', array( __NAMESPACE__ . '\\Usage\\Rollup', 'compact' ) );
+		add_action( 'qpucg_compact_step', array( __NAMESPACE__ . '\\Usage\\Rollup', 'compact' ) );
 		// Nightly, in the site's quiet hour: the size cap and table rebuild (DECISIONS D63).
-		add_action( 'upshift_storage', array( __NAMESPACE__ . '\\Usage\\Storage', 'nightly' ) );
+		add_action( 'qpucg_storage', array( __NAMESPACE__ . '\\Usage\\Storage', 'nightly' ) );
 		// Single event per scan id: one batch of a running scan when no page is driving it (= Runner::STEP_HOOK, DECISIONS D57).
-		add_action( 'upshift_scan_step', array( __NAMESPACE__ . '\\Scan\\Runner', 'cron_step' ) );
+		add_action( 'qpucg_scan_step', array( __NAMESPACE__ . '\\Scan\\Runner', 'cron_step' ) );
 
 		if ( is_admin() ) {
 			add_action( 'admin_init', array( __CLASS__, 'maybe_upgrade' ) );
 			add_action( 'upgrader_process_complete', array( __NAMESPACE__ . '\\Install', 'ensure_schedules' ), 10, 0 );
 			add_action( 'admin_menu', array( __NAMESPACE__ . '\\Admin\\Page', 'register' ) );
-			// The Developer tab's handlers exist only when UPSHIFT_DEV is defined (T12.3, DECISIONS D62).
+			// The Developer tab's handlers exist only when QPUCG_DEV is defined (T12.3, DECISIONS D62).
 			if ( Admin\Page::is_dev() ) {
-				add_action( 'admin_post_upshift_save_usage', array( __NAMESPACE__ . '\\Admin\\Page', 'handle_save_usage' ) );
-				add_action( 'admin_post_upshift_reset_usage', array( __NAMESPACE__ . '\\Admin\\Page', 'handle_reset_usage' ) );
-				add_action( 'admin_post_upshift_bench', array( __NAMESPACE__ . '\\Admin\\Page', 'handle_bench' ) );
-				add_action( 'admin_post_upshift_export_csv', array( __NAMESPACE__ . '\\Admin\\Report', 'handle_export' ) );
+				add_action( 'admin_post_qpucg_save_usage', array( __NAMESPACE__ . '\\Admin\\Page', 'handle_save_usage' ) );
+				add_action( 'admin_post_qpucg_reset_usage', array( __NAMESPACE__ . '\\Admin\\Page', 'handle_reset_usage' ) );
+				add_action( 'admin_post_qpucg_bench', array( __NAMESPACE__ . '\\Admin\\Page', 'handle_bench' ) );
+				add_action( 'admin_post_qpucg_export_csv', array( __NAMESPACE__ . '\\Admin\\Report', 'handle_export' ) );
 			}
-			add_action( 'admin_post_upshift_download_report', array( __NAMESPACE__ . '\\Admin\\CheckTab', 'handle_export' ) );
-			add_action( 'admin_post_upshift_activity_on', array( __NAMESPACE__ . '\\Admin\\CheckTab', 'handle_activity_on' ) );
-			add_action( 'admin_post_upshift_save_settings', array( __NAMESPACE__ . '\\Admin\\SettingsTab', 'handle_save' ) );
-			add_action( 'admin_post_upshift_delete_data', array( __NAMESPACE__ . '\\Admin\\SettingsTab', 'handle_delete' ) );
+			add_action( 'admin_post_qpucg_download_report', array( __NAMESPACE__ . '\\Admin\\CheckTab', 'handle_export' ) );
+			add_action( 'admin_post_qpucg_activity_on', array( __NAMESPACE__ . '\\Admin\\CheckTab', 'handle_activity_on' ) );
+			add_action( 'admin_post_qpucg_save_settings', array( __NAMESPACE__ . '\\Admin\\SettingsTab', 'handle_save' ) );
+			add_action( 'admin_post_qpucg_delete_data', array( __NAMESPACE__ . '\\Admin\\SettingsTab', 'handle_delete' ) );
 			// Always registered: a Stop sent after the guard was turned off in another tab gets a calm notice.
-			add_action( 'admin_post_upshift_watch_stop', array( __NAMESPACE__ . '\\Admin\\WatchTab', 'handle_stop' ) );
+			add_action( 'admin_post_qpucg_watch_stop', array( __NAMESPACE__ . '\\Admin\\WatchTab', 'handle_stop' ) );
 			// The Plugins screen badge and the Site Health test (they read the small cached summary only).
-			add_filter( 'plugin_action_links_' . plugin_basename( UPSHIFT_FILE ), array( __NAMESPACE__ . '\\Admin\\Integrations', 'action_links' ) );
+			add_filter( 'plugin_action_links_' . plugin_basename( QPUCG_FILE ), array( __NAMESPACE__ . '\\Admin\\Integrations', 'action_links' ) );
 			add_filter( 'plugin_row_meta', array( __NAMESPACE__ . '\\Admin\\Integrations', 'row_meta' ), 10, 2 );
 			add_filter( 'site_status_tests', array( __NAMESPACE__ . '\\Admin\\Integrations', 'site_health_tests' ) );
 			// One notice after activation (the flag is autoloaded, so this costs no query).
-			if ( get_option( 'upshift_show_notice' ) ) {
+			if ( get_option( 'qpucg_show_notice' ) ) {
 				add_action( 'admin_notices', array( __NAMESPACE__ . '\\Admin\\Integrations', 'activation_notice' ) );
 			}
 			add_action( 'admin_enqueue_scripts', array( __NAMESPACE__ . '\\Admin\\Page', 'enqueue' ) );
 			foreach ( array( 'start', 'batch', 'cancel', 'status' ) as $action ) {
-				add_action( 'wp_ajax_upshift_scan_' . $action, array( __NAMESPACE__ . '\\Admin\\Ajax', $action ) );
+				add_action( 'wp_ajax_qpucg_scan_' . $action, array( __NAMESPACE__ . '\\Admin\\Ajax', $action ) );
 			}
-			add_action( 'wp_ajax_upshift_rollup_step', array( __NAMESPACE__ . '\\Admin\\Ajax', 'rollup_step' ) );
+			add_action( 'wp_ajax_qpucg_rollup_step', array( __NAMESPACE__ . '\\Admin\\Ajax', 'rollup_step' ) );
 			add_filter( 'removable_query_args', array( __CLASS__, 'removable_query_args' ) );
 		}
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			// WP-CLI never fires admin_init, so a plugin updated by file replacement upgrades here too.
 			add_action( 'init', array( __CLASS__, 'maybe_upgrade' ) );
-			\WP_CLI::add_command( 'upshift', __NAMESPACE__ . '\\Cli\\Command' );
+			\WP_CLI::add_command( 'qpucg', __NAMESPACE__ . '\\Cli\\Command' );
 			// Dev-only loopback command; its file is not in the release zip (DECISIONS D64).
-			if ( is_file( UPSHIFT_DIR . '/src/Cli/DevCommand.php' ) ) {
-				\WP_CLI::add_command( 'upshift simulate-traffic', __NAMESPACE__ . '\\Cli\\DevCommand' );
+			if ( is_file( QPUCG_DIR . '/src/Cli/DevCommand.php' ) ) {
+				\WP_CLI::add_command( 'qpucg simulate-traffic', __NAMESPACE__ . '\\Cli\\DevCommand' );
 			}
 		}
 
@@ -90,27 +90,27 @@ class Plugin {
 		$settings = Settings::get();
 		$cron     = wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI );
 
-		if ( empty( $settings['upgrade_watch'] ) || ( defined( 'UPSHIFT_DISABLE_WATCH' ) && UPSHIFT_DISABLE_WATCH ) ) {
-			if ( $cron && false !== get_option( 'upshift_watch_state', false ) ) {
-				add_action( 'upshift_daily', array( __NAMESPACE__ . '\\Watch\\Collector', 'purge' ) );
+		if ( empty( $settings['upgrade_watch'] ) || ( defined( 'QPUCG_DISABLE_WATCH' ) && QPUCG_DISABLE_WATCH ) ) {
+			if ( $cron && false !== get_option( 'qpucg_watch_state', false ) ) {
+				add_action( 'qpucg_daily', array( __NAMESPACE__ . '\\Watch\\Collector', 'purge' ) );
 			}
 			return;
 		}
 
 		if ( $cron ) {
-			add_action( 'upshift_daily', array( __NAMESPACE__ . '\\Watch\\Collector', 'purge' ) );
-			add_action( 'upshift_daily', array( __NAMESPACE__ . '\\Watch\\State', 'move_first' ) );
+			add_action( 'qpucg_daily', array( __NAMESPACE__ . '\\Watch\\Collector', 'purge' ) );
+			add_action( 'qpucg_daily', array( __NAMESPACE__ . '\\Watch\\State', 'move_first' ) );
 		}
 		if ( is_admin() ) {
 			// WordPress sorts active_plugins every time a plugin is activated.
 			add_action( 'activated_plugin', array( __NAMESPACE__ . '\\Watch\\State', 'move_first' ), 10, 0 );
-			add_action( 'admin_post_upshift_watch_start', array( __NAMESPACE__ . '\\Admin\\WatchTab', 'handle_start' ) );
+			add_action( 'admin_post_qpucg_watch_start', array( __NAMESPACE__ . '\\Admin\\WatchTab', 'handle_start' ) );
 		}
 
 		if ( 'cli' === PHP_SAPI // WP-CLI, and a system cron whose PHP can differ from the web's.
-			|| ( defined( 'UPSHIFT_SCANNING' ) && UPSHIFT_SCANNING )
+			|| ( defined( 'QPUCG_SCANNING' ) && QPUCG_SCANNING )
 			|| (int) $settings['watch_paused_until'] > time()
-			|| UPSHIFT_DB_VERSION !== get_option( 'upshift_db_version' )
+			|| QPUCG_DB_VERSION !== get_option( 'qpucg_db_version' )
 			|| wp_installing()
 			|| self::is_scan_ajax()
 		) {
@@ -126,15 +126,15 @@ class Plugin {
 	private static function maybe_sample() {
 		$settings = Settings::get();
 		// Files updated but tables not yet: ask cron for the upgrade (never in this request), so recording comes back without an admin visit.
-		if ( UPSHIFT_DB_VERSION !== get_option( 'upshift_db_version' ) && ! wp_installing() && ! wp_next_scheduled( 'upshift_compact_step' ) ) {
-			wp_schedule_single_event( time(), 'upshift_compact_step' );
+		if ( QPUCG_DB_VERSION !== get_option( 'qpucg_db_version' ) && ! wp_installing() && ! wp_next_scheduled( 'qpucg_compact_step' ) ) {
+			wp_schedule_single_event( time(), 'qpucg_compact_step' );
 		}
 		if ( empty( $settings['usage_enabled'] )
-			|| ( defined( 'UPSHIFT_DISABLE_USAGE' ) && UPSHIFT_DISABLE_USAGE )
-			|| ( defined( 'UPSHIFT_SCANNING' ) && UPSHIFT_SCANNING )
+			|| ( defined( 'QPUCG_DISABLE_USAGE' ) && QPUCG_DISABLE_USAGE )
+			|| ( defined( 'QPUCG_SCANNING' ) && QPUCG_SCANNING )
 			|| (int) $settings['recorder_paused_until'] > time()
 			// Files updated but tables not yet (upgrade runs on the next admin_init): the upsert would fail.
-			|| UPSHIFT_DB_VERSION !== get_option( 'upshift_db_version' )
+			|| QPUCG_DB_VERSION !== get_option( 'qpucg_db_version' )
 			|| wp_installing()
 			|| self::is_scan_ajax()
 			|| self::is_own_cli()
@@ -166,7 +166,7 @@ class Plugin {
 	 * @return string[]
 	 */
 	public static function removable_query_args( $args ) {
-		$args[] = 'upshift_msg';
+		$args[] = 'qpucg_msg';
 		return $args;
 	}
 
@@ -180,11 +180,11 @@ class Plugin {
 			return false;
 		}
 		$action = sanitize_key( wp_unslash( $_REQUEST['action'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return 0 === strpos( $action, 'upshift_scan_' ) || 0 === strpos( $action, 'upshift_rollup_' );
+		return 0 === strpos( $action, 'qpucg_scan_' ) || 0 === strpos( $action, 'qpucg_rollup_' );
 	}
 
 	/**
-	 * Whether this is a `wp upshift ...` command.
+	 * Whether this is a `wp qpucg ...` command.
 	 *
 	 * @return bool
 	 */
@@ -198,9 +198,9 @@ class Plugin {
 			$args = (array) \WP_CLI::get_runner()->arguments;
 		}
 		if ( empty( $args ) && isset( $GLOBALS['argv'] ) ) {
-			return in_array( 'upshift', (array) $GLOBALS['argv'], true );
+			return in_array( 'qpucg', (array) $GLOBALS['argv'], true );
 		}
-		return isset( $args[0] ) && 'upshift' === $args[0];
+		return isset( $args[0] ) && 'qpucg' === $args[0];
 	}
 
 	/**
@@ -211,11 +211,11 @@ class Plugin {
 		if ( wp_doing_ajax() && ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		if ( UPSHIFT_DB_VERSION !== get_option( 'upshift_db_version' ) ) {
+		if ( QPUCG_DB_VERSION !== get_option( 'qpucg_db_version' ) ) {
 			Install::maybe_upgrade();
 		}
 		// Literal hook names, as in boot(): events lost in any way come back on the next admin page (DECISIONS D63).
-		if ( ! wp_next_scheduled( 'upshift_compact' ) || ! wp_next_scheduled( 'upshift_daily' ) || ! wp_next_scheduled( 'upshift_storage' ) ) {
+		if ( ! wp_next_scheduled( 'qpucg_compact' ) || ! wp_next_scheduled( 'qpucg_daily' ) || ! wp_next_scheduled( 'qpucg_storage' ) ) {
 			Install::ensure_schedules();
 		}
 	}

@@ -2,16 +2,16 @@
 /**
  * Scan lifecycle: start, resumable batches with time and memory budgets, lock, cancel (spec §7.6).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Scan;
+namespace Qpucg\Scan;
 
-use Upshift\Engine\Engine;
-use Upshift\Engine\Requirements;
-use Upshift\Install;
-use Upshift\Paths;
-use Upshift\Report\Status;
+use Qpucg\Engine\Engine;
+use Qpucg\Engine\Requirements;
+use Qpucg\Install;
+use Qpucg\Paths;
+use Qpucg\Report\Status;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -25,9 +25,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Runner {
 
-	const LOCK           = 'upshift_scan_lock';
+	const LOCK           = 'qpucg_scan_lock';
 	const LOCK_TTL       = 120;
-	const STATS          = 'upshift_scan_stats';
+	const STATS          = 'qpucg_scan_stats';
 	const CHUNK          = 25;
 	const FINDINGS_CHUNK = 100;
 	const MAX_SECONDS    = 15;
@@ -49,8 +49,8 @@ class Runner {
 	 * a page drives the scan (its last batch request is younger than the grace, longer in gentle mode where the page waits
 	 * minutes between batches) the event only reschedules itself.
 	 */
-	const STEP_HOOK       = 'upshift_scan_step';
-	const PAGE_AT         = 'upshift_scan_page_until';
+	const STEP_HOOK       = 'qpucg_scan_step';
+	const PAGE_AT         = 'qpucg_scan_page_until';
 	const PAGE_GRACE      = 130;
 	const PAGE_GRACE_SLOW = 400;
 	const STEP_DELAY      = 60;
@@ -128,13 +128,13 @@ class Runner {
 			return new \WP_Error( 'range', $error );
 		}
 		if ( ! Engine::is_available() ) {
-			return new \WP_Error( 'engine', implode( ' ', \Upshift\Engine\Requirements::problems() ) );
+			return new \WP_Error( 'engine', implode( ' ', \Qpucg\Engine\Requirements::problems() ) );
 		}
 		// The inventory runs under the scan lock, so a 'queued' scan found while we hold it was left by a request
 		// that died during its inventory (DECISIONS D47).
 		$token = self::lock( 0 );
 		if ( false === $token ) {
-			return new \WP_Error( 'busy', __( 'Another scan request is still running.', 'upshift' ) );
+			return new \WP_Error( 'busy', __( 'Another scan request is still running.', 'qasim-php-upgrade-check-guard' ) );
 		}
 		try {
 			return self::start_locked( (string) $from, (string) $target, (string) $only, $token, (bool) $inactive );
@@ -163,8 +163,8 @@ class Runner {
 				current_time( 'mysql' ),
 				sprintf(
 					/* translators: %s: WP-CLI command. */
-					__( 'The file inventory did not finish (the request hit a time or memory limit). Start the scan again; if this keeps happening, run it with WP-CLI: %s', 'upshift' ),
-					'wp upshift scan'
+					__( 'The file inventory did not finish (the request hit a time or memory limit). Start the scan again; if this keeps happening, run it with WP-CLI: %s', 'qasim-php-upgrade-check-guard' ),
+					'wp qpucg scan'
 				)
 			)
 		);
@@ -174,7 +174,7 @@ class Runner {
 			return new \WP_Error(
 				'running',
 				/* translators: %d: scan id. */
-				sprintf( __( 'A scan is already running (#%d). Resume or cancel it.', 'upshift' ), (int) $running['id'] ),
+				sprintf( __( 'A scan is already running (#%d). Resume or cancel it.', 'qasim-php-upgrade-check-guard' ), (int) $running['id'] ),
 				array( 'scan_id' => (int) $running['id'] )
 			);
 		}
@@ -204,7 +204,7 @@ class Runner {
 		}
 		if ( '' !== (string) $only && empty( $counts ) ) {
 			/* translators: %s: component id. */
-			$message = sprintf( __( 'Component not found: %s', 'upshift' ), $only );
+			$message = sprintf( __( 'Component not found: %s', 'qasim-php-upgrade-check-guard' ), $only );
 			self::fail( $scan_id, $message );
 			return new \WP_Error( 'component', $message );
 		}
@@ -216,8 +216,8 @@ class Runner {
 		// Only while still ours and still queued: an inventory slower than the lock TTL may have been marked failed.
 		$updated = $wpdb->query( $wpdb->prepare( "UPDATE {$table} SET status = 'running', files_total = %d, files_done = %d WHERE id = %d AND status = 'queued'", $total, self::done_count( $scan_id ), $scan_id ) );
 		if ( 1 !== $updated || ! self::refresh( $token ) ) {
-			self::fail( $scan_id, __( 'The file inventory took longer than the scan lock allows.', 'upshift' ) );
-			return new \WP_Error( 'inventory', __( 'The file inventory took longer than the scan lock allows.', 'upshift' ) );
+			self::fail( $scan_id, __( 'The file inventory took longer than the scan lock allows.', 'qasim-php-upgrade-check-guard' ) );
+			return new \WP_Error( 'inventory', __( 'The file inventory took longer than the scan lock allows.', 'qasim-php-upgrade-check-guard' ) );
 		}
 		// Display names of the components, for the progress shown while the scan runs (DECISIONS D57).
 		$labels = array();
@@ -282,7 +282,7 @@ class Runner {
 	public static function cron_step( $scan_id = 0 ) {
 		$scan_id = (int) $scan_id;
 		// Files updated but tables not yet (the upgrade runs on the next admin request): do nothing, like the rollup.
-		if ( UPSHIFT_DB_VERSION !== get_option( 'upshift_db_version' ) ) {
+		if ( QPUCG_DB_VERSION !== get_option( 'qpucg_db_version' ) ) {
 			return;
 		}
 		$scan = $scan_id > 0 ? self::get( $scan_id ) : null;
@@ -330,18 +330,18 @@ class Runner {
 		$scan_id = (int) $scan_id;
 		$scan    = self::get( $scan_id );
 		if ( null === $scan ) {
-			return new \WP_Error( 'not_found', __( 'Scan not found.', 'upshift' ) );
+			return new \WP_Error( 'not_found', __( 'Scan not found.', 'qasim-php-upgrade-check-guard' ) );
 		}
 		if ( 'running' !== $scan['status'] ) {
 			return self::progress( $scan, '' );
 		}
 		$token = self::lock( $scan_id );
 		if ( false === $token ) {
-			return new \WP_Error( 'busy', __( 'Another batch of this scan is still running.', 'upshift' ) );
+			return new \WP_Error( 'busy', __( 'Another batch of this scan is still running.', 'qasim-php-upgrade-check-guard' ) );
 		}
 
-		if ( ! defined( 'UPSHIFT_SCANNING' ) ) {
-			define( 'UPSHIFT_SCANNING', true );
+		if ( ! defined( 'QPUCG_SCANNING' ) ) {
+			define( 'QPUCG_SCANNING', true );
 		}
 		wp_raise_memory_limit( 'admin' );
 
@@ -478,17 +478,17 @@ class Runner {
 						}
 						$skip = sprintf(
 							/* translators: 1: memory the file needs (MB), 2: memory already in use (MB), 3: memory_limit (MB), 4: memory_limit that would be enough (MB), 5: wp-config.php line, 6: WP-CLI command. */
-							__( 'skipped: not enough memory to check this file. It needs about %1$s MB and %2$s MB of the %3$s MB PHP memory limit is already in use. Raise the limit to about %4$s MB (ask your host, or add %5$s to wp-config.php), or run the scan with WP-CLI: %6$s', 'upshift' ),
+							__( 'skipped: not enough memory to check this file. It needs about %1$s MB and %2$s MB of the %3$s MB PHP memory limit is already in use. Raise the limit to about %4$s MB (ask your host, or add %5$s to wp-config.php), or run the scan with WP-CLI: %6$s', 'qasim-php-upgrade-check-guard' ),
 							number_format_i18n( $est / 1048576 ),
 							number_format_i18n( $in_use / 1048576 ),
 							number_format_i18n( self::memory_limit() / 1048576 ),
 							number_format_i18n( ceil( $need / self::HARD_SHARE / 16777216 ) * 16 ),
 							"define( 'WP_MAX_MEMORY_LIMIT', '" . ( ceil( $need / self::HARD_SHARE / 16777216 ) * 16 ) . "M' );",
-							'wp upshift scan'
+							'wp qpucg scan'
 						);
 						if ( $tries > 0 ) {
 							/* translators: %d: number of separate requests the file was tried in. */
-							$skip .= ' ' . sprintf( __( '(It did not fit in any of %d separate requests.)', 'upshift' ), $tries + 1 );
+							$skip .= ' ' . sprintf( __( '(It did not fit in any of %d separate requests.)', 'qasim-php-upgrade-check-guard' ), $tries + 1 );
 						}
 					}
 					if ( time() - $refreshed >= self::LOCK_REFRESH ) {
@@ -574,12 +574,12 @@ class Runner {
 				$needed = (int) ( ceil( ( $in_use + self::FILE_ROOM ) / self::MEMORY_SHARE / 16777216 ) * 16777216 );
 				$failed = sprintf(
 					/* translators: 1: memory in use (MB), 2: memory_limit needed (MB), 3: current memory_limit (MB), 4: wp-config.php line, 5: WP-CLI command. */
-					__( 'Not enough memory to scan: %1$s MB is already in use before the first file, and a scan needs a memory_limit of about %2$s MB (this request has %3$s MB). To fix it, add %4$s to wp-config.php, ask your host for a higher PHP memory_limit, or run the scan with WP-CLI: %5$s', 'upshift' ),
+					__( 'Not enough memory to scan: %1$s MB is already in use before the first file, and a scan needs a memory_limit of about %2$s MB (this request has %3$s MB). To fix it, add %4$s to wp-config.php, ask your host for a higher PHP memory_limit, or run the scan with WP-CLI: %5$s', 'qasim-php-upgrade-check-guard' ),
 					number_format_i18n( $in_use / 1048576, 1 ),
 					number_format_i18n( $needed / 1048576 ),
 					number_format_i18n( self::memory_limit() / 1048576 ),
 					"define( 'WP_MAX_MEMORY_LIMIT', '256M' );",
-					'wp upshift scan'
+					'wp qpucg scan'
 				);
 			}
 		} catch ( \Throwable $e ) {
@@ -597,7 +597,7 @@ class Runner {
 				'db'       => 0.0,
 			);
 		}
-		// For reading live sites later (wp option get upshift_scan_stats): where batch time went (DECISIONS D57).
+		// For reading live sites later (wp option get qpucg_scan_stats): where batch time went (DECISIONS D57).
 		++$stats['timing']['requests'];
 		$stats['timing']['boot'] += $boot;
 		$stats['timing']['init'] += isset( $init ) ? $init : 0.0;
@@ -962,7 +962,7 @@ class Runner {
 		$note = null;
 		if ( null === $abs || ! is_readable( $abs ) ) {
 			$out['status'] = 'unreadable';
-			$note          = __( 'File not found or not readable.', 'upshift' );
+			$note          = __( 'File not found or not readable.', 'qasim-php-upgrade-check-guard' );
 		} elseif ( isset( $row['cached'] ) && is_array( $row['cached'] ) ) {
 			// Unchanged since a scan with the same range and rules: cache_lookup() checked size, mtime and content hash.
 			$out['bytes']       = (int) filesize( $abs );
@@ -1075,7 +1075,7 @@ class Runner {
 			return self::$cache_rules;
 		}
 		$parts = array( $match[1] );
-		foreach ( array( __FILE__, UPSHIFT_DIR . '/src/Engine/Engine.php', UPSHIFT_DIR . '/src/Engine/Guards.php', UPSHIFT_DIR . '/src/Scan/Categories.php' ) as $file ) {
+		foreach ( array( __FILE__, QPUCG_DIR . '/src/Engine/Engine.php', QPUCG_DIR . '/src/Engine/Guards.php', QPUCG_DIR . '/src/Scan/Categories.php' ) as $file ) {
 			$hash = is_readable( $file ) ? md5_file( $file ) : false;
 			if ( false === $hash ) {
 				return self::$cache_rules;
@@ -1346,7 +1346,7 @@ class Runner {
 		$rows     = $wpdb->get_results( $wpdb->prepare( "SELECT id, path_hash, note FROM {$files} WHERE scan_id = %d AND status = 'scanning'", (int) $scan_id ), ARRAY_A );
 		foreach ( (array) $rows as $row ) {
 			if ( '!' === substr( (string) $row['note'], -1 ) ) {
-				$marked = $wpdb->query( $wpdb->prepare( "UPDATE {$files} SET status = 'engine_error', note = %s WHERE id = %d AND status = 'scanning' AND note = %s", __( 'request died while scanning (memory/time limit)', 'upshift' ), (int) $row['id'], (string) $row['note'] ) );
+				$marked = $wpdb->query( $wpdb->prepare( "UPDATE {$files} SET status = 'engine_error', note = %s WHERE id = %d AND status = 'scanning' AND note = %s", __( 'request died while scanning (memory/time limit)', 'qasim-php-upgrade-check-guard' ), (int) $row['id'], (string) $row['note'] ) );
 			} else {
 				$marked = $wpdb->query( $wpdb->prepare( "UPDATE {$files} SET status = 'pending', note = %s WHERE id = %d AND status = 'scanning' AND note = %s", self::SUSPECT, (int) $row['id'], (string) $row['note'] ) );
 			}
@@ -1555,7 +1555,7 @@ class Runner {
 	}
 
 	/**
-	 * Takes the scan lock: option row `upshift_scan_lock` = "{scan id}:{token}|{expires}", read and written with SQL
+	 * Takes the scan lock: option row `qpucg_scan_lock` = "{scan id}:{token}|{expires}", read and written with SQL
 	 * only (never through the option cache). INSERT IGNORE on the unique option_name is atomic; add_option() is not
 	 * (it sends ON DUPLICATE KEY UPDATE). An expired lock is taken over by compare-and-swap (DECISIONS D47).
 	 *

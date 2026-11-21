@@ -3,13 +3,13 @@
  * The Plugins screen badge, the Site Health test and the one notice after activation (docs/UI-v1.md §4, §8a).
  * All three read the small cached summary (Report\Status) and never query the findings table.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Admin;
+namespace Qpucg\Admin;
 
-use Upshift\Report\Status;
-use Upshift\Usage\Health;
+use Qpucg\Report\Status;
+use Qpucg\Usage\Health;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -48,7 +48,7 @@ class Integrations {
 	 */
 	public static function badge_text( $status, $target ) {
 		/* translators: 1: target PHP version, 2: result, e.g. "Ready" or "Will break". */
-		return sprintf( __( 'PHP %1$s: %2$s', 'upshift' ), $target, Status::label( $status ) );
+		return sprintf( __( 'PHP %1$s: %2$s', 'qasim-php-upgrade-check-guard' ), $target, Status::label( $status ) );
 	}
 
 	/**
@@ -80,7 +80,7 @@ class Integrations {
 		}
 		$base = admin_url( 'tools.php' );
 		$mine = array(
-			'upshift_settings' => '<a href="' . esc_url(
+			'qpucg_settings' => '<a href="' . esc_url(
 				add_query_arg(
 					array(
 						'page' => Page::SLUG,
@@ -88,8 +88,8 @@ class Integrations {
 					),
 					$base
 				)
-			) . '">' . esc_html__( 'Settings', 'upshift' ) . '</a>',
-			'upshift_check'    => '<a href="' . esc_url( add_query_arg( 'page', Page::SLUG, $base ) ) . '">' . esc_html__( 'Check my site', 'upshift' ) . '</a>',
+			) . '">' . esc_html__( 'Settings', 'qasim-php-upgrade-check-guard' ) . '</a>',
+			'qpucg_check'    => '<a href="' . esc_url( add_query_arg( 'page', Page::SLUG, $base ) ) . '">' . esc_html__( 'Check my site', 'qasim-php-upgrade-check-guard' ) . '</a>',
 		);
 		return array_merge( $mine, (array) $links );
 	}
@@ -122,13 +122,13 @@ class Integrations {
 	 */
 	public static function site_health_tests( $tests ) {
 		if ( null !== Status::summary() ) {
-			$tests['direct']['upshift_php'] = array(
-				'label' => __( 'Your plugins and PHP version', 'upshift' ),
+			$tests['direct']['qpucg_php'] = array(
+				'label' => __( 'Your plugins and PHP version', 'qasim-php-upgrade-check-guard' ),
 				'test'  => array( __CLASS__, 'site_health_result' ),
 			);
 		}
-		$tests['direct']['upshift_recording'] = array(
-			'label' => __( 'Upshift Smart results', 'upshift' ),
+		$tests['direct']['qpucg_recording'] = array(
+			'label' => __( 'Qasim PHP Upgrade Check & Guard Smart results', 'qasim-php-upgrade-check-guard' ),
 			'test'  => array( __CLASS__, 'site_health_recording' ),
 		);
 		return $tests;
@@ -158,19 +158,19 @@ class Integrations {
 		$messages = Health::messages();
 		$ok       = empty( $messages );
 		$text     = '';
-		foreach ( $ok ? array( __( 'Upshift is recording normally, or Smart results is off.', 'upshift' ) ) : $messages as $message ) {
+		foreach ( $ok ? array( __( 'Qasim PHP Upgrade Check & Guard is recording normally, or Smart results is off.', 'qasim-php-upgrade-check-guard' ) ) : $messages as $message ) {
 			$text .= '<p>' . esc_html( $message ) . '</p>';
 		}
 		return array(
-			'label'       => $ok ? __( 'Upshift Smart results is working', 'upshift' ) : __( 'Upshift Smart results needs a look', 'upshift' ),
+			'label'       => $ok ? __( 'Qasim PHP Upgrade Check & Guard Smart results is working', 'qasim-php-upgrade-check-guard' ) : __( 'Qasim PHP Upgrade Check & Guard Smart results needs a look', 'qasim-php-upgrade-check-guard' ),
 			'status'      => $ok ? 'good' : 'recommended',
 			'badge'       => array(
-				'label' => __( 'PHP upgrade', 'upshift' ),
+				'label' => __( 'PHP upgrade', 'qasim-php-upgrade-check-guard' ),
 				'color' => $ok ? 'green' : 'orange',
 			),
 			'description' => $text,
 			'actions'     => '',
-			'test'        => 'upshift_recording',
+			'test'        => 'qpucg_recording',
 		);
 	}
 
@@ -196,15 +196,15 @@ class Integrations {
 
 		return array(
 			/* translators: %s: target PHP version. */
-			'label'       => sprintf( __( 'Your plugins and PHP %s', 'upshift' ), $target ),
+			'label'       => sprintf( __( 'Your plugins and PHP %s', 'qasim-php-upgrade-check-guard' ), $target ),
 			'status'      => $status[0],
 			'badge'       => array(
-				'label' => __( 'PHP upgrade', 'upshift' ),
+				'label' => __( 'PHP upgrade', 'qasim-php-upgrade-check-guard' ),
 				'color' => $status[1],
 			),
 			'description' => '<p>' . esc_html( $answer['sentence'] ) . '</p>',
-			'actions'     => '<p><a href="' . esc_url( admin_url( 'tools.php?page=' . Page::SLUG ) ) . '">' . esc_html__( 'See the details', 'upshift' ) . '</a></p>',
-			'test'        => 'upshift_php',
+			'actions'     => '<p><a href="' . esc_url( admin_url( 'tools.php?page=' . Page::SLUG ) ) . '">' . esc_html__( 'See the details', 'qasim-php-upgrade-check-guard' ) . '</a></p>',
+			'test'        => 'qpucg_php',
 		);
 	}
 
@@ -215,14 +215,14 @@ class Integrations {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		delete_option( 'upshift_show_notice' );
+		delete_option( 'qpucg_show_notice' );
 		// Read-only check of the current page; no state change, so no nonce.
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( Page::SLUG === $page ) {
 			return;
 		}
-		$link = '<a href="' . esc_url( admin_url( 'tools.php?page=' . Page::SLUG ) ) . '">' . esc_html__( 'Tools → PHP Upgrade', 'upshift' ) . '</a>';
+		$link = '<a href="' . esc_url( admin_url( 'tools.php?page=' . Page::SLUG ) ) . '">' . esc_html__( 'Tools → PHP Upgrade', 'qasim-php-upgrade-check-guard' ) . '</a>';
 		/* translators: %s: link to the Tools → PHP Upgrade page. */
-		echo '<div class="notice notice-info is-dismissible"><p>' . wp_kses_post( sprintf( esc_html__( 'Upshift is ready. Open %s to check your site for PHP upgrade problems.', 'upshift' ), $link ) ) . '</p></div>';
+		echo '<div class="notice notice-info is-dismissible"><p>' . wp_kses_post( sprintf( esc_html__( 'Qasim PHP Upgrade Check & Guard is ready. Open %s to check your site for PHP upgrade problems.', 'qasim-php-upgrade-check-guard' ), $link ) ) . '</p></div>';
 	}
 }

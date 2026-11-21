@@ -1,8 +1,10 @@
+# Dependencies and build output (not committed)
 /vendor/
-/vendor-prefixed/
 /engine/vendor/
 /build/
 /dist/
 /tools/
+/build.txt
 *.zip
 *.log
+.DS_Store

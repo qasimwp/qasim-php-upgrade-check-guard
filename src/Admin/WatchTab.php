@@ -2,15 +2,15 @@
 /**
  * The Upgrade watch tab (docs/UI-v1.md §5).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Admin;
+namespace Qpucg\Admin;
 
-use Upshift\Settings;
-use Upshift\Watch\Collector;
-use Upshift\Watch\Report;
-use Upshift\Watch\State;
+use Qpucg\Settings;
+use Qpucg\Watch\Collector;
+use Qpucg\Watch\Report;
+use Qpucg\Watch\State;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -21,8 +21,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WatchTab {
 
-	const START = 'upshift_watch_start';
-	const STOP  = 'upshift_watch_stop';
+	const START = 'qpucg_watch_start';
+	const STOP  = 'qpucg_watch_stop';
 
 	/**
 	 * Renders the tab.
@@ -53,15 +53,15 @@ class WatchTab {
 	 */
 	private static function render_notice() {
 		// Read-only notice selector after our own redirect.
-		$msg = isset( $_GET['upshift_msg'] ) ? sanitize_key( wp_unslash( $_GET['upshift_msg'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$msg = isset( $_GET['qpucg_msg'] ) ? sanitize_key( wp_unslash( $_GET['qpucg_msg'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( 'saved' === $msg ) {
-			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Settings saved.', 'upshift' ) . '</p></div>';
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Settings saved.', 'qasim-php-upgrade-check-guard' ) . '</p></div>';
 		} elseif ( 'started' === $msg ) {
-			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Upgrade guard started. Upshift compares the next 7 days with the 7 days before.', 'upshift' ) . '</p></div>';
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Upgrade guard started. Qasim PHP Upgrade Check & Guard compares the next 7 days with the 7 days before.', 'qasim-php-upgrade-check-guard' ) . '</p></div>';
 		} elseif ( 'stopped' === $msg ) {
-			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Comparison stopped. Upgrade guard keeps watching.', 'upshift' ) . '</p></div>';
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Comparison stopped. Upgrade guard keeps watching.', 'qasim-php-upgrade-check-guard' ) . '</p></div>';
 		} elseif ( 'guard_off' === $msg ) {
-			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Upgrade guard is already off. Nothing to stop.', 'upshift' ) . '</p></div>';
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Upgrade guard is already off. Nothing to stop.', 'qasim-php-upgrade-check-guard' ) . '</p></div>';
 		}
 	}
 
@@ -71,19 +71,19 @@ class WatchTab {
 	 * @param bool $on Whether the watch is on.
 	 */
 	private static function render_switch( $on ) {
-		echo '<form method="post" class="upshift-switch" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		echo '<input type="hidden" name="action" value="' . esc_attr( SettingsTab::SAVE ) . '" /><input type="hidden" name="upshift_section" value="watch" />';
+		echo '<form method="post" class="qpucg-switch" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( SettingsTab::SAVE ) . '" /><input type="hidden" name="qpucg_section" value="watch" />';
 		wp_nonce_field( SettingsTab::SAVE );
-		echo '<p class="upshift-switch__row"><label><input type="checkbox" name="upgrade_watch" value="1"' . checked( $on, true, false ) . ' /> <strong>' . esc_html__( 'Watch for problems after a PHP upgrade', 'upshift' ) . '</strong></label> ';
-		submit_button( __( 'Save', 'upshift' ), 'secondary', 'submit', false );
+		echo '<p class="qpucg-switch__row"><label><input type="checkbox" name="upgrade_watch" value="1"' . checked( $on, true, false ) . ' /> <strong>' . esc_html__( 'Watch for problems after a PHP upgrade', 'qasim-php-upgrade-check-guard' ) . '</strong></label> ';
+		submit_button( __( 'Save', 'qasim-php-upgrade-check-guard' ), 'secondary', 'submit', false );
 		echo '</p>';
 		if ( $on ) {
-			echo '<p class="upshift-muted">' . esc_html__( 'Turn this off to stop Upgrade guard completely.', 'upshift' ) . '</p>';
+			echo '<p class="qpucg-muted">' . esc_html__( 'Turn this off to stop Upgrade guard completely.', 'qasim-php-upgrade-check-guard' ) . '</p>';
 		}
 		// "Turn it on now" only makes sense while it is off.
-		echo '<p class="upshift-muted">' . esc_html( $on ? __( 'Tells you if any plugin starts crashing after your host changes PHP.', 'upshift' ) : __( 'Tells you if any plugin starts crashing after your host changes PHP. Turn it on now, so Upshift knows how your site behaves before the change.', 'upshift' ) ) . '</p>';
+		echo '<p class="qpucg-muted">' . esc_html( $on ? __( 'Tells you if any plugin starts crashing after your host changes PHP.', 'qasim-php-upgrade-check-guard' ) : __( 'Tells you if any plugin starts crashing after your host changes PHP. Turn it on now, so Qasim PHP Upgrade Check & Guard knows how your site behaves before the change.', 'qasim-php-upgrade-check-guard' ) ) . '</p>';
 		if ( ! $on ) {
-			echo '<p class="upshift-muted upshift-privacy">' . esc_html( SettingsTab::privacy_line() ) . '</p>';
+			echo '<p class="qpucg-muted qpucg-privacy">' . esc_html( SettingsTab::privacy_line() ) . '</p>';
 		}
 		echo '</form>';
 	}
@@ -92,8 +92,8 @@ class WatchTab {
 	 * Off: what it does and the switch.
 	 */
 	private static function render_off() {
-		echo '<section class="upshift-card upshift-watch">';
-		echo '<h2>' . esc_html__( 'Upgrade guard is off.', 'upshift' ) . '</h2>';
+		echo '<section class="qpucg-card qpucg-watch">';
+		echo '<h2>' . esc_html__( 'Upgrade guard is off.', 'qasim-php-upgrade-check-guard' ) . '</h2>';
 		self::render_switch( false );
 		echo '</section>';
 	}
@@ -116,18 +116,18 @@ class WatchTab {
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( self::START ) . '" />';
 		wp_nonce_field( self::START );
-		echo '<button type="submit" class="button' . ( $primary ? ' button-primary' : '' ) . '">' . esc_html__( 'Start comparing now', 'upshift' ) . '</button></form>';
+		echo '<button type="submit" class="button' . ( $primary ? ' button-primary' : '' ) . '">' . esc_html__( 'Start comparing now', 'qasim-php-upgrade-check-guard' ) . '</button></form>';
 	}
 
 	/**
 	 * "Stop comparing": the confirm text, always shown, and one button that sends it (no script).
 	 */
 	private static function render_stop() {
-		echo '<div class="upshift-stop"><p>' . esc_html__( 'Stop comparing? Upshift keeps watching and starts a new comparison when your PHP version changes.', 'upshift' ) . '</p>';
+		echo '<div class="qpucg-stop"><p>' . esc_html__( 'Stop comparing? Qasim PHP Upgrade Check & Guard keeps watching and starts a new comparison when your PHP version changes.', 'qasim-php-upgrade-check-guard' ) . '</p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( self::STOP ) . '" />';
 		wp_nonce_field( self::STOP );
-		echo '<button type="submit" class="button">' . esc_html__( 'Stop comparing', 'upshift' ) . '</button></form></div>';
+		echo '<button type="submit" class="button">' . esc_html__( 'Stop comparing', 'qasim-php-upgrade-check-guard' ) . '</button></form></div>';
 	}
 
 	/**
@@ -137,8 +137,8 @@ class WatchTab {
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( self::START ) . '" />';
 		wp_nonce_field( self::START );
-		echo '<button type="submit" class="button button-small">' . esc_html__( 'Already upgraded? Start comparing now', 'upshift' ) . '</button></form>';
-		echo '<p class="upshift-muted upshift-compare__note">' . esc_html__( 'Use this only if your host changed PHP recently.', 'upshift' ) . '</p>';
+		echo '<button type="submit" class="button button-small">' . esc_html__( 'Already upgraded? Start comparing now', 'qasim-php-upgrade-check-guard' ) . '</button></form>';
+		echo '<p class="qpucg-muted qpucg-compare__note">' . esc_html__( 'Use this only if your host changed PHP recently.', 'qasim-php-upgrade-check-guard' ) . '</p>';
 	}
 
 	/**
@@ -149,29 +149,29 @@ class WatchTab {
 	private static function render_before( array $report ) {
 		$since = '' !== (string) $report['state']['since'] ? (string) $report['state']['since'] : (string) $report['today'];
 
-		echo '<section class="upshift-hero upshift-hero--run">';
-		self::icon( 'upshift-hero__icon dashicons-visibility' );
-		echo '<div class="upshift-hero__body">';
-		echo '<h2 class="upshift-hero__answer">' . esc_html__( 'Upgrade guard is on. Nothing more to do. When your host changes PHP, Upshift starts comparing automatically for 7 days.', 'upshift' ) . '</h2>';
+		echo '<section class="qpucg-hero qpucg-hero--run">';
+		self::icon( 'qpucg-hero__icon dashicons-visibility' );
+		echo '<div class="qpucg-hero__body">';
+		echo '<h2 class="qpucg-hero__answer">' . esc_html__( 'Upgrade guard is on. Nothing more to do. When your host changes PHP, Qasim PHP Upgrade Check & Guard starts comparing automatically for 7 days.', 'qasim-php-upgrade-check-guard' ) . '</h2>';
 
-		echo '<ol class="upshift-stages">';
-		echo '<li class="upshift-stages__step is-current" aria-current="step"><span class="upshift-stages__marker" aria-hidden="true">1</span><span class="upshift-stages__text"><strong>' . esc_html__( 'Learning how your site normally behaves', 'upshift' ) . '</strong>';
+		echo '<ol class="qpucg-stages">';
+		echo '<li class="qpucg-stages__step is-current" aria-current="step"><span class="qpucg-stages__marker" aria-hidden="true">1</span><span class="qpucg-stages__text"><strong>' . esc_html__( 'Learning how your site normally behaves', 'qasim-php-upgrade-check-guard' ) . '</strong>';
 		/* translators: %s: date, for example "9 Nov". */
-		$collecting = sprintf( __( 'Collecting since %s', 'upshift' ), Report::date( $since ) );
+		$collecting = sprintf( __( 'Collecting since %s', 'qasim-php-upgrade-check-guard' ), Report::date( $since ) );
 		/* translators: %s: PHP version. */
-		$runs = sprintf( __( 'Your site runs PHP %s.', 'upshift' ), $report['php'] );
-		echo '<span class="upshift-stages__line">' . esc_html( $collecting . ' · ' . $runs ) . '</span></span></li>';
-		echo '<li class="upshift-stages__step"><span class="upshift-stages__marker" aria-hidden="true">2</span><span class="upshift-stages__text"><strong>' . esc_html__( 'Your host changes PHP', 'upshift' ) . '</strong></span></li>';
-		echo '<li class="upshift-stages__step"><span class="upshift-stages__marker" aria-hidden="true">3</span><span class="upshift-stages__text"><strong>' . esc_html__( '7-day comparison', 'upshift' ) . '</strong></span></li>';
+		$runs = sprintf( __( 'Your site runs PHP %s.', 'qasim-php-upgrade-check-guard' ), $report['php'] );
+		echo '<span class="qpucg-stages__line">' . esc_html( $collecting . ' · ' . $runs ) . '</span></span></li>';
+		echo '<li class="qpucg-stages__step"><span class="qpucg-stages__marker" aria-hidden="true">2</span><span class="qpucg-stages__text"><strong>' . esc_html__( 'Your host changes PHP', 'qasim-php-upgrade-check-guard' ) . '</strong></span></li>';
+		echo '<li class="qpucg-stages__step"><span class="qpucg-stages__marker" aria-hidden="true">3</span><span class="qpucg-stages__text"><strong>' . esc_html__( '7-day comparison', 'qasim-php-upgrade-check-guard' ) . '</strong></span></li>';
 		echo '</ol>';
 
 		if ( $report['state']['since'] !== $report['today'] ) {
 			/* translators: %s: for example "0 crashes, 3 warnings". */
-			echo '<p>' . esc_html( sprintf( __( 'Last 7 days: %s.', 'upshift' ), Report::recent_words( $report['recent'] ) ) ) . '</p>';
+			echo '<p>' . esc_html( sprintf( __( 'Last 7 days: %s.', 'qasim-php-upgrade-check-guard' ), Report::recent_words( $report['recent'] ) ) ) . '</p>';
 		}
 		self::render_also( $report['recent'][ Collector::DEPRECATION ] );
 		self::render_switch( true );
-		echo '</div><div class="upshift-hero__action upshift-compare">';
+		echo '</div><div class="qpucg-hero__action qpucg-compare">';
 		self::render_compare();
 		echo '</div></section>';
 	}
@@ -184,7 +184,7 @@ class WatchTab {
 	private static function render_also( $count ) {
 		if ( $count > 0 ) {
 			/* translators: %s: for example "12 notes about old code that still work". */
-			echo '<p class="upshift-muted">' . esc_html( sprintf( __( 'Also seen: %s.', 'upshift' ), Report::count_words( $count, Collector::DEPRECATION ) ) ) . '</p>';
+			echo '<p class="qpucg-muted">' . esc_html( sprintf( __( 'Also seen: %s.', 'qasim-php-upgrade-check-guard' ), Report::count_words( $count, Collector::DEPRECATION ) ) ) . '</p>';
 		}
 	}
 
@@ -196,15 +196,15 @@ class WatchTab {
 	private static function render_result( array $report ) {
 		$green = 'green' === $report['answer']['level'];
 
-		echo '<section class="upshift-hero upshift-hero--' . esc_attr( $report['answer']['level'] ) . '">';
-		self::icon( 'upshift-hero__icon ' . ( $green ? 'dashicons-yes-alt' : 'dashicons-dismiss' ) );
-		echo '<div class="upshift-hero__body">';
-		echo '<h2 class="upshift-hero__answer">' . esc_html( $report['answer']['sentence'] ) . '</h2>';
+		echo '<section class="qpucg-hero qpucg-hero--' . esc_attr( $report['answer']['level'] ) . '">';
+		self::icon( 'qpucg-hero__icon ' . ( $green ? 'dashicons-yes-alt' : 'dashicons-dismiss' ) );
+		echo '<div class="qpucg-hero__body">';
+		echo '<h2 class="qpucg-hero__answer">' . esc_html( $report['answer']['sentence'] ) . '</h2>';
 		self::render_path( $report );
-		echo '<p class="upshift-muted">' . esc_html( Report::headline( $report ) ) . '</p>';
+		echo '<p class="qpucg-muted">' . esc_html( Report::headline( $report ) ) . '</p>';
 		self::render_also( $report['also'] );
 		echo '</div>';
-		echo '<div class="upshift-hero__action">';
+		echo '<div class="qpucg-hero__action">';
 		if ( Report::WATCHING !== $report['phase'] ) {
 			self::render_start( false );
 		} else {
@@ -224,18 +224,18 @@ class WatchTab {
 
 		$advice = Report::advice( $report );
 		if ( '' !== $advice ) {
-			echo '<div class="upshift-note' . ( $green ? '' : ' upshift-note--warn' ) . '"><p>' . esc_html( $advice ) . '</p></div>';
+			echo '<div class="qpucg-note' . ( $green ? '' : ' qpucg-note--warn' ) . '"><p>' . esc_html( $advice ) . '</p></div>';
 		}
 
 		if ( $rows ) {
 			self::render_table( $rows );
 		}
 
-		echo '<div class="upshift-actions">';
-		echo '<button type="button" class="button upshift-copy" data-copy-from="upshift-watch-text">' . esc_html__( 'Copy report', 'upshift' ) . '</button>';
-		echo '<span id="upshift-copy-status" class="upshift-muted" role="status"></span>';
+		echo '<div class="qpucg-actions">';
+		echo '<button type="button" class="button qpucg-copy" data-copy-from="qpucg-watch-text">' . esc_html__( 'Copy report', 'qasim-php-upgrade-check-guard' ) . '</button>';
+		echo '<span id="qpucg-copy-status" class="qpucg-muted" role="status"></span>';
 		echo '</div>';
-		echo '<textarea id="upshift-watch-text" class="upshift-offscreen" readonly tabindex="-1" aria-hidden="true">' . esc_textarea( Report::text( $report ) ) . '</textarea>';
+		echo '<textarea id="qpucg-watch-text" class="qpucg-offscreen" readonly tabindex="-1" aria-hidden="true">' . esc_textarea( Report::text( $report ) ) . '</textarea>';
 	}
 
 	/**
@@ -250,12 +250,12 @@ class WatchTab {
 		if ( '' === $from ) {
 			return;
 		}
-		echo '<p class="upshift-path">';
+		echo '<p class="qpucg-path">';
 		/* translators: 1: PHP version before, 2: PHP version after. */
-		echo '<span class="screen-reader-text">' . esc_html( sprintf( __( 'From PHP %1$s to PHP %2$s', 'upshift' ), $from, $to ) ) . '</span>';
-		echo '<span class="upshift-pill" aria-hidden="true">' . esc_html( $from ) . '</span>';
-		self::icon( 'dashicons-arrow-right-alt upshift-path__arrow' );
-		echo '<span class="upshift-pill" aria-hidden="true">' . esc_html( $to ) . '</span></p>';
+		echo '<span class="screen-reader-text">' . esc_html( sprintf( __( 'From PHP %1$s to PHP %2$s', 'qasim-php-upgrade-check-guard' ), $from, $to ) ) . '</span>';
+		echo '<span class="qpucg-pill" aria-hidden="true">' . esc_html( $from ) . '</span>';
+		self::icon( 'dashicons-arrow-right-alt qpucg-path__arrow' );
+		echo '<span class="qpucg-pill" aria-hidden="true">' . esc_html( $to ) . '</span></p>';
 	}
 
 	/**
@@ -265,14 +265,14 @@ class WatchTab {
 	 */
 	private static function render_table( array $rows ) {
 		$heads = array(
-			__( 'Plugin or theme', 'upshift' ),
-			__( 'New crashes', 'upshift' ),
-			__( 'New errors', 'upshift' ),
-			__( 'New warnings', 'upshift' ),
-			__( 'Where', 'upshift' ),
-			__( 'Last seen', 'upshift' ),
+			__( 'Plugin or theme', 'qasim-php-upgrade-check-guard' ),
+			__( 'New crashes', 'qasim-php-upgrade-check-guard' ),
+			__( 'New errors', 'qasim-php-upgrade-check-guard' ),
+			__( 'New warnings', 'qasim-php-upgrade-check-guard' ),
+			__( 'Where', 'qasim-php-upgrade-check-guard' ),
+			__( 'Last seen', 'qasim-php-upgrade-check-guard' ),
 		);
-		echo '<section class="upshift-section"><table class="upshift-problems upshift-watch-table"><thead><tr>';
+		echo '<section class="qpucg-section"><table class="qpucg-problems qpucg-watch-table"><thead><tr>';
 		foreach ( $heads as $head ) {
 			echo '<th scope="col">' . esc_html( $head ) . '</th>';
 		}
@@ -283,9 +283,9 @@ class WatchTab {
 			echo '<td data-label="' . esc_attr( $heads[1] ) . '">' . esc_html( number_format_i18n( $item[ Collector::CRASH ] ) ) . '</td>';
 			echo '<td data-label="' . esc_attr( $heads[2] ) . '">' . esc_html( number_format_i18n( $item[ Collector::ERROR ] ) ) . '</td>';
 			echo '<td data-label="' . esc_attr( $heads[3] ) . '">' . esc_html( number_format_i18n( $item[ Collector::WARNING ] ) ) . '</td>';
-			echo '<td data-label="' . esc_attr( $heads[4] ) . '"><span class="upshift-chips">';
+			echo '<td data-label="' . esc_attr( $heads[4] ) . '"><span class="qpucg-chips">';
 			foreach ( Report::chips( $item['context'] ) as $chip ) {
-				echo '<span class="upshift-chip">';
+				echo '<span class="qpucg-chip">';
 				self::icon( $chip[0] );
 				echo esc_html( $chip[1] ) . '</span>';
 			}
@@ -295,7 +295,7 @@ class WatchTab {
 		}
 		echo '</tbody></table>';
 
-		echo '<details class="upshift-tech"><summary>' . esc_html__( 'Technical details', 'upshift' ) . '</summary><ul>';
+		echo '<details class="qpucg-tech"><summary>' . esc_html__( 'Technical details', 'qasim-php-upgrade-check-guard' ) . '</summary><ul>';
 		foreach ( $rows as $item ) {
 			foreach ( $item['samples'] as $sample ) {
 				echo '<li><strong>' . esc_html( $item['name'] ) . '</strong> <code>' . esc_html( $sample['level'] ) . '</code> ' . esc_html( $sample['sample'] ) . '</li>';
@@ -313,30 +313,30 @@ class WatchTab {
 		$notes = array();
 		if ( null !== $report['thin'] ) {
 			if ( 0 === $report['thin'] ) {
-				$notes[] = __( 'Upshift didn\'t have time to learn how your site normally behaves before this. A few warnings listed as new may have been there before.', 'upshift' );
+				$notes[] = __( 'Qasim PHP Upgrade Check & Guard didn\'t have time to learn how your site normally behaves before this. A few warnings listed as new may have been there before.', 'qasim-php-upgrade-check-guard' );
 			} else {
 				/* translators: %s: number of days. */
-				$notes[] = sprintf( _n( 'Upshift had only %s day to learn how your site normally behaves. A few warnings listed as new may have been there before.', 'Upshift had only %s days to learn how your site normally behaves. A few warnings listed as new may have been there before.', $report['thin'], 'upshift' ), number_format_i18n( $report['thin'] ) );
+				$notes[] = sprintf( _n( 'Qasim PHP Upgrade Check & Guard had only %s day to learn how your site normally behaves. A few warnings listed as new may have been there before.', 'Qasim PHP Upgrade Check & Guard had only %s days to learn how your site normally behaves. A few warnings listed as new may have been there before.', $report['thin'], 'qasim-php-upgrade-check-guard' ), number_format_i18n( $report['thin'] ) );
 			}
 		}
 		if ( $report['paused'] ) {
-			$notes[] = __( 'Upgrade guard paused itself for a few minutes after a database error. It starts again on its own.', 'upshift' );
+			$notes[] = __( 'Upgrade guard paused itself for a few minutes after a database error. It starts again on its own.', 'qasim-php-upgrade-check-guard' );
 		}
 		if ( $report['capped'] ) {
-			$notes[] = __( 'So many different warnings appeared today that Upshift stopped counting new ones until tomorrow. Crashes are still counted.', 'upshift' );
+			$notes[] = __( 'So many different warnings appeared today that Qasim PHP Upgrade Check & Guard stopped counting new ones until tomorrow. Crashes are still counted.', 'qasim-php-upgrade-check-guard' );
 		}
 		foreach ( $notes as $note ) {
-			echo '<div class="upshift-note upshift-note--warn"><p>' . esc_html( $note ) . '</p></div>';
+			echo '<div class="qpucg-note qpucg-note--warn"><p>' . esc_html( $note ) . '</p></div>';
 		}
 	}
 
 	/**
-	 * "How Upshift counts problems", collapsed.
+	 * "How Qpucg counts problems", collapsed.
 	 *
 	 * @param array $report Report::build().
 	 */
 	private static function render_counting( array $report ) {
-		echo '<details class="upshift-howcount"><summary>' . esc_html__( 'How Upshift counts problems', 'upshift' ) . '</summary>';
+		echo '<details class="qpucg-howcount"><summary>' . esc_html__( 'How Qasim PHP Upgrade Check & Guard counts problems', 'qasim-php-upgrade-check-guard' ) . '</summary>';
 		echo '<p>' . esc_html( self::counting_text( $report['rate'] ) ) . '</p></details>';
 	}
 
@@ -347,12 +347,12 @@ class WatchTab {
 	 * @return string
 	 */
 	public static function counting_text( $rate ) {
-		$parts = array( __( 'Upshift counts every crash.', 'upshift' ) );
+		$parts = array( __( 'Qasim PHP Upgrade Check & Guard counts every crash.', 'qasim-php-upgrade-check-guard' ) );
 		if ( $rate > 0 && $rate < 100 ) {
 			/* translators: %s: a number, e.g. 4 in "1 in 4 page views". */
-			$parts[] = sprintf( __( 'To keep your site fast, it looks at about 1 in %s page views for smaller warnings.', 'upshift' ), number_format_i18n( (int) round( 100 / $rate ) ) );
+			$parts[] = sprintf( __( 'To keep your site fast, it looks at about 1 in %s page views for smaller warnings.', 'qasim-php-upgrade-check-guard' ), number_format_i18n( (int) round( 100 / $rate ) ) );
 		}
-		$parts[] = __( "Must-use plugins load before Upshift, so their crashes aren't included.", 'upshift' );
+		$parts[] = __( "Must-use plugins load before Qasim PHP Upgrade Check & Guard, so their crashes aren't included.", 'qasim-php-upgrade-check-guard' );
 		return implode( ' ', $parts );
 	}
 
@@ -361,7 +361,7 @@ class WatchTab {
 	 */
 	public static function handle_start() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to do this.', 'upshift' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to do this.', 'qasim-php-upgrade-check-guard' ), 403 );
 		}
 		check_admin_referer( self::START );
 
@@ -371,7 +371,7 @@ class WatchTab {
 			add_query_arg(
 				array(
 					'tab'         => 'watch',
-					'upshift_msg' => 'started',
+					'qpucg_msg' => 'started',
 				),
 				admin_url( 'tools.php?page=' . Page::SLUG )
 			)
@@ -385,7 +385,7 @@ class WatchTab {
 	 */
 	public static function handle_stop() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to do this.', 'upshift' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to do this.', 'qasim-php-upgrade-check-guard' ), 403 );
 		}
 		check_admin_referer( self::STOP );
 
@@ -399,7 +399,7 @@ class WatchTab {
 			add_query_arg(
 				array(
 					'tab'         => 'watch',
-					'upshift_msg' => $msg,
+					'qpucg_msg' => $msg,
 				),
 				admin_url( 'tools.php?page=' . Page::SLUG )
 			)

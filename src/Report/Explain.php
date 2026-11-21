@@ -2,12 +2,12 @@
 /**
  * Plain-English text for a finding: what is wrong, how to fix it, what it means for the site (DECISIONS D56).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Report;
+namespace Qpucg\Report;
 
-use Upshift\Scan\Categories;
+use Qpucg\Scan\Categories;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -98,7 +98,7 @@ class Explain {
 		return array(
 			'problem'    => $texts[ $family ][0],
 			'how_to_fix' => $texts[ $family ][1],
-			'impact'     => 'html_flags' === $family ? __( 'Quotes in some text may display a little differently; the site keeps working.', 'upshift' ) : $impact,
+			'impact'     => 'html_flags' === $family ? __( 'Quotes in some text may display a little differently; the site keeps working.', 'qasim-php-upgrade-check-guard' ) : $impact,
 			'specific'   => true,
 		);
 	}
@@ -152,132 +152,132 @@ class Explain {
 		if ( null === self::$texts ) {
 			self::$texts = array(
 				'implicit_nullable'  => array(
-					__( 'A function says a value has a set type but defaults to nothing. Newer PHP warns about this way of writing it.', 'upshift' ),
-					__( 'Ask the developer to mark the type as optional by adding a question mark before it. Or update the plugin or theme.', 'upshift' ),
+					__( 'A function says a value has a set type but defaults to nothing. Newer PHP warns about this way of writing it.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to mark the type as optional by adding a question mark before it. Or update the plugin or theme.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'trigger_error'      => array(
-					__( 'The code stops the site with an old kind of error message that newer PHP is phasing out.', 'upshift' ),
-					__( 'Ask the developer to replace it with an exception. Or update the plugin or theme.', 'upshift' ),
+					__( 'The code stops the site with an old kind of error message that newer PHP is phasing out.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to replace it with an exception. Or update the plugin or theme.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'csv_escape'         => array(
-					__( 'The code reads or writes CSV files without saying how special characters are handled. Newer PHP wants this stated.', 'upshift' ),
-					__( 'Ask the developer to pass the escape setting in the call. Or update the plugin or theme.', 'upshift' ),
+					__( 'The code reads or writes CSV files without saying how special characters are handled. Newer PHP wants this stated.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to pass the escape setting in the call. Or update the plugin or theme.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'e_strict'           => array(
-					__( 'The code refers to an old error level called E_STRICT that newer PHP no longer uses.', 'upshift' ),
-					__( 'Ask the developer to remove that reference. It is safe to drop.', 'upshift' ),
+					__( 'The code refers to an old error level called E_STRICT that newer PHP no longer uses.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to remove that reference. It is safe to drop.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'each'               => array(
-					__( 'The code uses each() to walk through a list, and PHP removed that function.', 'upshift' ),
-					__( 'Update the plugin or theme. A developer can replace it with a foreach loop.', 'upshift' ),
+					__( 'The code uses each() to walk through a list, and PHP removed that function.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Update the plugin or theme. A developer can replace it with a foreach loop.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'create_function'    => array(
-					__( 'The code builds a function from text with create_function(), which PHP removed.', 'upshift' ),
-					__( 'Update the plugin or theme. A developer can replace it with a normal anonymous function.', 'upshift' ),
+					__( 'The code builds a function from text with create_function(), which PHP removed.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Update the plugin or theme. A developer can replace it with a normal anonymous function.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'mysql'              => array(
-					__( 'The code talks to the database with the old mysql_ functions, which PHP removed.', 'upshift' ),
-					__( 'Update the plugin or theme. A developer can switch it to the WordPress database functions.', 'upshift' ),
+					__( 'The code talks to the database with the old mysql_ functions, which PHP removed.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Update the plugin or theme. A developer can switch it to the WordPress database functions.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'money_format'       => array(
-					__( 'The code formats prices with money_format(), which PHP removed.', 'upshift' ),
-					__( 'Update the plugin or theme. A developer can use the NumberFormatter class instead.', 'upshift' ),
+					__( 'The code formats prices with money_format(), which PHP removed.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Update the plugin or theme. A developer can use the NumberFormatter class instead.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'utf8'               => array(
-					__( 'The code converts text with utf8_encode() or utf8_decode(), which newer PHP is phasing out.', 'upshift' ),
-					__( 'Update the plugin or theme. A developer can use mb_convert_encoding() instead.', 'upshift' ),
+					__( 'The code converts text with utf8_encode() or utf8_decode(), which newer PHP is phasing out.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Update the plugin or theme. A developer can use mb_convert_encoding() instead.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'strftime'           => array(
-					__( 'The code formats dates with strftime(), which newer PHP is phasing out.', 'upshift' ),
-					__( 'Update the plugin or theme. A developer can use wp_date() instead.', 'upshift' ),
+					__( 'The code formats dates with strftime(), which newer PHP is phasing out.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Update the plugin or theme. A developer can use wp_date() instead.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'curly_offset'       => array(
-					__( 'The code reads part of a text or list with curly braces, a way of writing that PHP removed. The whole file fails to load.', 'upshift' ),
-					__( 'Update the plugin or theme. A developer can replace the curly braces with square brackets.', 'upshift' ),
+					__( 'The code reads part of a text or list with curly braces, a way of writing that PHP removed. The whole file fails to load.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Update the plugin or theme. A developer can replace the curly braces with square brackets.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'php4_constructor'   => array(
-					__( 'A class sets itself up the very old way, with a function named after the class. PHP no longer runs that setup step.', 'upshift' ),
-					__( 'Update the plugin or theme. A developer can rename that function to __construct.', 'upshift' ),
+					__( 'A class sets itself up the very old way, with a function named after the class. PHP no longer runs that setup step.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Update the plugin or theme. A developer can rename that function to __construct.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'soft_required'      => array(
-					__( 'The code leaves out a value that PHP used to treat as optional. Newer PHP expects it.', 'upshift' ),
-					__( 'Ask the developer to pass the missing value. Or update the plugin or theme.', 'upshift' ),
+					__( 'The code leaves out a value that PHP used to treat as optional. Newer PHP expects it.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to pass the missing value. Or update the plugin or theme.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'get_class'          => array(
-					__( 'The code calls get_class() or a similar function without saying which object it means. Newer PHP is phasing this out.', 'upshift' ),
-					__( 'Ask the developer to pass the object, or to use self::class. Or update the plugin or theme.', 'upshift' ),
+					__( 'The code calls get_class() or a similar function without saying which object it means. Newer PHP is phasing this out.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to pass the object, or to use self::class. Or update the plugin or theme.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'xml_set_object'     => array(
-					__( 'The code uses xml_set_object() to read XML, which newer PHP is phasing out.', 'upshift' ),
-					__( 'Update the plugin or theme. A developer can pass the handlers as callbacks instead.', 'upshift' ),
+					__( 'The code uses xml_set_object() to read XML, which newer PHP is phasing out.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Update the plugin or theme. A developer can pass the handlers as callbacks instead.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'mysqli_store'       => array(
-					__( 'The code passes an extra setting to mysqli_store_result() that newer PHP is phasing out.', 'upshift' ),
-					__( 'Ask the developer to remove that setting. Or update the plugin or theme.', 'upshift' ),
+					__( 'The code passes an extra setting to mysqli_store_result() that newer PHP is phasing out.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to remove that setting. Or update the plugin or theme.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'html_flags'         => array(
-					__( 'The code converts special characters in text without saying how to treat quotes. Since PHP 8.1 single quotes are converted too.', 'upshift' ),
-					__( 'Usually nothing to do. If quotes look wrong, ask the developer to set the flags in the call.', 'upshift' ),
+					__( 'The code converts special characters in text without saying how to treat quotes. Since PHP 8.1 single quotes are converted too.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Usually nothing to do. If quotes look wrong, ask the developer to set the flags in the call.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'dollar_brace'       => array(
-					__( 'The code puts a variable inside text using the ${name} form, which newer PHP is phasing out.', 'upshift' ),
-					__( 'Update the plugin or theme. A developer can write it as {$name} instead.', 'upshift' ),
+					__( 'The code puts a variable inside text using the ${name} form, which newer PHP is phasing out.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Update the plugin or theme. A developer can write it as {$name} instead.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'forbidden_resource' => array(
-					__( 'A class, function or constant is named "resource", a name PHP keeps for its own use.', 'upshift' ),
-					__( 'Ask the developer to rename it. Or update the plugin or theme.', 'upshift' ),
+					__( 'A class, function or constant is named "resource", a name PHP keeps for its own use.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to rename it. Or update the plugin or theme.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'optional_required'  => array(
-					__( 'A function lists an optional value before a required one. Newer PHP warns about this order.', 'upshift' ),
-					__( 'Ask the developer to put the required values first. Or update the plugin or theme.', 'upshift' ),
+					__( 'A function lists an optional value before a required one. Newer PHP warns about this order.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to put the required values first. Or update the plugin or theme.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'libxml_loader'      => array(
-					__( 'The code calls libxml_disable_entity_loader(), which newer PHP no longer needs and is phasing out.', 'upshift' ),
-					__( 'Update the plugin or theme. A developer can remove the call on PHP 8 and newer.', 'upshift' ),
+					__( 'The code calls libxml_disable_entity_loader(), which newer PHP no longer needs and is phasing out.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Update the plugin or theme. A developer can remove the call on PHP 8 and newer.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'serializable'       => array(
-					__( 'A class saves and restores itself the old Serializable way, which newer PHP is phasing out.', 'upshift' ),
-					__( 'Ask the developer to add the __serialize and __unserialize methods. Or update the plugin or theme.', 'upshift' ),
+					__( 'A class saves and restores itself the old Serializable way, which newer PHP is phasing out.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to add the __serialize and __unserialize methods. Or update the plugin or theme.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'mysqli_ping'        => array(
-					__( 'The code checks its database connection with mysqli_ping(), which newer PHP is phasing out.', 'upshift' ),
-					__( 'Ask the developer to run a simple query instead, or to catch errors on normal queries. Or update the plugin or theme.', 'upshift' ),
+					__( 'The code checks its database connection with mysqli_ping(), which newer PHP is phasing out.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to run a simple query instead, or to catch errors on normal queries. Or update the plugin or theme.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'imagerotate_param'  => array(
-					__( 'The code passes an extra setting to imagerotate() that PHP removed.', 'upshift' ),
-					__( 'Ask the developer to remove the last value in that call. Or update the plugin or theme.', 'upshift' ),
+					__( 'The code passes an extra setting to imagerotate() that PHP removed.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to remove the last value in that call. Or update the plugin or theme.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'sunfuncs'           => array(
-					__( 'The code works out sunrise or sunset times with an old setting named SUNFUNCS_RET, which newer PHP is phasing out.', 'upshift' ),
-					__( 'Ask the developer to use date_sun_info() instead. Or update the plugin or theme.', 'upshift' ),
+					__( 'The code works out sunrise or sunset times with an old setting named SUNFUNCS_RET, which newer PHP is phasing out.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to use date_sun_info() instead. Or update the plugin or theme.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'ldap_exop_param'    => array(
-					__( 'The code asks ldap_exop() to hand back its reply through extra values, which newer PHP is phasing out.', 'upshift' ),
-					__( 'Ask the developer to use ldap_exop_sync() instead. Or update the plugin or theme.', 'upshift' ),
+					__( 'The code asks ldap_exop() to hand back its reply through extra values, which newer PHP is phasing out.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to use ldap_exop_sync() instead. Or update the plugin or theme.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'curlopt_binary'     => array(
-					__( 'The code uses a download setting named CURLOPT_BINARYTRANSFER, which no longer does anything and newer PHP is phasing out.', 'upshift' ),
-					__( 'Ask the developer to remove that setting. It is safe to drop.', 'upshift' ),
+					__( 'The code uses a download setting named CURLOPT_BINARYTRANSFER, which no longer does anything and newer PHP is phasing out.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask the developer to remove that setting. It is safe to drop.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'ext_imap'           => array(
-					__( 'The code reads email with IMAP, which is no longer included with PHP 8.4.', 'upshift' ),
-					__( 'Ask your host to install the IMAP extension. Or replace the plugin that needs it.', 'upshift' ),
+					__( 'The code reads email with IMAP, which is no longer included with PHP 8.4.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask your host to install the IMAP extension. Or replace the plugin that needs it.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'ext_oci8'           => array(
-					__( 'The code connects to an Oracle database with OCI8, which is no longer included with PHP 8.4.', 'upshift' ),
-					__( 'Ask your host to install the OCI8 extension. You only need it if the site uses Oracle.', 'upshift' ),
+					__( 'The code connects to an Oracle database with OCI8, which is no longer included with PHP 8.4.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask your host to install the OCI8 extension. You only need it if the site uses Oracle.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'ext_pspell'         => array(
-					__( 'The code checks spelling with pspell, which is no longer included with PHP 8.4.', 'upshift' ),
-					__( 'Ask your host to install the pspell extension. Or replace the plugin that needs it.', 'upshift' ),
+					__( 'The code checks spelling with pspell, which is no longer included with PHP 8.4.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask your host to install the pspell extension. Or replace the plugin that needs it.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'ext_xmlrpc'         => array(
-					__( 'The code uses PHP\'s own XML-RPC tools, which are no longer included since PHP 8.0.', 'upshift' ),
-					__( 'Ask your host to install the xmlrpc extension. Or update the plugin that needs it.', 'upshift' ),
+					__( 'The code uses PHP\'s own XML-RPC tools, which are no longer included since PHP 8.0.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask your host to install the xmlrpc extension. Or update the plugin that needs it.', 'qasim-php-upgrade-check-guard' ),
 				),
 				'ext_other'          => array(
-					__( 'The code needs a PHP add-on that is no longer included with PHP.', 'upshift' ),
-					__( 'Ask your host to install that extension. Or replace the plugin that needs it.', 'upshift' ),
+					__( 'The code needs a PHP add-on that is no longer included with PHP.', 'qasim-php-upgrade-check-guard' ),
+					__( 'Ask your host to install that extension. Or replace the plugin that needs it.', 'qasim-php-upgrade-check-guard' ),
 				),
 			);
 		}
@@ -295,17 +295,17 @@ class Explain {
 		$error = 'error' === $severity;
 		switch ( $category ) {
 			case Categories::REMOVED:
-				return $error ? __( 'This can stop the page from loading.', 'upshift' ) : __( 'This part of the site can stop working.', 'upshift' );
+				return $error ? __( 'This can stop the page from loading.', 'qasim-php-upgrade-check-guard' ) : __( 'This part of the site can stop working.', 'qasim-php-upgrade-check-guard' );
 			case Categories::NEEDS_EXTENSION:
-				return __( 'This feature stops working unless your host installs the missing add-on.', 'upshift' );
+				return __( 'This feature stops working unless your host installs the missing add-on.', 'qasim-php-upgrade-check-guard' );
 			case Categories::DEPRECATED:
-				return $error ? __( 'Works now; stops working in a future PHP version.', 'upshift' ) : __( 'Your site keeps working; you\'ll only see warnings in the error log.', 'upshift' );
+				return $error ? __( 'Works now; stops working in a future PHP version.', 'qasim-php-upgrade-check-guard' ) : __( 'Your site keeps working; you\'ll only see warnings in the error log.', 'qasim-php-upgrade-check-guard' );
 			case Categories::CHANGED:
-				return $error ? __( 'This part of the site may stop working as it did.', 'upshift' ) : __( 'This part of the site may behave differently.', 'upshift' );
+				return $error ? __( 'This part of the site may stop working as it did.', 'qasim-php-upgrade-check-guard' ) : __( 'This part of the site may behave differently.', 'qasim-php-upgrade-check-guard' );
 			case Categories::NEWER_THAN_CURRENT:
-				return __( 'This uses a newer PHP feature, so it is not an upgrade problem.', 'upshift' );
+				return __( 'This uses a newer PHP feature, so it is not an upgrade problem.', 'qasim-php-upgrade-check-guard' );
 			default:
-				return __( 'This does not affect how your site runs.', 'upshift' );
+				return __( 'This does not affect how your site runs.', 'qasim-php-upgrade-check-guard' );
 		}
 	}
 
@@ -315,7 +315,7 @@ class Explain {
 	 * @return string
 	 */
 	public static function guarded_impact() {
-		return __( 'This code only runs where it is safe, so it should not cause a problem.', 'upshift' );
+		return __( 'This code only runs where it is safe, so it should not cause a problem.', 'qasim-php-upgrade-check-guard' );
 	}
 
 	/**
@@ -327,15 +327,15 @@ class Explain {
 	private static function generic_problem( $category ) {
 		switch ( $category ) {
 			case Categories::REMOVED:
-				return __( 'The code uses a PHP feature that has been removed.', 'upshift' );
+				return __( 'The code uses a PHP feature that has been removed.', 'qasim-php-upgrade-check-guard' );
 			case Categories::DEPRECATED:
-				return __( 'The code uses a PHP feature that newer PHP is phasing out.', 'upshift' );
+				return __( 'The code uses a PHP feature that newer PHP is phasing out.', 'qasim-php-upgrade-check-guard' );
 			case Categories::CHANGED:
-				return __( 'The code relies on PHP behavior that has changed.', 'upshift' );
+				return __( 'The code relies on PHP behavior that has changed.', 'qasim-php-upgrade-check-guard' );
 			case Categories::NEWER_THAN_CURRENT:
-				return __( 'The code uses a feature from a newer PHP version.', 'upshift' );
+				return __( 'The code uses a feature from a newer PHP version.', 'qasim-php-upgrade-check-guard' );
 			default:
-				return __( 'This is a note about how the code is written.', 'upshift' );
+				return __( 'This is a note about how the code is written.', 'qasim-php-upgrade-check-guard' );
 		}
 	}
 
@@ -347,8 +347,8 @@ class Explain {
 	 */
 	private static function generic_fix( $category ) {
 		if ( Categories::NEWER_THAN_CURRENT === $category || Categories::ADVISORY === $category || Categories::IGNORED === $category ) {
-			return __( 'Nothing to do before the upgrade.', 'upshift' );
+			return __( 'Nothing to do before the upgrade.', 'qasim-php-upgrade-check-guard' );
 		}
-		return __( 'Update the plugin or theme to its latest version. If the problem stays, ask its developer for a fix.', 'upshift' );
+		return __( 'Update the plugin or theme to its latest version. If the problem stays, ask its developer for a fix.', 'qasim-php-upgrade-check-guard' );
 	}
 }

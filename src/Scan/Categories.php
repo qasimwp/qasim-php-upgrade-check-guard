@@ -2,10 +2,10 @@
 /**
  * Rule code → finding category (spec §7.7).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Scan;
+namespace Qpucg\Scan;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -493,7 +493,7 @@ class Categories {
 	 */
 	public static function of( $rule ) {
 		$rule = (string) $rule;
-		if ( 0 === strpos( $rule, 'Upshift.Php82.DynamicProperty' ) ) {
+		if ( 0 === strpos( $rule, 'Qpucg.Php82.DynamicProperty' ) ) {
 			return self::DEPRECATED;
 		}
 		if ( 0 === strpos( $rule, 'Internal.LineEndings.' ) ) {

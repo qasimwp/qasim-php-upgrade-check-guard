@@ -2,16 +2,16 @@
 /**
  * Findings × Usage tab, Spike metrics tab and the CSV export (spec §7.9).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Admin;
+namespace Qpucg\Admin;
 
-use Upshift\Report\Explain;
-use Upshift\Report\Join;
-use Upshift\Scan\Categories;
-use Upshift\Scan\Runner;
-use Upshift\Usage\Rollup;
+use Qpucg\Report\Explain;
+use Qpucg\Report\Join;
+use Qpucg\Scan\Categories;
+use Qpucg\Scan\Runner;
+use Qpucg\Usage\Rollup;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Report {
 
 	const PER_PAGE = 50;
-	const EXPORT   = 'upshift_export_csv';
+	const EXPORT   = 'qpucg_export_csv';
 
 	/**
 	 * Findings × Usage: filters, priority-sorted table (50 per page), CSV export.
@@ -31,7 +31,7 @@ class Report {
 	public static function render_findings() {
 		$scan = Runner::latest( 'done' );
 		if ( null === $scan ) {
-			echo '<p>' . esc_html__( 'No completed scan yet. Run one from the Scan tab.', 'upshift' ) . '</p>';
+			echo '<p>' . esc_html__( 'No completed scan yet. Run one from the Scan tab.', 'qasim-php-upgrade-check-guard' ) . '</p>';
 			return;
 		}
 		$meta = Page::render_rollup_status();
@@ -76,29 +76,29 @@ class Report {
 			echo '<div class="notice notice-info inline"><p>' . esc_html( Join::inactive_note() ) . '</p></div>';
 		}
 		/* translators: 1: scan id, 2: range, 3: finished date. */
-		echo '<p>' . esc_html( sprintf( __( 'Scan #%1$d (%2$s), finished %3$s. Sorted by priority (severity × category × usage).', 'upshift' ), $scan['id'], $scan['from_version'] . '-' . $scan['target_version'], $scan['finished'] ) ) . '</p>';
+		echo '<p>' . esc_html( sprintf( __( 'Scan #%1$d (%2$s), finished %3$s. Sorted by priority (severity × category × usage).', 'qasim-php-upgrade-check-guard' ), $scan['id'], $scan['from_version'] . '-' . $scan['target_version'], $scan['finished'] ) ) . '</p>';
 		echo '<p>' . esc_html(
 			sprintf(
 				/* translators: 1: counted findings, 2: from PHP version, 3: findings already true on it, 4: newer_than_current findings, 5: advisory findings, 6: ignored findings, 7: findings in inactive components, 8: guarded findings. */
-				__( 'Counted problems (active components; removed, needs extension, deprecated, changed; new for this upgrade): %1$s. Not counted: %8$s guarded (fallback code that cannot run on the target PHP, or only runs when the feature exists), %3$s already true on PHP %2$s (information: reported for PHP %2$s alone too, so the code is already guarded, unused or noticed today), %4$s newer_than_current (information: the code uses features newer than the "from" version, usually guarded or polyfilled), %5$s advisory (information: naming advice, heuristics and ini-dependent notes that break nothing by themselves), %6$s ignored (not a PHP version issue, e.g. mixed line endings) and %7$s in inactive components.', 'upshift' ),
+				__( 'Counted problems (active components; removed, needs extension, deprecated, changed; new for this upgrade): %1$s. Not counted: %8$s guarded (fallback code that cannot run on the target PHP, or only runs when the feature exists), %3$s already true on PHP %2$s (information: reported for PHP %2$s alone too, so the code is already guarded, unused or noticed today), %4$s newer_than_current (information: the code uses features newer than the "from" version, usually guarded or polyfilled), %5$s advisory (information: naming advice, heuristics and ini-dependent notes that break nothing by themselves), %6$s ignored (not a PHP version issue, e.g. mixed line endings) and %7$s in inactive components.', 'qasim-php-upgrade-check-guard' ),
 				number_format_i18n( $counted ),
 				$scan['from_version'],
-				$checked ? number_format_i18n( $current ) : __( '(not checked in this scan)', 'upshift' ),
+				$checked ? number_format_i18n( $current ) : __( '(not checked in this scan)', 'qasim-php-upgrade-check-guard' ),
 				number_format_i18n( $info[ Categories::NEWER_THAN_CURRENT ] ),
 				number_format_i18n( $info[ Categories::ADVISORY ] ),
 				number_format_i18n( $info[ Categories::IGNORED ] ),
-				$inactive_scanned ? number_format_i18n( $inactive ) : __( '(not scanned)', 'upshift' ),
+				$inactive_scanned ? number_format_i18n( $inactive ) : __( '(not scanned)', 'qasim-php-upgrade-check-guard' ),
 				number_format_i18n( $guarded )
 			)
 		) . '</p>';
-		echo '<p class="description">' . esc_html__( '"Not seen" means not seen during the observation period, not "never runs": a yearly cron job or a rarely used screen may not appear.', 'upshift' ) . '</p>';
+		echo '<p class="description">' . esc_html__( '"Not seen" means not seen during the observation period, not "never runs": a yearly cron job or a rarely used screen may not appear.', 'qasim-php-upgrade-check-guard' ) . '</p>';
 		if ( $file_checks['code_active'] > 0 ) {
 			/* translators: %s: number of files. */
-			echo '<div class="notice notice-warning inline"><p>' . esc_html( sprintf( _n( '%s active code file was not checked (too large, unreadable, engine error, or PHPCS stopped inside it), so problems in it can be missing here. The Scan tab lists it.', '%s active code files were not checked (too large, unreadable, engine error, or PHPCS stopped inside them), so problems in them can be missing here. The Scan tab lists them.', $file_checks['code_active'], 'upshift' ), number_format_i18n( $file_checks['code_active'] ) ) ) . '</p></div>';
+			echo '<div class="notice notice-warning inline"><p>' . esc_html( sprintf( _n( '%s active code file was not checked (too large, unreadable, engine error, or PHPCS stopped inside it), so problems in it can be missing here. The Scan tab lists it.', '%s active code files were not checked (too large, unreadable, engine error, or PHPCS stopped inside them), so problems in them can be missing here. The Scan tab lists them.', $file_checks['code_active'], 'qasim-php-upgrade-check-guard' ), number_format_i18n( $file_checks['code_active'] ) ) ) . '</p></div>';
 		}
 		if ( $file_checks['data'] > 0 ) {
 			/* translators: %s: number of files. */
-			echo '<p class="description">' . esc_html( sprintf( _n( '%s data file was skipped (harmless: only arrays or a classmap, nothing a PHP version can break).', '%s data files were skipped (harmless: only arrays or classmaps, nothing a PHP version can break).', $file_checks['data'], 'upshift' ), number_format_i18n( $file_checks['data'] ) ) ) . '</p>';
+			echo '<p class="description">' . esc_html( sprintf( _n( '%s data file was skipped (harmless: only arrays or a classmap, nothing a PHP version can break).', '%s data files were skipped (harmless: only arrays or classmaps, nothing a PHP version can break).', $file_checks['data'], 'qasim-php-upgrade-check-guard' ), number_format_i18n( $file_checks['data'] ) ) ) . '</p>';
 		}
 
 		self::render_filters( $filters, array_keys( $components ), $scan['from_version'], $scan['target_version'] );
@@ -116,11 +116,11 @@ class Report {
 		}
 		wp_nonce_field( self::EXPORT );
 		/* translators: %s: number of findings. */
-		submit_button( sprintf( __( 'Export CSV (%s findings, current filters)', 'upshift' ), number_format_i18n( $total ) ), 'secondary', 'submit', false );
+		submit_button( sprintf( __( 'Export CSV (%s findings, current filters)', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $total ) ), 'secondary', 'submit', false );
 		echo '</form>';
 
 		if ( 0 === $total ) {
-			echo '<p>' . esc_html__( 'No findings match these filters.', 'upshift' ) . '</p>';
+			echo '<p>' . esc_html__( 'No findings match these filters.', 'qasim-php-upgrade-check-guard' ) . '</p>';
 			return;
 		}
 
@@ -135,18 +135,18 @@ class Report {
 			)
 		);
 		/* translators: 1: first row number, 2: last row number, 3: total rows. */
-		$range = sprintf( __( '%1$s–%2$s of %3$s', 'upshift' ), number_format_i18n( ( $paged - 1 ) * self::PER_PAGE + 1 ), number_format_i18n( ( $paged - 1 ) * self::PER_PAGE + count( $slice ) ), number_format_i18n( $total ) );
+		$range = sprintf( __( '%1$s–%2$s of %3$s', 'qasim-php-upgrade-check-guard' ), number_format_i18n( ( $paged - 1 ) * self::PER_PAGE + 1 ), number_format_i18n( ( $paged - 1 ) * self::PER_PAGE + count( $slice ) ), number_format_i18n( $total ) );
 		echo '<div class="tablenav"><div class="tablenav-pages"><span class="displaying-num">' . esc_html( $range ) . '</span> ' . wp_kses_post( (string) $pagination ) . '</div></div>';
 
 		$heads = array(
-			__( 'Priority', 'upshift' ),
-			__( 'Component', 'upshift' ),
-			__( 'File:line', 'upshift' ),
-			__( 'Category', 'upshift' ),
-			__( 'Severity', 'upshift' ),
-			__( 'Rule', 'upshift' ),
-			__( 'Message', 'upshift' ),
-			__( 'Usage', 'upshift' ),
+			__( 'Priority', 'qasim-php-upgrade-check-guard' ),
+			__( 'Component', 'qasim-php-upgrade-check-guard' ),
+			__( 'File:line', 'qasim-php-upgrade-check-guard' ),
+			__( 'Category', 'qasim-php-upgrade-check-guard' ),
+			__( 'Severity', 'qasim-php-upgrade-check-guard' ),
+			__( 'Rule', 'qasim-php-upgrade-check-guard' ),
+			__( 'Message', 'qasim-php-upgrade-check-guard' ),
+			__( 'Usage', 'qasim-php-upgrade-check-guard' ),
 		);
 		echo '<table class="widefat striped"><thead><tr>';
 		foreach ( $heads as $head ) {
@@ -181,24 +181,24 @@ class Report {
 	 */
 	private static function render_filters( array $filters, array $components, $from, $target ) {
 		$selects = array(
-			'component' => array( '' => __( 'All components', 'upshift' ) ) + array_combine( $components, $components ),
-			'bucket'    => array( '' => __( 'All buckets', 'upshift' ) ) + array_combine( Join::buckets(), Join::buckets() ),
+			'component' => array( '' => __( 'All components', 'qasim-php-upgrade-check-guard' ) ) + array_combine( $components, $components ),
+			'bucket'    => array( '' => __( 'All buckets', 'qasim-php-upgrade-check-guard' ) ) + array_combine( Join::buckets(), Join::buckets() ),
 			'category'  => array(
-				Join::COUNTED_FILTER           => __( 'Counted: new risks (removed, needs extension, deprecated, changed)', 'upshift' ),
+				Join::COUNTED_FILTER           => __( 'Counted: new risks (removed, needs extension, deprecated, changed)', 'qasim-php-upgrade-check-guard' ),
 				Categories::REMOVED            => Categories::REMOVED . ': ' . Join::tier_label( Categories::REMOVED, $target ),
 				Categories::NEEDS_EXTENSION    => Categories::NEEDS_EXTENSION . ': ' . Join::tier_label( Categories::NEEDS_EXTENSION, $target ),
 				Categories::DEPRECATED         => Categories::DEPRECATED . ': ' . Join::tier_label( Categories::DEPRECATED, $target ),
 				Categories::CHANGED            => Categories::CHANGED . ': ' . Join::tier_label( Categories::CHANGED, $target ),
 				/* translators: %s: from PHP version. */
-				Join::CURRENT_FILTER           => sprintf( __( 'Already true on PHP %s (information)', 'upshift' ), $from ),
-				Join::GUARDED_FILTER           => __( 'Guarded: only runs where it is safe (information)', 'upshift' ),
-				Categories::NEWER_THAN_CURRENT => __( 'newer_than_current (information)', 'upshift' ),
-				Categories::ADVISORY           => __( 'advisory (information)', 'upshift' ),
-				Categories::IGNORED            => __( 'ignored: not a PHP version issue', 'upshift' ),
-				'all'                          => __( 'All categories', 'upshift' ),
+				Join::CURRENT_FILTER           => sprintf( __( 'Already true on PHP %s (information)', 'qasim-php-upgrade-check-guard' ), $from ),
+				Join::GUARDED_FILTER           => __( 'Guarded: only runs where it is safe (information)', 'qasim-php-upgrade-check-guard' ),
+				Categories::NEWER_THAN_CURRENT => __( 'newer_than_current (information)', 'qasim-php-upgrade-check-guard' ),
+				Categories::ADVISORY           => __( 'advisory (information)', 'qasim-php-upgrade-check-guard' ),
+				Categories::IGNORED            => __( 'ignored: not a PHP version issue', 'qasim-php-upgrade-check-guard' ),
+				'all'                          => __( 'All categories', 'qasim-php-upgrade-check-guard' ),
 			),
 			'severity'  => array(
-				''        => __( 'All severities', 'upshift' ),
+				''        => __( 'All severities', 'qasim-php-upgrade-check-guard' ),
 				'error'   => 'error',
 				'warning' => 'warning',
 			),
@@ -213,7 +213,7 @@ class Report {
 			}
 			echo '</select> ';
 		}
-		submit_button( __( 'Filter', 'upshift' ), 'secondary', '', false );
+		submit_button( __( 'Filter', 'qasim-php-upgrade-check-guard' ), 'secondary', '', false );
 		echo '</form>';
 	}
 
@@ -222,13 +222,13 @@ class Report {
 	 */
 	public static function handle_export() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to do this.', 'upshift' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to do this.', 'qasim-php-upgrade-check-guard' ), 403 );
 		}
 		check_admin_referer( self::EXPORT );
 
 		$scan = Runner::latest( 'done' );
 		if ( null === $scan ) {
-			wp_die( esc_html__( 'No completed scan yet.', 'upshift' ) );
+			wp_die( esc_html__( 'No completed scan yet.', 'qasim-php-upgrade-check-guard' ) );
 		}
 		$filters = Join::filters( wp_unslash( $_POST ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every value is allow-listed in Join::filters().
 		$rows    = Join::apply( Join::findings( (int) $scan['id'] ), $filters );
@@ -237,7 +237,7 @@ class Report {
 
 		nocache_headers();
 		header( 'Content-Type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename="upshift-findings-scan-' . (int) $scan['id'] . '.csv"' );
+		header( 'Content-Disposition: attachment; filename="qpucg-findings-scan-' . (int) $scan['id'] . '.csv"' );
 		header( 'X-Content-Type-Options: nosniff' );
 
 		$out = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- streaming the download.
@@ -286,42 +286,42 @@ class Report {
 		if ( null !== $m['scan'] && ! $m['scan']['inactive_scanned'] ) {
 			echo '<div class="notice notice-info inline"><p>' . esc_html( Join::inactive_note() ) . '</p></div>';
 		}
-		echo '<table class="widefat striped" style="max-width:60em"><thead><tr><th>' . esc_html__( 'Metric', 'upshift' ) . '</th><th>' . esc_html__( 'Result', 'upshift' ) . '</th><th>' . esc_html__( 'Detail', 'upshift' ) . '</th></tr></thead><tbody>';
+		echo '<table class="widefat striped" style="max-width:60em"><thead><tr><th>' . esc_html__( 'Metric', 'qasim-php-upgrade-check-guard' ) . '</th><th>' . esc_html__( 'Result', 'qasim-php-upgrade-check-guard' ) . '</th><th>' . esc_html__( 'Detail', 'qasim-php-upgrade-check-guard' ) . '</th></tr></thead><tbody>';
 		$gates = array(
-			'm1'  => __( 'M1 Engine works on this host', 'upshift' ),
-			'm3a' => __( 'M3a Recorder overhead (prep median ≤ 2%, p95 ≤ 5% of request time)', 'upshift' ),
-			'm4'  => __( 'M4 Signal: always = whole site (≥ 30% of counted findings not always loaded)', 'upshift' ),
+			'm1'  => __( 'M1 Engine works on this host', 'qasim-php-upgrade-check-guard' ),
+			'm3a' => __( 'M3a Recorder overhead (prep median ≤ 2%, p95 ≤ 5% of request time)', 'qasim-php-upgrade-check-guard' ),
+			'm4'  => __( 'M4 Signal: always = whole site (≥ 30% of counted findings not always loaded)', 'qasim-php-upgrade-check-guard' ),
 		);
 		foreach ( $gates as $key => $label ) {
 			echo '<tr><td>' . esc_html( $label ) . '</td><td><strong>' . esc_html( Join::result_label( $m[ $key ]['result'] ) ) . '</strong></td><td>' . esc_html( $m[ $key ]['note'] ) . '</td></tr>';
 			if ( 'm3a' === $key ) {
-				echo '<tr><td style="padding-left:2em">' . esc_html__( 'M3a information (not gated)', 'upshift' ) . '</td><td></td><td>' . esc_html( $m['m3a_info'] ) . '</td></tr>';
+				echo '<tr><td style="padding-left:2em">' . esc_html__( 'M3a information (not gated)', 'qasim-php-upgrade-check-guard' ) . '</td><td></td><td>' . esc_html( $m['m3a_info'] ) . '</td></tr>';
 			}
 		}
 		echo '</tbody></table>';
-		echo '<p class="description">' . esc_html__( 'M2 (wp upshift selftest), M3b (the Usage tab benchmark button) and M5 (your judgement of the top 15 findings) are not computed here.', 'upshift' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'M2 (wp qpucg selftest), M3b (the Usage tab benchmark button) and M5 (your judgement of the top 15 findings) are not computed here.', 'qasim-php-upgrade-check-guard' ) . '</p>';
 
 		if ( null !== $m['findings'] ) {
 			$f = $m['findings'];
-			echo '<h2>' . esc_html__( 'Counted findings by bucket (always = whole site)', 'upshift' ) . '</h2>';
+			echo '<h2>' . esc_html__( 'Counted findings by bucket (always = whole site)', 'qasim-php-upgrade-check-guard' ) . '</h2>';
 			$rows = array();
 			foreach ( $f['by_bucket'] as $bucket => $n ) {
 				$rows[] = array( $bucket, number_format_i18n( $n ) . ( $f['counted'] > 0 ? ' (' . number_format_i18n( 100 * $n / $f['counted'], 1 ) . '%)' : '' ) );
 			}
-			$rows[] = array( __( 'Counted total', 'upshift' ), number_format_i18n( $f['counted'] ) );
+			$rows[] = array( __( 'Counted total', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $f['counted'] ) );
 			/* translators: 1: will break, 2: needs a PHP extension, 3: deprecation notices, 4: behaviour changes. */
-			$rows[] = array( __( 'Counted by tier', 'upshift' ), sprintf( __( 'will break %1$s, needs a PHP extension %2$s, deprecation notices %3$s, behaviour changes %4$s', 'upshift' ), number_format_i18n( $f['by_category'][ Categories::REMOVED ] ), number_format_i18n( $f['by_category'][ Categories::NEEDS_EXTENSION ] ), number_format_i18n( $f['by_category'][ Categories::DEPRECATED ] ), number_format_i18n( $f['by_category'][ Categories::CHANGED ] ) ) );
-			$rows[] = array( __( 'Not counted: already true on the from version (information)', 'upshift' ), $f['checked'] ? number_format_i18n( $f['current'] ) : __( 'not checked (scan from before the new-risk check; run a new scan)', 'upshift' ) );
-			$rows[] = array( __( 'Not counted: newer_than_current (information)', 'upshift' ), number_format_i18n( $f['newer_than_current'] ) );
-			$rows[] = array( __( 'Not counted: advisory (information)', 'upshift' ), number_format_i18n( $f['advisory'] ) );
-			$rows[] = array( __( 'Not counted: ignored (not a PHP version issue)', 'upshift' ), number_format_i18n( $f['ignored'] ) );
-			$rows[] = array( __( 'Not counted: inactive components', 'upshift' ), null !== $m['scan'] && ! $m['scan']['inactive_scanned'] ? __( 'not scanned', 'upshift' ) : number_format_i18n( $f['inactive'] ) );
+			$rows[] = array( __( 'Counted by tier', 'qasim-php-upgrade-check-guard' ), sprintf( __( 'will break %1$s, needs a PHP extension %2$s, deprecation notices %3$s, behaviour changes %4$s', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $f['by_category'][ Categories::REMOVED ] ), number_format_i18n( $f['by_category'][ Categories::NEEDS_EXTENSION ] ), number_format_i18n( $f['by_category'][ Categories::DEPRECATED ] ), number_format_i18n( $f['by_category'][ Categories::CHANGED ] ) ) );
+			$rows[] = array( __( 'Not counted: already true on the from version (information)', 'qasim-php-upgrade-check-guard' ), $f['checked'] ? number_format_i18n( $f['current'] ) : __( 'not checked (scan from before the new-risk check; run a new scan)', 'qasim-php-upgrade-check-guard' ) );
+			$rows[] = array( __( 'Not counted: newer_than_current (information)', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $f['newer_than_current'] ) );
+			$rows[] = array( __( 'Not counted: advisory (information)', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $f['advisory'] ) );
+			$rows[] = array( __( 'Not counted: ignored (not a PHP version issue)', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $f['ignored'] ) );
+			$rows[] = array( __( 'Not counted: inactive components', 'qasim-php-upgrade-check-guard' ), null !== $m['scan'] && ! $m['scan']['inactive_scanned'] ? __( 'not scanned', 'qasim-php-upgrade-check-guard' ) : number_format_i18n( $f['inactive'] ) );
 			self::key_value_table( $rows );
 
 			if ( $f['components'] ) {
-				echo '<h2>' . esc_html__( 'Top components by counted findings (always = whole site)', 'upshift' ) . '</h2>';
+				echo '<h2>' . esc_html__( 'Top components by counted findings (always = whole site)', 'qasim-php-upgrade-check-guard' ) . '</h2>';
 				echo '<table class="widefat striped" style="max-width:60em"><thead><tr>';
-				foreach ( array( __( 'Component', 'upshift' ), __( 'Counted', 'upshift' ), Join::ALWAYS, Join::SOMETIMES, Join::NEVER ) as $head ) {
+				foreach ( array( __( 'Component', 'qasim-php-upgrade-check-guard' ), __( 'Counted', 'qasim-php-upgrade-check-guard' ), Join::ALWAYS, Join::SOMETIMES, Join::NEVER ) as $head ) {
 					echo '<th>' . esc_html( $head ) . '</th>';
 				}
 				echo '</tr></thead><tbody>';
@@ -337,7 +337,7 @@ class Report {
 		}
 
 		$u = $m['usage'];
-		echo '<h2>' . esc_html__( 'Usage and overhead', 'upshift' ) . '</h2>';
+		echo '<h2>' . esc_html__( 'Usage and overhead', 'qasim-php-upgrade-check-guard' ) . '</h2>';
 		$by_ctx = array();
 		foreach ( $u['requests_by_context'] as $label => $count ) {
 			$by_ctx[] = $label . ': ' . number_format_i18n( $count );
@@ -345,38 +345,38 @@ class Report {
 		self::key_value_table(
 			array(
 				/* translators: 1: days, 2: first day, 3: last day. */
-				array( __( 'Days observed', 'upshift' ), sprintf( __( '%1$s (%2$s to %3$s)', 'upshift' ), number_format_i18n( $u['days_observed'] ), $u['first_day'], $u['last_day'] ) ),
-				array( __( 'Sampled requests', 'upshift' ), number_format_i18n( $u['sampled_requests'] ) . ( $by_ctx ? ' (' . implode( '; ', $by_ctx ) . ')' : '' ) ),
-				array( __( 'Filesets', 'upshift' ), number_format_i18n( $u['filesets'] ) ),
+				array( __( 'Days observed', 'qasim-php-upgrade-check-guard' ), sprintf( __( '%1$s (%2$s to %3$s)', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $u['days_observed'] ), $u['first_day'], $u['last_day'] ) ),
+				array( __( 'Sampled requests', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $u['sampled_requests'] ) . ( $by_ctx ? ' (' . implode( '; ', $by_ctx ) . ')' : '' ) ),
+				array( __( 'Filesets', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $u['filesets'] ) ),
 				/* translators: 1: average ms, 2: max ms, 3: percent. */
-				array( __( 'Recorder prep', 'upshift' ), sprintf( __( 'avg %1$s ms, max %2$s ms, %3$s%% of requests ≥ 3 ms', 'upshift' ), number_format_i18n( $u['avg_prep_ms'], 3 ), number_format_i18n( $u['max_prep_ms'], 3 ), number_format_i18n( 100 * $u['slow_share'], 2 ) ) ),
+				array( __( 'Recorder prep', 'qasim-php-upgrade-check-guard' ), sprintf( __( 'avg %1$s ms, max %2$s ms, %3$s%% of requests ≥ 3 ms', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $u['avg_prep_ms'], 3 ), number_format_i18n( $u['max_prep_ms'], 3 ), number_format_i18n( 100 * $u['slow_share'], 2 ) ) ),
 				/* translators: 1: median range, 2: p95 range, 3: requests, 4: average request ms. */
-				array( __( 'Recorder prep as % of request time', 'upshift' ), sprintf( __( 'median %1$s, p95 %2$s (%3$s requests with a request time, avg request %4$s ms)', 'upshift' ), $u['rel_median'], $u['rel_p95'], number_format_i18n( $u['req_hits'] ), number_format_i18n( $u['avg_req_ms'], 1 ) ) ),
+				array( __( 'Recorder prep as % of request time', 'qasim-php-upgrade-check-guard' ), sprintf( __( 'median %1$s, p95 %2$s (%3$s requests with a request time, avg request %4$s ms)', 'qasim-php-upgrade-check-guard' ), $u['rel_median'], $u['rel_p95'], number_format_i18n( $u['req_hits'] ), number_format_i18n( $u['avg_req_ms'], 1 ) ) ),
 			)
 		);
 
 		if ( null !== $m['scan'] ) {
 			$s = $m['scan'];
-			echo '<h2>' . esc_html__( 'Scan', 'upshift' ) . '</h2>';
+			echo '<h2>' . esc_html__( 'Scan', 'qasim-php-upgrade-check-guard' ) . '</h2>';
 			self::key_value_table(
 				array(
-					array( __( 'Scan', 'upshift' ), sprintf( '#%d, %s, %s', $s['id'], $s['range'], $s['finished'] ) ),
+					array( __( 'Scan', 'qasim-php-upgrade-check-guard' ), sprintf( '#%d, %s, %s', $s['id'], $s['range'], $s['finished'] ) ),
 					/* translators: 1: files, 2: skipped, 3: engine errors. */
-					array( __( 'Files', 'upshift' ), sprintf( __( '%1$s (skipped %2$s, engine errors %3$s)', 'upshift' ), number_format_i18n( $s['files'] ), number_format_i18n( $s['skipped'] ), number_format_i18n( $s['engine_errors'] ) ) ),
+					array( __( 'Files', 'qasim-php-upgrade-check-guard' ), sprintf( __( '%1$s (skipped %2$s, engine errors %3$s)', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $s['files'] ), number_format_i18n( $s['skipped'] ), number_format_i18n( $s['engine_errors'] ) ) ),
 					/* translators: 1: seconds, 2: engine seconds, 3: batches. */
-					array( __( 'Duration', 'upshift' ), sprintf( __( '%1$s s (engine %2$s s), %3$s batches', 'upshift' ), number_format_i18n( $s['seconds'] ), number_format_i18n( $s['engine_seconds'], 1 ), number_format_i18n( $s['batches'] ) ) ),
+					array( __( 'Duration', 'qasim-php-upgrade-check-guard' ), sprintf( __( '%1$s s (engine %2$s s), %3$s batches', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $s['seconds'] ), number_format_i18n( $s['engine_seconds'], 1 ), number_format_i18n( $s['batches'] ) ) ),
 					/* translators: %s: seconds. */
-					array( __( 'New-risk check', 'upshift' ), $s['checked'] ? sprintf( __( '%s s extra for re-scanning files with findings on the "from" version alone', 'upshift' ), number_format_i18n( $s['baseline_seconds'], 1 ) ) : __( 'not run (scan from before the new-risk check)', 'upshift' ) ),
+					array( __( 'New-risk check', 'qasim-php-upgrade-check-guard' ), $s['checked'] ? sprintf( __( '%s s extra for re-scanning files with findings on the "from" version alone', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $s['baseline_seconds'], 1 ) ) : __( 'not run (scan from before the new-risk check)', 'qasim-php-upgrade-check-guard' ) ),
 					/* translators: 1: peak MB, 2: limit MB, 3: SAPI or note. */
-					array( __( 'Peak memory', 'upshift' ), sprintf( __( '%1$s MB of %2$s MB %3$s', 'upshift' ), number_format_i18n( $s['peak_memory'] / 1048576, 1 ), number_format_i18n( $s['memory_limit'] / 1048576, 1 ), $s['memory_limit_recorded'] ? '(' . $s['sapi'] . ')' : __( '(current limit; not recorded at scan time)', 'upshift' ) ) ),
+					array( __( 'Peak memory', 'qasim-php-upgrade-check-guard' ), sprintf( __( '%1$s MB of %2$s MB %3$s', 'qasim-php-upgrade-check-guard' ), number_format_i18n( $s['peak_memory'] / 1048576, 1 ), number_format_i18n( $s['memory_limit'] / 1048576, 1 ), $s['memory_limit_recorded'] ? '(' . $s['sapi'] . ')' : __( '(current limit; not recorded at scan time)', 'qasim-php-upgrade-check-guard' ) ) ),
 				)
 			);
 		}
 
-		echo '<h2>' . esc_html__( 'Copy as Markdown', 'upshift' ) . '</h2>';
-		echo '<p>' . esc_html__( 'For docs/SPIKE-RESULT.md.', 'upshift' ) . '</p>';
-		echo '<textarea id="upshift-markdown" readonly rows="22" class="large-text code" onfocus="this.select()">' . esc_textarea( Join::markdown( $m ) ) . '</textarea>';
-		echo '<p><button type="button" class="button" id="upshift-copy-markdown">' . esc_html__( 'Copy', 'upshift' ) . '</button> <span id="upshift-copy-status"></span></p>';
+		echo '<h2>' . esc_html__( 'Copy as Markdown', 'qasim-php-upgrade-check-guard' ) . '</h2>';
+		echo '<p>' . esc_html__( 'For docs/SPIKE-RESULT.md.', 'qasim-php-upgrade-check-guard' ) . '</p>';
+		echo '<textarea id="qpucg-markdown" readonly rows="22" class="large-text code" onfocus="this.select()">' . esc_textarea( Join::markdown( $m ) ) . '</textarea>';
+		echo '<p><button type="button" class="button" id="qpucg-copy-markdown">' . esc_html__( 'Copy', 'qasim-php-upgrade-check-guard' ) . '</button> <span id="qpucg-copy-status"></span></p>';
 	}
 
 	/**

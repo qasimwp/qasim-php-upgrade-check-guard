@@ -2,12 +2,12 @@
 /**
  * Plain-words state of the recording: dropped page views and an hourly job that stopped (DECISIONS D63).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Usage;
+namespace Qpucg\Usage;
 
-use Upshift\Settings;
+use Qpucg\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -18,12 +18,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Health {
 
-	const HEARTBEAT   = 'upshift_compact_last';
+	const HEARTBEAT   = 'qpucg_compact_last';
 	const OVERDUE     = DAY_IN_SECONDS;
 	const DROP_WINDOW = 7 * DAY_IN_SECONDS;
 	const LOST_SHARE  = 0.05; // Share of the recent page views without a file list before the notice shows (DECISIONS D66).
 	const LOST_MIN    = 50;   // And at least this many.
-	const BUILD       = 'upshift_build'; // This build's stamp, the day and time it was first seen.
+	const BUILD       = 'qpucg_build'; // This build's stamp, the day and time it was first seen.
 
 	/**
 	 * Dropped page views by reason, from the recorder flags.
@@ -36,7 +36,7 @@ class Health {
 	}
 
 	/**
-	 * The day and time this build of Upshift was first seen. The version and DB version stay the same between builds of
+	 * The day and time this build of Qpucg was first seen. The version and DB version stay the same between builds of
 	 * one release, so the stamp also holds the main file's time, which an update by zip, FTP or wordpress.org changes.
 	 * Called only from admin pages, Site Health and the hourly job: never on a visitor's request.
 	 *
@@ -45,7 +45,7 @@ class Health {
 	 */
 	public static function build( $now = null ) {
 		$now   = null === $now ? time() : (int) $now;
-		$stamp = UPSHIFT_VERSION . '|' . UPSHIFT_DB_VERSION . '|' . (int) filemtime( UPSHIFT_FILE );
+		$stamp = QPUCG_VERSION . '|' . QPUCG_DB_VERSION . '|' . (int) filemtime( QPUCG_FILE );
 		$build = get_option( self::BUILD, array() );
 		if ( ! is_array( $build ) || ! isset( $build['stamp'], $build['day'], $build['at'] ) || $stamp !== $build['stamp'] ) {
 			$build = array(
@@ -91,7 +91,7 @@ class Health {
 			return $out;
 		}
 		if ( self::job_overdue( $now ) ) {
-			$out[] = __( "Upshift's hourly job has not run for more than a day, so Smart results is not being updated. WordPress scheduled tasks (WP-Cron) may be off on this site. Your host can check this.", 'upshift' );
+			$out[] = __( "Qasim PHP Upgrade Check & Guard's hourly job has not run for more than a day, so Smart results is not being updated. WordPress scheduled tasks (WP-Cron) may be off on this site. Your host can check this.", 'qasim-php-upgrade-check-guard' );
 		}
 
 		$flags   = Recorder::flags();
@@ -99,7 +99,7 @@ class Health {
 		if ( $dropped > 0 && ! empty( $flags['dropped_at'] ) && $now - (int) $flags['dropped_at'] <= self::DROP_WINDOW ) {
 			$out[] = sprintf(
 				/* translators: %s: number of page views. */
-				_n( 'Upshift could not save %s page view because of a database problem. Recording continues by itself.', 'Upshift could not save %s page views because of a database problem. Recording continues by itself.', $dropped, 'upshift' ),
+				_n( 'Qasim PHP Upgrade Check & Guard could not save %s page view because of a database problem. Recording continues by itself.', 'Qasim PHP Upgrade Check & Guard could not save %s page views because of a database problem. Recording continues by itself.', $dropped, 'qasim-php-upgrade-check-guard' ),
 				number_format_i18n( $dropped )
 			);
 		}
@@ -112,7 +112,7 @@ class Health {
 		if ( null !== $recent && (int) $recent['sampled'] > 0 && (int) $recent['lost'] >= self::LOST_MIN && (int) $recent['lost'] >= self::LOST_SHARE * (int) $recent['sampled'] ) {
 			$out[] = sprintf(
 				/* translators: 1: number of days, 2: page views without a file list, 3: all page views of those days. */
-				_n( 'In the last %1$s day, %2$s of %3$s recorded page views were saved without their list of files, so Smart results may miss where some code runs. Recording continues normally.', 'In the last %1$s days, %2$s of %3$s recorded page views were saved without their list of files, so Smart results may miss where some code runs. Recording continues normally.', (int) $recent['days'], 'upshift' ),
+				_n( 'In the last %1$s day, %2$s of %3$s recorded page views were saved without their list of files, so Smart results may miss where some code runs. Recording continues normally.', 'In the last %1$s days, %2$s of %3$s recorded page views were saved without their list of files, so Smart results may miss where some code runs. Recording continues normally.', (int) $recent['days'], 'qasim-php-upgrade-check-guard' ),
 				number_format_i18n( (int) $recent['days'] ),
 				number_format_i18n( (int) $recent['lost'] ),
 				number_format_i18n( (int) $recent['sampled'] )

@@ -2,13 +2,13 @@
 /**
  * Components and their file lists (spec §7.5).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Scan;
+namespace Qpucg\Scan;
 
-use Upshift\Install;
-use Upshift\Paths;
+use Qpucg\Install;
+use Qpucg\Paths;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -54,7 +54,7 @@ class Inventory {
 
 		foreach ( get_plugins() as $file => $data ) {
 			$dir   = dirname( $file );
-			$root  = WP_PLUGIN_DIR . '/' . ( '.' === $dir ? $file : $dir );
+			$root  = Paths::plugins_dir() . '/' . ( '.' === $dir ? $file : $dir );
 			$out[] = array(
 				'root'   => $root,
 				'label'  => isset( $data['Name'] ) && '' !== $data['Name'] ? $data['Name'] : $file,
@@ -80,9 +80,9 @@ class Inventory {
 			);
 		}
 
-		if ( is_dir( WPMU_PLUGIN_DIR ) ) {
+		if ( is_dir( Paths::mu_plugins_dir() ) ) {
 			$out[] = array(
-				'root'   => WPMU_PLUGIN_DIR,
+				'root'   => Paths::mu_plugins_dir(),
 				'label'  => 'mu-plugins',
 				'active' => true,
 				'type'   => 'mu-plugins',
@@ -90,9 +90,9 @@ class Inventory {
 		}
 
 		foreach ( array_keys( _get_dropins() ) as $dropin ) {
-			if ( is_file( WP_CONTENT_DIR . '/' . $dropin ) ) {
+			if ( is_file( Paths::content_dir() . '/' . $dropin ) ) {
 				$out[] = array(
-					'root'   => WP_CONTENT_DIR . '/' . $dropin,
+					'root'   => Paths::content_dir() . '/' . $dropin,
 					'label'  => $dropin,
 					'active' => true,
 					'type'   => 'dropin',
@@ -172,7 +172,7 @@ class Inventory {
 		if ( 'theme' === $type ) {
 			$root = wp_get_theme( $name )->exists() ? wp_get_theme( $name )->get_stylesheet_directory() : '';
 		} else {
-			$root = WP_PLUGIN_DIR . '/' . $name;
+			$root = Paths::plugins_dir() . '/' . $name;
 		}
 		return '' !== $root && file_exists( $root ) ? $root : null;
 	}
@@ -263,7 +263,7 @@ class Inventory {
 				$note = null;
 				if ( ! is_readable( $path ) ) {
 					$status = 'unreadable';
-					$note   = __( 'File not readable.', 'upshift' );
+					$note   = __( 'File not readable.', 'qasim-php-upgrade-check-guard' );
 				} else {
 					$note   = self::skip_note( $path, (int) filesize( $path ) );
 					$status = null === $note ? 'pending' : 'skipped_large';
@@ -294,11 +294,11 @@ class Inventory {
 		$kb = number_format_i18n( $bytes / 1024, 1 );
 		if ( $bytes > self::MAX_BYTES ) {
 			/* translators: 1: file size in KB, 2: limit in KB. */
-			return sprintf( __( 'skipped: too large (%1$s KB, limit %2$s KB)', 'upshift' ), $kb, number_format_i18n( self::MAX_BYTES / 1024 ) );
+			return sprintf( __( 'skipped: too large (%1$s KB, limit %2$s KB)', 'qasim-php-upgrade-check-guard' ), $kb, number_format_i18n( self::MAX_BYTES / 1024 ) );
 		}
 		if ( $bytes >= self::DATA_MIN_BYTES && self::is_data_file( $path ) ) {
 			/* translators: %s: file size in KB. */
-			return sprintf( __( 'skipped: too large (data/classmap file, %s KB)', 'upshift' ), $kb );
+			return sprintf( __( 'skipped: too large (data/classmap file, %s KB)', 'qasim-php-upgrade-check-guard' ), $kb );
 		}
 		return null;
 	}

@@ -1,4 +1,4 @@
-=== Upshift - PHP Upgrade Check & Guard ===
+=== Qasim PHP Upgrade Check & Guard ===
 Contributors: qasimwp
 Tags: php, compatibility, php 8, upgrade, php version
 Requires at least: 6.2
@@ -12,7 +12,7 @@ Check your plugins and themes for code that breaks on a newer PHP version, see w
 
 == Description ==
 
-Your host wants to move your site to a newer PHP version. Will your plugins survive it? Upshift reads the code of your plugins, themes, must-use plugins and special WordPress files (such as object-cache.php) and tells you, in plain words, what would break.
+Your host wants to move your site to a newer PHP version. Will your plugins survive it? Qasim PHP Upgrade Check & Guard reads the code of your plugins, themes, must-use plugins and special WordPress files (such as object-cache.php) and tells you, in plain words, what would break.
 
 **Check**
 
@@ -27,13 +27,15 @@ You get a short "Do this first" list, the file and line of every problem with wh
 
 **Smart results (optional, off by default)**
 
-Turn it on and Upshift learns which plugin files your site really loads, for example on checkout, shop pages or the admin. Each problem then says where it runs, or that it was not seen running in the last days, so you can fix what matters first. It looks at some page views only (1 in 4 by default) and stores file names and counts, nothing about your visitors.
+Turn it on and Qasim PHP Upgrade Check & Guard learns which plugin files your site really loads, for example on checkout, shop pages or the admin. Each problem then says where it runs, or that it was not seen running in the last days, so you can fix what matters first. It looks at some page views only (1 in 4 by default) and stores file names and counts, nothing about your visitors.
 
 **Upgrade guard (optional, off by default)**
 
-Turn it on before your host changes PHP. Upshift learns how your site normally behaves, notices the PHP change by itself and compares the next 7 days with before. If a plugin starts crashing or showing new errors, the Upgrade guard tab names it and tells you what to do. It can also email the site's admin address about new crashes (off by default).
+Turn it on before your host changes PHP. Qasim PHP Upgrade Check & Guard learns how your site normally behaves, notices the PHP change by itself and compares the next 7 days with before. If a plugin starts crashing or showing new errors, the Upgrade guard tab names it and tells you what to do. It can also email the site's admin address about new crashes (off by default).
 
-**What Upshift does not do**
+To see a crash in a plugin that loads after it, the Upgrade guard moves itself to the front of the active plugins list while it is on, and back to its normal place when you turn it off. The order of your other plugins does not change.
+
+**What Qasim PHP Upgrade Check & Guard does not do**
 
 * It does not run or change your code. It reads files as text.
 * It is not a guarantee. Code that is built at run time, or loaded in unusual ways, can be missed. Always test on a staging copy before you upgrade a live shop.
@@ -43,18 +45,18 @@ Turn it on before your host changes PHP. Upshift learns how your site normally b
 
 == Installation ==
 
-1. Install Upshift from Plugins > Add New, or upload the zip under Plugins > Add New > Upload Plugin.
+1. Install Qasim PHP Upgrade Check & Guard from Plugins > Add New, or upload the zip under Plugins > Add New > Upload Plugin.
 2. Activate it.
 3. Go to Tools > PHP Upgrade and click Check.
 4. Optional: in the Settings tab, turn on Smart results and Upgrade guard.
 
-WP-CLI users can also run `wp upshift scan --target=8.4`.
+WP-CLI users can also run `wp qpucg scan --target=8.4`.
 
 == Frequently Asked Questions ==
 
 = What does "not seen running" mean? =
 
-With Smart results on, Upshift didn't see that code run on the page views it looked at during the last days. It may still run at other times, for example once a month or only for one user. Treat it as "probably less urgent", not as "safe to ignore".
+With Smart results on, Qasim PHP Upgrade Check & Guard didn't see that code run on the page views it looked at during the last days. It may still run at other times, for example once a month or only for one user. Treat it as "probably less urgent", not as "safe to ignore".
 
 = The check says a file is too large for the memory limit. What now? =
 
@@ -62,11 +64,11 @@ Large files need more memory to check. Ask your host to raise the PHP memory lim
 
 = Does it check must-use plugins? =
 
-Yes. Must-use plugins and special WordPress files (drop-ins such as object-cache.php) are checked like normal plugins. Upgrade guard cannot see crashes in must-use plugins, because they load before Upshift.
+Yes. Must-use plugins and special WordPress files (drop-ins such as object-cache.php) are checked like normal plugins. Upgrade guard cannot see crashes in must-use plugins, because they load before Qasim PHP Upgrade Check & Guard.
 
 = Where is my data stored? =
 
-In your own WordPress database, in Upshift's own tables (with the prefix `upshift_`) and a few `upshift_` options. See Privacy below.
+In your own WordPress database, in Qasim PHP Upgrade Check & Guard's own tables (with the prefix `qpucg_`) and a few `qpucg_` options. See Privacy below.
 
 = Will it slow my site? =
 
@@ -78,9 +80,9 @@ Each site has its own check and data under Tools > PHP Upgrade. Deleting the plu
 
 == Privacy ==
 
-Upshift makes no remote requests, has no tracking and loads no files from other servers.
+Qasim PHP Upgrade Check & Guard makes no remote requests, has no tracking and loads no files from other servers.
 
-What is stored, and where: everything is stored in your own WordPress database, in Upshift's tables and options.
+What is stored, and where: everything is stored in your own WordPress database, in Qasim PHP Upgrade Check & Guard's tables and options.
 
 * Check results: the file name, line and problem of each finding, and a cache of unchanged files so the next check is faster.
 * Smart results (only if you turn it on): the names of the plugin and theme files that loaded, counted per day and per type of page (for example checkout or admin). No visitor, customer, IP address or URL is stored.
@@ -90,7 +92,7 @@ Smart results, Upgrade guard and the crash email are all off by default.
 
 The only data that can leave your site is the optional crash email. It is off by default, and when turned on it is sent to your site's admin email address, at most once a day.
 
-How long it is kept: collected data older than 30 days is removed automatically, and each finished day is summarised and its raw rows deleted. Upshift keeps its collected data under 50 MB. The latest check results stay until you check again, until you click "Delete collected data" in Settings, or until you uninstall Upshift. Uninstalling removes all of Upshift's tables and options, unless you turned off "Delete all data when Upshift is uninstalled".
+How long it is kept: collected data older than 30 days is removed automatically, and each finished day is summarised and its raw rows deleted. Qasim PHP Upgrade Check & Guard keeps its collected data under 50 MB. The latest check results stay until you check again, until you click "Delete collected data" in Settings, or until you uninstall Qasim PHP Upgrade Check & Guard. Uninstalling removes all of Qasim PHP Upgrade Check & Guard's tables and options, unless you turned off "Delete all data when Qasim PHP Upgrade Check & Guard is uninstalled".
 
 == Screenshots ==
 
@@ -107,7 +109,7 @@ How long it is kept: collected data older than 30 days is removed automatically,
 
 == Credits and licenses ==
 
-Upshift is free software under the GNU General Public License, version 3 or later.
+Qasim PHP Upgrade Check & Guard is free software under the GNU General Public License, version 3 or later.
 
 The check uses these open-source projects, bundled in `vendor-prefixed/` with their own license files:
 
@@ -116,4 +118,6 @@ The check uses these open-source projects, bundled in `vendor-prefixed/` with th
 * PHPCSUtils 1.2.3, LGPL-3.0-or-later, https://github.com/PHPCSStandards/PHPCSUtils
 * Composer's class loader, MIT
 
-The bundled code is renamed into the `Upshift\Vendor` namespace (with PHP-Scoper) so it cannot clash with other plugins, and a few lines that would run shell commands or `eval()` are removed. The full source code and the build scripts are at https://github.com/qasimwp/upshift-source
+The bundled code is renamed into the `Qpucg\Vendor` namespace (with PHP-Scoper) so it cannot clash with other plugins, and a few lines that would run shell commands or `eval()` are removed.
+
+Source code: https://github.com/qasimwp/qasim-php-upgrade-check-guard . The scan engine in vendor-prefixed/ is built with Composer and PHP-Scoper; the build steps are in the repository README.

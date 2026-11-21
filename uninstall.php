@@ -2,7 +2,7 @@
 /**
  * Uninstall: drops tables, deletes options/transients, clears cron (spec §7.11).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
@@ -11,4 +11,4 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 require_once __DIR__ . '/src/Install.php';
 
-\Upshift\Install::uninstall();
+\Qpucg\Install::uninstall();

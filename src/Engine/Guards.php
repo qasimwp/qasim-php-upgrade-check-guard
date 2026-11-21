@@ -5,13 +5,13 @@
  *
  * Conservative: whatever it cannot read for certain stays counted.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Engine;
+namespace Qpucg\Engine;
 
-use Upshift\Scan\Categories;
-use Upshift\Vendor\PHP_CodeSniffer\Util\Tokens;
+use Qpucg\Scan\Categories;
+use Qpucg\Vendor\PHP_CodeSniffer\Util\Tokens;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

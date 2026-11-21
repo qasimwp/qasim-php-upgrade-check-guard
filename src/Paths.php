@@ -5,10 +5,10 @@
  * The single source of truth for file identity: the usage recorder and the
  * scanner must produce the same key for the same file.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift;
+namespace Qpucg;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -131,7 +131,7 @@ class Paths {
 			return false;
 		}
 		if ( null === self::$own ) {
-			$own_key   = self::key( UPSHIFT_FILE );
+			$own_key   = self::key( QPUCG_FILE );
 			self::$own = null === $own_key ? '' : self::component( $own_key );
 		}
 		return '' !== self::$own && self::component( $key ) === self::$own;
@@ -239,6 +239,41 @@ class Paths {
 	}
 
 	/**
+	 * Plugins directory for filesystem scanning of all plugins.
+	 *
+	 * WordPress has no function that returns this path for arbitrary scans of every
+	 * installed plugin (plugin_dir_path() is per-file). WP_PLUGIN_DIR is the documented
+	 * location WordPress itself uses.
+	 *
+	 * @return string
+	 */
+	public static function plugins_dir() {
+		return WP_PLUGIN_DIR;
+	}
+
+	/**
+	 * Must-use plugins directory for filesystem scanning.
+	 *
+	 * There is no WordPress function equivalent for scanning this directory.
+	 *
+	 * @return string
+	 */
+	public static function mu_plugins_dir() {
+		return WPMU_PLUGIN_DIR;
+	}
+
+	/**
+	 * Content directory (drop-ins and content-relative paths).
+	 *
+	 * There is no WordPress function that returns WP_CONTENT_DIR for filesystem scanning.
+	 *
+	 * @return string
+	 */
+	public static function content_dir() {
+		return WP_CONTENT_DIR;
+	}
+
+	/**
 	 * Builds and caches the bases, longest first.
 	 *
 	 * @return array
@@ -249,13 +284,13 @@ class Paths {
 		}
 
 		$dirs = array(
-			array( 'mu-plugins', WPMU_PLUGIN_DIR ),
-			array( 'plugins', WP_PLUGIN_DIR ),
+			array( 'mu-plugins', self::mu_plugins_dir() ),
+			array( 'plugins', self::plugins_dir() ),
 		);
 		foreach ( self::theme_dirs() as $theme_dir ) {
 			$dirs[] = array( 'themes', $theme_dir );
 		}
-		$dirs[] = array( 'content', WP_CONTENT_DIR );
+		$dirs[] = array( 'content', self::content_dir() );
 
 		$bases = array();
 		foreach ( $dirs as $pair ) {
@@ -285,27 +320,31 @@ class Paths {
 	}
 
 	/**
-	 * Absolute theme root directories, resolved like get_theme_root().
+	 * Absolute theme root directories, including custom roots from register_theme_directory().
+	 *
+	 * Uses the registered $wp_theme_directories list (same source WordPress uses internally).
+	 * Falls back to get_theme_root() when that list is empty. Cached with the rest of Paths::$bases.
 	 *
 	 * @return string[]
 	 */
 	private static function theme_dirs() {
 		global $wp_theme_directories;
 
-		$roots = function_exists( 'get_theme_roots' ) ? get_theme_roots() : '/themes';
-		$roots = array_unique( array_values( (array) $roots ) );
-		$out   = array();
-		foreach ( $roots as $root ) {
-			if ( in_array( $root, (array) $wp_theme_directories, true ) ) {
-				$out[] = $root;
-			} else {
-				$out[] = WP_CONTENT_DIR . $root;
+		$out = array();
+		if ( is_array( $wp_theme_directories ) ) {
+			foreach ( $wp_theme_directories as $dir ) {
+				if ( is_string( $dir ) && '' !== $dir ) {
+					$out[] = $dir;
+				}
 			}
 		}
-		if ( empty( $out ) ) {
-			$out[] = WP_CONTENT_DIR . '/themes';
+		if ( empty( $out ) && function_exists( 'get_theme_root' ) ) {
+			$root = get_theme_root();
+			if ( is_string( $root ) && '' !== $root ) {
+				$out[] = $root;
+			}
 		}
-		return array_unique( $out );
+		return array_values( array_unique( $out ) );
 	}
 
 	/**

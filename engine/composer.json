@@ -1,6 +1,6 @@
 {
-	"name": "upshift/engine",
-	"description": "Engine dependencies for Upshift (input for PHP-Scoper; built into vendor-prefixed/ by bin/build-engine.php).",
+	"name": "qasim/qasim-php-upgrade-check-guard-engine",
+	"description": "Engine dependencies for Qasim PHP Upgrade Check & Guard (input for PHP-Scoper; built into vendor-prefixed/ by bin/build-engine.php).",
 	"type": "project",
 	"license": "GPL-3.0-or-later",
 	"minimum-stability": "alpha",

@@ -1,14 +1,14 @@
 <?php
 /**
- * Dev-only WP-CLI command `wp upshift simulate-traffic` (spec §7.10). This file is not in the release zip
+ * Dev-only WP-CLI command `wp qpucg simulate-traffic` (spec §7.10). This file is not in the release zip
  * (bin/build-zip.php), so the plugin on wordpress.org makes no HTTP requests at all (DECISIONS D64).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Cli;
+namespace Qpucg\Cli;
 
-use Upshift\Settings;
+use Qpucg\Settings;
 use WP_CLI;
 
 if ( ! defined( 'ABSPATH' ) ) {

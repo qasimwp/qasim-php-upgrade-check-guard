@@ -1,11 +1,11 @@
-/* global jQuery, upshiftScan */
+/* global jQuery, qpucgScan */
 /**
  * Check tab: start / continue / stop, the batch loop (spec §7.6), card filter, copy and print (docs/UI-v1.md §3).
  */
 ( function ( $ ) {
 	'use strict';
 
-	var cfg = window.upshiftScan;
+	var cfg = window.qpucgScan;
 	var scanId = 0;
 	var failures = 0;
 	var stopped = false;
@@ -43,7 +43,7 @@
 	// wp.i18n can be missing if an optimization plugin removed it: English plurals still work then.
 	function plural( single, many, number ) {
 		if ( window.wp && window.wp.i18n ) {
-			return window.wp.i18n._n( single, many, number, 'upshift' );
+			return window.wp.i18n._n( single, many, number, 'qasim-php-upgrade-check-guard' );
 		}
 		return 1 === number ? single : many;
 	}
@@ -71,44 +71,44 @@
 	}
 
 	function show( message, progress ) {
-		var $box = $( '#upshift-scan-progress' ).prop( 'hidden', false );
-		var $results = $( '#upshift-results' );
+		var $box = $( '#qpucg-scan-progress' ).prop( 'hidden', false );
+		var $results = $( '#qpucg-results' );
 		var shrinks = ! $results.prop( 'hidden' );
-		$( '#upshift-strip' ).prop( 'hidden', true );
+		$( '#qpucg-strip' ).prop( 'hidden', true );
 		$results.prop( 'hidden', true );
 		if ( shrinks ) {
 			repinMenu();
 		}
-		$box.find( '.upshift-scan-message' ).text( message );
+		$box.find( '.qpucg-scan-message' ).text( message );
 		if ( progress && progress.files_total > 0 ) {
 			$box.find( 'progress' ).attr( { max: progress.files_total, value: progress.files_done } );
-			$box.find( '.upshift-percent' ).text( fmt( cfg.i18n.percent, num( Math.floor( 100 * progress.files_done / progress.files_total ) ) ) );
+			$box.find( '.qpucg-percent' ).text( fmt( cfg.i18n.percent, num( Math.floor( 100 * progress.files_done / progress.files_total ) ) ) );
 		}
 		if ( progress && progress.files_reused > 0 ) {
-			$box.find( '.upshift-reused' ).prop( 'hidden', false ).text( fmt( plural( 'Reused %s unchanged file.', 'Reused %s unchanged files.', progress.files_reused ), num( progress.files_reused ) ) );
+			$box.find( '.qpucg-reused' ).prop( 'hidden', false ).text( fmt( plural( 'Reused %s unchanged file.', 'Reused %s unchanged files.', progress.files_reused ), num( progress.files_reused ) ) );
 		}
 	}
 
 	function showBack() {
-		$( '#upshift-back' ).prop( 'hidden', false );
+		$( '#qpucg-back' ).prop( 'hidden', false );
 	}
 
 	// "Speed up" while the check runs in the background (with its one-line hint); "Continue" when it is paused.
 	function setBackground( background ) {
-		var $button = $( '#upshift-scan-resume' );
+		var $button = $( '#qpucg-scan-resume' );
 		$button.text( background ? $button.attr( 'data-speed' ) : $button.attr( 'data-continue' ) );
-		$( '#upshift-speedup-note' ).prop( 'hidden', ! background );
+		$( '#qpucg-speedup-note' ).prop( 'hidden', ! background );
 	}
 
 	function setRunning( running ) {
-		$( '#upshift-scan-start' ).prop( 'disabled', running );
-		$( '#upshift-scan-resume' ).toggle( ! running && scanId > 0 ).prop( 'disabled', running );
-		$( '#upshift-scan-cancel' ).toggle( scanId > 0 || starting );
+		$( '#qpucg-scan-start' ).prop( 'disabled', running );
+		$( '#qpucg-scan-resume' ).toggle( ! running && scanId > 0 ).prop( 'disabled', running );
+		$( '#qpucg-scan-cancel' ).toggle( scanId > 0 || starting );
 		setBackground( false );
 	}
 
 	function post( action, data ) {
-		return $.post( cfg.ajaxUrl, $.extend( { action: 'upshift_scan_' + action, nonce: cfg.nonce }, data ) );
+		return $.post( cfg.ajaxUrl, $.extend( { action: 'qpucg_scan_' + action, nonce: cfg.nonce }, data ) );
 	}
 
 	// Short plain text of a non-JSON reply (an HTML error page, "-1", "0"); shown with .text(), never as HTML.
@@ -201,7 +201,7 @@
 		wait( seconds * 1000, function ( left ) {
 			return fmt( cfg.i18n.resourceWait, code, left, attempt, RESOURCE_TRIES );
 		}, batch );
-		$( '#upshift-scan-resume' ).show().prop( 'disabled', false );
+		$( '#qpucg-scan-resume' ).show().prop( 'disabled', false );
 		setBackground( false );
 	}
 
@@ -282,30 +282,30 @@
 		batch();
 	}
 
-	// Without upshiftScan (removed by an optimization plugin) the buttons can't work: say so next to them (DECISIONS D53).
+	// Without qpucgScan (removed by an optimization plugin) the buttons can't work: say so next to them (DECISIONS D53).
 	$( function () {
 		if ( cfg ) {
 			return;
 		}
-		$( '[data-upshift-no-config]' ).each( function () {
-			$( '<span class="upshift-no-config" role="alert" style="color:#b32d2e;margin-left:0.5em"></span>' )
-				.text( $( this ).attr( 'data-upshift-no-config' ) )
+		$( '[data-qpucg-no-config]' ).each( function () {
+			$( '<span class="qpucg-no-config" role="alert" style="color:#b32d2e;margin-left:0.5em"></span>' )
+				.text( $( this ).attr( 'data-qpucg-no-config' ) )
 				.insertAfter( this );
 		} );
 	} );
 
 	// "Update usage data now": one rollup step per request until the job is done (DECISIONS D48).
 	$( function () {
-		var $button = $( '#upshift-rollup-now' );
+		var $button = $( '#qpucg-rollup-now' );
 		if ( ! cfg || ! $button.length ) {
 			return;
 		}
-		var $message = $( '#upshift-rollup-message' );
+		var $message = $( '#qpucg-rollup-message' );
 		var rollupFailures = 0;
 		var rollupBusy = 0;
 
 		function step( start ) {
-			$.post( cfg.ajaxUrl, { action: 'upshift_rollup_step', nonce: cfg.rollupNonce, start: start ? 1 : 0 } )
+			$.post( cfg.ajaxUrl, { action: 'qpucg_rollup_step', nonce: cfg.rollupNonce, start: start ? 1 : 0 } )
 				.done( function ( response, textStatus, xhr ) {
 					if ( ! response || ! response.success ) {
 						again( errorMessage( xhr, response ), start );
@@ -364,12 +364,12 @@
 
 	// Spike metrics: copy the Markdown textarea.
 	$( function () {
-		$( '#upshift-copy-markdown' ).on( 'click', function () {
-			var area = document.getElementById( 'upshift-markdown' );
+		$( '#qpucg-copy-markdown' ).on( 'click', function () {
+			var area = document.getElementById( 'qpucg-markdown' );
 			area.focus();
 			area.select();
 			var done = function () {
-				$( '#upshift-copy-status' ).text( cfg.i18n.copied );
+				$( '#qpucg-copy-status' ).text( cfg.i18n.copied );
 			};
 			if ( navigator.clipboard && window.isSecureContext ) {
 				navigator.clipboard.writeText( area.value ).then( done );
@@ -381,11 +381,11 @@
 
 	$( function () {
 		// The 8.5 note shows only while 8.5 is the selected target.
-		$( '#upshift-target' ).on( 'change', function () {
-			$( '#upshift-target-note' ).toggle( '8.5' === $( this ).val() );
+		$( '#qpucg-target' ).on( 'change', function () {
+			$( '#qpucg-target-note' ).toggle( '8.5' === $( this ).val() );
 		} );
 
-		var $controls = $( '#upshift-scan-controls' );
+		var $controls = $( '#qpucg-scan-controls' );
 		if ( ! cfg || ! $controls.length ) {
 			return;
 		}
@@ -417,18 +417,18 @@
 			poll();
 		}
 
-		$( '#upshift-scan-start' ).on( 'click', function () {
+		$( '#qpucg-scan-start' ).on( 'click', function () {
 			starting = true;
 			stopAfterStart = false;
 			setRunning( true );
-			$( '#upshift-run-from' ).text( $( '#upshift-from' ).val() );
-			$( '#upshift-run-target' ).text( $( '#upshift-target' ).val() );
+			$( '#qpucg-run-from' ).text( $( '#qpucg-from' ).val() );
+			$( '#qpucg-run-target' ).text( $( '#qpucg-target' ).val() );
 			show( cfg.i18n.starting );
 			post( 'start', {
-				from: $( '#upshift-from' ).val(),
-				target: $( '#upshift-target' ).val(),
+				from: $( '#qpucg-from' ).val(),
+				target: $( '#qpucg-target' ).val(),
 				// The "Everything installed" radio button.
-				inactive: $( '#upshift-scan-inactive' ).is( ':checked' ) ? 1 : 0
+				inactive: $( '#qpucg-scan-inactive' ).is( ':checked' ) ? 1 : 0
 			} )
 				.done( function ( response, textStatus, xhr ) {
 					starting = false;
@@ -464,11 +464,11 @@
 				} );
 		} );
 
-		$( '#upshift-scan-resume' ).on( 'click', function () {
+		$( '#qpucg-scan-resume' ).on( 'click', function () {
 			run( scanId );
 		} );
 
-		$( '#upshift-scan-cancel' ).on( 'click', function () {
+		$( '#qpucg-scan-cancel' ).on( 'click', function () {
 			if ( ! window.confirm( cfg.i18n.confirm ) ) {
 				return;
 			}
@@ -488,11 +488,11 @@
 	} );
 	// Count cards filter the list; pressing the same card (or "Show all plugins") shows everything again.
 	$( function () {
-		var $cards = $( '.upshift-count' );
-		var $items = $( '#upshift-active-list .upshift-item' );
-		var $group = $( '#upshift-ready-group' );
-		var $status = $( '#upshift-filter-status' );
-		var $all = $( '#upshift-show-all' );
+		var $cards = $( '.qpucg-count' );
+		var $items = $( '#qpucg-active-list .qpucg-item' );
+		var $group = $( '#qpucg-ready-group' );
+		var $status = $( '#qpucg-filter-status' );
+		var $all = $( '#qpucg-show-all' );
 		var active = '';
 		var groupWasOpen = false;
 
@@ -517,7 +517,7 @@
 				var $card = $( this );
 				var current = filter === $card.attr( 'data-filter' );
 				$card.attr( 'aria-pressed', current ? 'true' : 'false' );
-				$card.find( '.upshift-count__show' ).text( $card.find( '.upshift-count__show' ).attr( current ? 'data-showall' : 'data-show' ) );
+				$card.find( '.qpucg-count__show' ).text( $card.find( '.qpucg-count__show' ).attr( current ? 'data-showall' : 'data-show' ) );
 			} );
 			$items.each( function () {
 				var match = ! filter || $( this ).attr( 'data-status' ) === filter;
@@ -543,7 +543,7 @@
 
 		// A closed plugin row can make the page shorter too. "toggle" doesn't bubble, so it is caught on the way down.
 		document.addEventListener( 'toggle', function ( event ) {
-			if ( event.target.closest && event.target.closest( '.upshift-wrap' ) ) {
+			if ( event.target.closest && event.target.closest( '.qpucg-wrap' ) ) {
 				repinMenu();
 			}
 		}, true );
@@ -559,9 +559,9 @@
 
 	// Settings: "Delete collected data" only submits after the owner confirms in plain words.
 	$( function () {
-		$( '#upshift-delete-data' ).on( 'click', function () {
+		$( '#qpucg-delete-data' ).on( 'click', function () {
 			if ( window.confirm( $( this ).attr( 'data-confirm' ) ) ) {
-				document.getElementById( 'upshift-delete-form' ).submit();
+				document.getElementById( 'qpucg-delete-form' ).submit();
 			}
 		} );
 	} );
@@ -585,13 +585,13 @@
 			return ok;
 		}
 
-		$( '.upshift-copy' ).on( 'click', function () {
+		$( '.qpucg-copy' ).on( 'click', function () {
 			var $button = $( this );
 			var from = $button.attr( 'data-copy-from' );
 			var text = from ? document.getElementById( from ).value : $button.attr( 'data-copy' );
 			var label = $button.text();
 			var done = function () {
-				$( '#upshift-copy-status' ).text( cfg.i18n.copied );
+				$( '#qpucg-copy-status' ).text( cfg.i18n.copied );
 				$button.text( cfg.i18n.copied );
 				setTimeout( function () {
 					$button.text( label );
@@ -613,11 +613,11 @@
 	$( function () {
 		var opened = [];
 
-		$( '#upshift-print' ).on( 'click', function () {
+		$( '#qpucg-print' ).on( 'click', function () {
 			window.print();
 		} );
 		window.addEventListener( 'beforeprint', function () {
-			opened = $( 'details.upshift-item:not([open])' ).prop( 'open', true ).get();
+			opened = $( 'details.qpucg-item:not([open])' ).prop( 'open', true ).get();
 		} );
 		window.addEventListener( 'afterprint', function () {
 			$( opened ).prop( 'open', false );

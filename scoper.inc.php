@@ -3,10 +3,10 @@
  * PHP-Scoper config for the engine (spec §7.3). Dev only, not shipped.
  *
  * Input: engine/vendor (installed by bin/build-engine.php) + engine/composer.json.
- * Output: build/engine-scoped/ with everything under the prefix Upshift\Vendor.
+ * Output: build/engine-scoped/ with everything under the prefix Qpucg\Vendor.
  * Every patcher is documented in docs/DECISIONS.md.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
 // phpcs:ignoreFile -- dev build config (PHP 8.2 only, runs inside php-scoper.phar), not runtime code.
@@ -16,7 +16,7 @@ use Isolated\Symfony\Component\Finder\Finder;
 $engine = __DIR__ . '/engine';
 
 return array(
-	'prefix'            => 'Upshift\\Vendor',
+	'prefix'            => 'Qpucg\\Vendor',
 
 	'finders'           => array(
 		Finder::create()
@@ -63,13 +63,13 @@ return array(
 			$own   = $prefix . '\\PHP_CodeSniffer\\';
 			$tests = $own . 'Tests\\';
 			$map   = array(
-				// Own classes: Upshift\Vendor\PHP_CodeSniffer\X → src/X.php.
+				// Own classes: Qpucg\Vendor\PHP_CodeSniffer\X → src/X.php.
 				"substr(\$className, 0, 16) === 'PHP_CodeSniffer\\\\'"           => 'substr($className, 0, ' . strlen( $own ) . ") === '" . str_replace( '\\', '\\\\', $own ) . "'",
 				"substr(\$className, 0, 22) === 'PHP_CodeSniffer\\Tests\\\\'"    => 'substr($className, 0, ' . strlen( $tests ) . ") === '" . str_replace( '\\', '\\\\', $tests ) . "'",
 				"substr(str_replace('\\\\', \$ds, \$className), 22)"             => "substr(str_replace('\\\\', \$ds, \$className), " . strlen( $tests ) . ')',
 				"substr(str_replace('\\\\', \$ds, \$className), 16)"             => "substr(str_replace('\\\\', \$ds, \$className), " . strlen( $own ) . ')',
 				// External standards (PHPCompatibility*): drop our prefix before matching the
-				// standard's namespace, so Upshift\Vendor\PHPCompatibility\X → <standard>/X.php.
+				// standard's namespace, so Qpucg\Vendor\PHPCompatibility\X → <standard>/X.php.
 				'$className = $className;'                                       => "\$className = strpos(\$className, '" . str_replace( '\\', '\\\\', $prefix ) . "\\\\') === 0 ? substr(\$className, " . ( strlen( $prefix ) + 1 ) . ') : $className;',
 			);
 			foreach ( $map as $search => $replace ) {
@@ -97,7 +97,7 @@ return array(
 							'return $isTTY;',
 							'}',
 						),
-						'// Upshift (DECISIONS D28): no "which tty" / "tty -s" shell calls; fstat() below decides.',
+						'// Qpucg (DECISIONS D28): no "which tty" / "tty -s" shell calls; fstat() below decides.',
 					),
 				),
 				'#/squizlabs/php_codesniffer/src/Config\.php$#'      => array(
@@ -111,19 +111,19 @@ return array(
 							'}',
 							'}',
 						),
-						'// Upshift (DECISIONS D28): no "stty size" shell call; the default width below applies.',
+						'// Qpucg (DECISIONS D28): no "stty size" shell call; the default width below applies.',
 					),
 					// getExecutablePath(): never look a tool up on the PATH.
 					array(
 						array( '$result = exec($cmd, $output, $retVal);' ),
-						'$result = null; $retVal = 1; // Upshift (DECISIONS D28): no "which" / "where" shell call.',
+						'$result = null; $retVal = 1; // Qpucg (DECISIONS D28): no "which" / "where" shell call.',
 					),
 				),
 				'#/squizlabs/php_codesniffer/src/Fixer\.php$#'       => array(
 					// generateDiff() (diff report only): refuse before the temp file and the diff process.
 					array(
 						array( "\$tempName = tempnam(sys_get_temp_dir(), 'phpcs-fixer');" ),
-						"throw new RuntimeException('Upshift (DECISIONS D28): diff output is not available in this build.');",
+						"throw new RuntimeException('Qpucg (DECISIONS D28): diff output is not available in this build.');",
 					),
 					array(
 						array( '$process = proc_open($cmd, $descriptorspec, $pipes, $cwd, null, $options);' ),
@@ -135,14 +135,14 @@ return array(
 					// A non-numeric `continue <expr>` level is unknown: skip that continue statement.
 					array(
 						array( '$level = eval("return ( {$codeString} );");' ),
-						'continue; // Upshift (DECISIONS D43): non-numeric level = unknown, no eval().',
+						'continue; // Qpucg (DECISIONS D43): non-numeric level = unknown, no eval().',
 					),
 				),
 				'#/PHPCSUtils/AbstractSniffs/AbstractArrayDeclarationSniff\.php$#' => array(
 					// getActualArrayKey() (no sniff we load uses it): the key can't be determined.
 					array(
 						array( "\$key = @eval('return ' . \$content . ';' . \\PHP_EOL);" ),
-						'return; // Upshift (DECISIONS D43): no eval().',
+						'return; // Qpucg (DECISIONS D43): no eval().',
 					),
 				),
 			);

@@ -2,14 +2,14 @@
 /**
  * Plugin status, the site answer and the cached summary (docs/UI-v1.md §1, §3; DECISIONS D58).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Report;
+namespace Qpucg\Report;
 
-use Upshift\Install;
-use Upshift\Scan\Categories;
-use Upshift\Scan\Runner;
+use Qpucg\Install;
+use Qpucg\Scan\Categories;
+use Qpucg\Scan\Runner;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Status {
 
-	const OPTION = 'upshift_check_summary';
+	const OPTION = 'qpucg_check_summary';
 
 	const BREAKS = 'break';
 	const HOST   = 'host';
@@ -78,13 +78,13 @@ class Status {
 	public static function label( $status ) {
 		switch ( $status ) {
 			case self::BREAKS:
-				return __( 'Will break', 'upshift' );
+				return __( 'Will break', 'qasim-php-upgrade-check-guard' );
 			case self::HOST:
-				return __( 'Ask your host', 'upshift' );
+				return __( 'Ask your host', 'qasim-php-upgrade-check-guard' );
 			case self::LATER:
-				return __( 'Works, fix later', 'upshift' );
+				return __( 'Works, fix later', 'qasim-php-upgrade-check-guard' );
 			default:
-				return __( 'Ready', 'upshift' );
+				return __( 'Ready', 'qasim-php-upgrade-check-guard' );
 		}
 	}
 
@@ -189,7 +189,7 @@ class Status {
 	}
 
 	/**
-	 * What is installed and active right now, Upshift itself excluded.
+	 * What is installed and active right now, Qpucg itself excluded.
 	 *
 	 * @return array plugins (id => version), themes (stylesheet => version), active (sorted list).
 	 */
@@ -197,7 +197,7 @@ class Status {
 		if ( ! function_exists( 'get_plugins' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
-		$own     = plugin_basename( UPSHIFT_FILE );
+		$own     = plugin_basename( QPUCG_FILE );
 		$plugins = array();
 		foreach ( get_plugins() as $file => $data ) {
 			if ( $own !== $file ) {
@@ -288,7 +288,7 @@ class Status {
 			return array(
 				'level'    => 'orange',
 				'status'   => self::HOST,
-				'sentence' => __( 'Ask your host one question before you upgrade.', 'upshift' ),
+				'sentence' => __( 'Ask your host one question before you upgrade.', 'qasim-php-upgrade-check-guard' ),
 			);
 		}
 		if ( $counts[ self::LATER ]['all'] > 0 ) {
@@ -302,7 +302,7 @@ class Status {
 			'level'    => 'green',
 			'status'   => self::READY,
 			/* translators: %s: target PHP version. */
-			'sentence' => sprintf( __( 'Your site looks ready for PHP %s.', 'upshift' ), $target ),
+			'sentence' => sprintf( __( 'Your site looks ready for PHP %s.', 'qasim-php-upgrade-check-guard' ), $target ),
 		);
 	}
 
@@ -318,14 +318,14 @@ class Status {
 		$number = number_format_i18n( $n );
 		if ( 0 === (int) $count['theme'] ) {
 			/* translators: 1: number of plugins, 2: target PHP version. */
-			return sprintf( _n( '%1$s plugin will likely break on PHP %2$s. Fix it before you upgrade.', '%1$s plugins will likely break on PHP %2$s. Fix them before you upgrade.', $n, 'upshift' ), $number, $target );
+			return sprintf( _n( '%1$s plugin will likely break on PHP %2$s. Fix it before you upgrade.', '%1$s plugins will likely break on PHP %2$s. Fix them before you upgrade.', $n, 'qasim-php-upgrade-check-guard' ), $number, $target );
 		}
 		if ( 0 === (int) $count['plugin'] ) {
 			/* translators: 1: number of themes, 2: target PHP version. */
-			return sprintf( _n( '%1$s theme will likely break on PHP %2$s. Fix it before you upgrade.', '%1$s themes will likely break on PHP %2$s. Fix them before you upgrade.', $n, 'upshift' ), $number, $target );
+			return sprintf( _n( '%1$s theme will likely break on PHP %2$s. Fix it before you upgrade.', '%1$s themes will likely break on PHP %2$s. Fix them before you upgrade.', $n, 'qasim-php-upgrade-check-guard' ), $number, $target );
 		}
 		/* translators: 1: number of plugins and themes together, 2: target PHP version. */
-		return sprintf( _n( '%1$s plugin or theme will likely break on PHP %2$s. Fix it before you upgrade.', '%1$s plugins and themes will likely break on PHP %2$s. Fix them before you upgrade.', $n, 'upshift' ), $number, $target );
+		return sprintf( _n( '%1$s plugin or theme will likely break on PHP %2$s. Fix it before you upgrade.', '%1$s plugins and themes will likely break on PHP %2$s. Fix them before you upgrade.', $n, 'qasim-php-upgrade-check-guard' ), $number, $target );
 	}
 
 	/**
@@ -340,13 +340,13 @@ class Status {
 		$number = number_format_i18n( $n );
 		if ( 0 === (int) $count['theme'] ) {
 			/* translators: 1: target PHP version, 2: number of plugins. */
-			return sprintf( _n( 'Your site should work on PHP %1$s. %2$s plugin shows warnings you can fix later.', 'Your site should work on PHP %1$s. %2$s plugins show warnings you can fix later.', $n, 'upshift' ), $target, $number );
+			return sprintf( _n( 'Your site should work on PHP %1$s. %2$s plugin shows warnings you can fix later.', 'Your site should work on PHP %1$s. %2$s plugins show warnings you can fix later.', $n, 'qasim-php-upgrade-check-guard' ), $target, $number );
 		}
 		if ( 0 === (int) $count['plugin'] ) {
 			/* translators: 1: target PHP version, 2: number of themes. */
-			return sprintf( _n( 'Your site should work on PHP %1$s. %2$s theme shows warnings you can fix later.', 'Your site should work on PHP %1$s. %2$s themes show warnings you can fix later.', $n, 'upshift' ), $target, $number );
+			return sprintf( _n( 'Your site should work on PHP %1$s. %2$s theme shows warnings you can fix later.', 'Your site should work on PHP %1$s. %2$s themes show warnings you can fix later.', $n, 'qasim-php-upgrade-check-guard' ), $target, $number );
 		}
 		/* translators: 1: target PHP version, 2: number of plugins and themes together. */
-		return sprintf( _n( 'Your site should work on PHP %1$s. %2$s plugin or theme shows warnings you can fix later.', 'Your site should work on PHP %1$s. %2$s plugins and themes show warnings you can fix later.', $n, 'upshift' ), $target, $number );
+		return sprintf( _n( 'Your site should work on PHP %1$s. %2$s plugin or theme shows warnings you can fix later.', 'Your site should work on PHP %1$s. %2$s plugins and themes show warnings you can fix later.', $n, 'qasim-php-upgrade-check-guard' ), $target, $number );
 	}
 }

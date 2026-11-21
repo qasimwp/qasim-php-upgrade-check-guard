@@ -1,16 +1,16 @@
 <?php
 /**
- * Upshift's database size: the number shown in Settings, the 50 MB cap and the table rebuild (DECISIONS D63).
+ * Qpucg's database size: the number shown in Settings, the 50 MB cap and the table rebuild (DECISIONS D63).
  *
  * Runs from WP-Cron and admin pages only, never on a visitor request.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Usage;
+namespace Qpucg\Usage;
 
-use Upshift\Install;
-use Upshift\Scan\Runner;
+use Qpucg\Install;
+use Qpucg\Scan\Runner;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -25,11 +25,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Storage {
 
 	const MB     = 1048576;
-	const CAP    = 52428800; // 50 MB: the most Upshift may use, including a rollup's staging rows.
+	const CAP    = 52428800; // 50 MB: the most Qpucg may use, including a rollup's staging rows.
 	const TARGET = 42991616; // 41 MB when idle: a rollup's staging rows (about 9 MB on the largest site seen) still fit under the cap.
 
-	const HOOK             = 'upshift_storage';
-	const OPTION           = 'upshift_storage_state';
+	const HOOK             = 'qpucg_storage';
+	const OPTION           = 'qpucg_storage_state';
 	const QUIET_HOUR       = 3;
 	const REBUILD_MIN_FREE = 10485760;
 	const REBUILD_DAILY    = 72000; // 20 h.
@@ -43,8 +43,8 @@ class Storage {
 	const LOCK_SECONDS     = 900; // The rollup lock is held this long: the nightly budget plus a rebuild started at its end (DECISIONS D66).
 
 	/**
-	 * Fresh size of Upshift's own tables and options, and nothing else: the exact tables of Install::tables() and the
-	 * options named upshift_*. Data + index, without free space (DECISIONS D63).
+	 * Fresh size of Qpucg's own tables and options, and nothing else: the exact tables of Install::tables() and the
+	 * options named qpucg_*. Data + index, without free space (DECISIONS D63).
 	 *
 	 * @return array|null total (bytes), options (bytes), tables (name => data, index, free, rows, engine); null when
 	 *                    information_schema can't be read.
@@ -82,7 +82,7 @@ class Storage {
 			);
 			$total           += (int) $row['d'] + (int) $row['i'];
 		}
-		$like    = $wpdb->esc_like( 'upshift_' ) . '%';
+		$like    = $wpdb->esc_like( 'qpucg_' ) . '%';
 		$options = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(LENGTH(option_name) + LENGTH(option_value)), 0) FROM {$wpdb->options} WHERE option_name LIKE %s", $like ) );
 
 		return array(
@@ -133,7 +133,7 @@ class Storage {
 	 * @param bool $nightly Whether this is the nightly run.
 	 */
 	private static function run( $nightly ) {
-		if ( UPSHIFT_DB_VERSION !== get_option( 'upshift_db_version' ) ) {
+		if ( QPUCG_DB_VERSION !== get_option( 'qpucg_db_version' ) ) {
 			return;
 		}
 		$deleted = Rollup::guarded(

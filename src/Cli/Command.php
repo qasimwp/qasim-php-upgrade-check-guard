@@ -2,20 +2,20 @@
 /**
  * WP-CLI commands (spec §7.10). Registered only when WP_CLI is defined.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Cli;
+namespace Qpucg\Cli;
 
-use Upshift\Engine\Engine;
-use Upshift\Install;
-use Upshift\Report\Join;
-use Upshift\Scan\Categories;
-use Upshift\Scan\Runner;
-use Upshift\Settings;
-use Upshift\Usage\Bench;
-use Upshift\Usage\Recorder;
-use Upshift\Usage\Rollup;
+use Qpucg\Engine\Engine;
+use Qpucg\Install;
+use Qpucg\Report\Join;
+use Qpucg\Scan\Categories;
+use Qpucg\Scan\Runner;
+use Qpucg\Settings;
+use Qpucg\Usage\Bench;
+use Qpucg\Usage\Recorder;
+use Qpucg\Usage\Rollup;
 use WP_CLI;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -247,7 +247,7 @@ class Command {
 		if ( is_wp_error( $scan_id ) ) {
 			$message = $scan_id->get_error_message();
 			if ( 'running' === $scan_id->get_error_code() ) {
-				$message .= ' (Tools → Upshift → Scan has Resume and Cancel.)';
+				$message .= ' (Tools → PHP Upgrade has Resume and Cancel.)';
 			}
 			WP_CLI::error( $message );
 		}
@@ -338,7 +338,7 @@ class Command {
 			WP_CLI::warning( sprintf( 'Engine error: %s: %s', $error['path_key'], $error['note'] ) );
 		}
 		if ( 'lock' === $result['stopped'] ) {
-			WP_CLI::error( sprintf( 'Scan #%d: another request took over the scan lock (e.g. Resume in Tools → Upshift → Scan), so this process stopped; the scan continues there.', $scan_id ) );
+			WP_CLI::error( sprintf( 'Scan #%d: another request took over the scan lock (e.g. Resume in Tools → PHP Upgrade), so this process stopped; the scan continues there.', $scan_id ) );
 		}
 		if ( 'done' !== $scan['status'] ) {
 			WP_CLI::error( sprintf( 'Scan #%d ended with status %s (%s). %s', $scan_id, $scan['status'], $result['stopped'], (string) $scan['error'] ) );
@@ -542,7 +542,7 @@ class Command {
 	 * a non-required case that fails is listed as KNOWN-GAP.
 	 */
 	public function selftest() {
-		$dir  = UPSHIFT_DIR . '/tests/fixtures';
+		$dir  = QPUCG_DIR . '/tests/fixtures';
 		$json = is_readable( $dir . '/expected.json' ) ? file_get_contents( $dir . '/expected.json' ) : false; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local file.
 		$spec = false === $json ? null : json_decode( $json, true );
 		if ( ! is_array( $spec ) || empty( $spec['cases'] ) || ! is_array( $spec['cases'] ) ) {

@@ -2,8 +2,8 @@
 # This file is distributed under the GPL-3.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Upshift - PHP Upgrade Check & Guard 1.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/upshift\n"
+"Project-Id-Version: Qasim PHP Upgrade Check & Guard 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/qasim-php-upgrade-check-guard\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -12,26 +12,26 @@ msgstr ""
 "POT-Creation-Date: 2026-11-16T10:33:45+01:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
-"X-Domain: upshift\n"
+"X-Domain: qasim-php-upgrade-check-guard\n"
 
 #. Plugin Name of the plugin
-#: upshift.php
-msgid "Upshift - PHP Upgrade Check & Guard"
+#: qasim-php-upgrade-check-guard.php
+msgid "Qasim PHP Upgrade Check & Guard"
 msgstr ""
 
 #. Description of the plugin
-#: upshift.php
+#: qasim-php-upgrade-check-guard.php
 msgid "Checks your plugins and themes for code that breaks on a newer PHP version. Optional: see which of that code really runs on your site, and get warned when a plugin starts failing after a PHP change."
 msgstr ""
 
 #. Author of the plugin
-#: upshift.php
+#: qasim-php-upgrade-check-guard.php
 #: src/Admin/HelpTab.php:79
 msgid "Muhammad Qasim"
 msgstr ""
 
 #. Author URI of the plugin
-#: upshift.php
+#: qasim-php-upgrade-check-guard.php
 msgid "https://profiles.wordpress.org/qasimwp/"
 msgstr ""
 
@@ -181,7 +181,7 @@ msgid "Back to the results"
 msgstr ""
 
 #: src/Admin/CheckTab.php:265
-msgid "Upshift reads your plugins and themes and tells you what a newer PHP version would break."
+msgid "Qasim PHP Upgrade Check & Guard reads your plugins and themes and tells you what a newer PHP version would break."
 msgstr ""
 
 #: src/Admin/CheckTab.php:266
@@ -385,11 +385,11 @@ msgid "There is no finished check yet."
 msgstr ""
 
 #: src/Admin/HelpTab.php:45
-msgid "What Upshift does"
+msgid "What Qasim PHP Upgrade Check & Guard does"
 msgstr ""
 
 #: src/Admin/HelpTab.php:46
-msgid "Upshift reads the code of your plugins and themes and tells you what would break on a newer PHP version. It can also learn which plugins your site really uses, and tell you if a plugin starts crashing after your host changes PHP."
+msgid "Qasim PHP Upgrade Check & Guard reads the code of your plugins and themes and tells you what would break on a newer PHP version. It can also learn which plugins your site really uses, and tell you if a plugin starts crashing after your host changes PHP."
 msgstr ""
 
 #: src/Admin/HelpTab.php:48
@@ -413,7 +413,7 @@ msgid "Questions"
 msgstr ""
 
 #: src/Admin/HelpTab.php:56
-msgid "Does Upshift send my data anywhere?"
+msgid "Does Qasim PHP Upgrade Check & Guard send my data anywhere?"
 msgstr ""
 
 #: src/Admin/HelpTab.php:57
@@ -425,7 +425,7 @@ msgid "Will it slow my site?"
 msgstr ""
 
 #: src/Admin/HelpTab.php:59
-msgid "Upshift is built to stay light. By default it looks at only some page views and stores very little."
+msgid "Qasim PHP Upgrade Check & Guard is built to stay light. By default it looks at only some page views and stores very little."
 msgstr ""
 
 #: src/Admin/HelpTab.php:60
@@ -433,7 +433,7 @@ msgid "What does 'not seen running' mean?"
 msgstr ""
 
 #: src/Admin/HelpTab.php:61
-msgid "Upshift didn't see that code run on the page views it looked at, but it may still run at other times."
+msgid "Qasim PHP Upgrade Check & Guard didn't see that code run on the page views it looked at, but it may still run at other times."
 msgstr ""
 
 #: src/Admin/HelpTab.php:64
@@ -458,7 +458,7 @@ msgid "WordPress developer"
 msgstr ""
 
 #: src/Admin/HelpTab.php:82
-msgid "I've been building WordPress plugins, themes and WooCommerce integrations for over 10 years. I made Upshift because a PHP upgrade shouldn't be a guessing game for site owners."
+msgid "I've been building WordPress plugins, themes and WooCommerce integrations for over 10 years. I made Qasim PHP Upgrade Check & Guard because a PHP upgrade shouldn't be a guessing game for site owners."
 msgstr ""
 
 #: src/Admin/HelpTab.php:83
@@ -476,7 +476,7 @@ msgstr ""
 #. translators: %s: plugin version.
 #: src/Admin/HelpTab.php:87
 #, php-format
-msgid "Upshift version %s"
+msgid "Qasim PHP Upgrade Check & Guard version %s"
 msgstr ""
 
 #. translators: 1: target PHP version, 2: result, e.g. "Ready" or "Will break".
@@ -495,19 +495,19 @@ msgid "Your plugins and PHP version"
 msgstr ""
 
 #: src/Admin/Integrations.php:131
-msgid "Upshift Smart results"
+msgid "Qasim PHP Upgrade Check & Guard Smart results"
 msgstr ""
 
 #: src/Admin/Integrations.php:161
-msgid "Upshift is recording normally, or Smart results is off."
+msgid "Qasim PHP Upgrade Check & Guard is recording normally, or Smart results is off."
 msgstr ""
 
 #: src/Admin/Integrations.php:165
-msgid "Upshift Smart results is working"
+msgid "Qasim PHP Upgrade Check & Guard Smart results is working"
 msgstr ""
 
 #: src/Admin/Integrations.php:165
-msgid "Upshift Smart results needs a look"
+msgid "Qasim PHP Upgrade Check & Guard Smart results needs a look"
 msgstr ""
 
 #: src/Admin/Integrations.php:168
@@ -532,7 +532,7 @@ msgstr ""
 #. translators: %s: link to the Tools → PHP Upgrade page.
 #: src/Admin/Integrations.php:226
 #, php-format
-msgid "Upshift is ready. Open %s to check your site for PHP upgrade problems."
+msgid "Qasim PHP Upgrade Check & Guard is ready. Open %s to check your site for PHP upgrade problems."
 msgstr ""
 
 #: src/Admin/Page.php:43
@@ -573,11 +573,11 @@ msgid "You do not have permission to access this page."
 msgstr ""
 
 #: src/Admin/Page.php:153
-msgid "Upshift – PHP Upgrade"
+msgid "Qasim PHP Upgrade Check & Guard – PHP Upgrade"
 msgstr ""
 
 #: src/Admin/Page.php:154
-msgid "Upshift sections"
+msgid "Qasim PHP Upgrade Check & Guard sections"
 msgstr ""
 
 #: src/Admin/Page.php:229
@@ -665,7 +665,7 @@ msgstr ""
 #. translators: 1: plugin version, 2: build id.
 #: src/Admin/Page.php:272
 #, php-format
-msgid "Upshift %1$s · build %2$s"
+msgid "Qasim PHP Upgrade Check & Guard %1$s · build %2$s"
 msgstr ""
 
 #: src/Admin/Page.php:285
@@ -729,7 +729,7 @@ msgid "Reset usage data"
 msgstr ""
 
 #: src/Admin/Page.php:335
-msgid "This button cannot work: the page settings for Upshift's script (upshiftScan) did not load. A caching or script optimization plugin may have removed them; exclude this admin page from it and reload."
+msgid "This button cannot work: the page settings for Qasim PHP Upgrade Check & Guard's script (qpucgScan) did not load. A caching or script optimization plugin may have removed them; exclude this admin page from it and reload."
 msgstr ""
 
 #: src/Admin/Page.php:355
@@ -1021,7 +1021,7 @@ msgid "A check is running. Stop it first, then delete the data."
 msgstr ""
 
 #: src/Admin/SettingsTab.php:77
-msgid "Upshift looks at your plugins' code, not at your visitors or customers. Nothing leaves your site except the crash email, if you turn it on."
+msgid "Qasim PHP Upgrade Check & Guard looks at your plugins' code, not at your visitors or customers. Nothing leaves your site except the crash email, if you turn it on."
 msgstr ""
 
 #: src/Admin/SettingsTab.php:87
@@ -1058,7 +1058,7 @@ msgstr ""
 
 #: src/Admin/SettingsTab.php:139
 #: src/Admin/WatchTab.php:84
-msgid "Tells you if any plugin starts crashing after your host changes PHP. Turn it on now, so Upshift knows how your site behaves before the change."
+msgid "Tells you if any plugin starts crashing after your host changes PHP. Turn it on now, so Qasim PHP Upgrade Check & Guard knows how your site behaves before the change."
 msgstr ""
 
 #: src/Admin/SettingsTab.php:145
@@ -1070,7 +1070,7 @@ msgid "Sends at most one email a day to your site's admin address if a plugin st
 msgstr ""
 
 #: src/Admin/SettingsTab.php:151
-msgid "Delete all data when Upshift is uninstalled"
+msgid "Delete all data when Qasim PHP Upgrade Check & Guard is uninstalled"
 msgstr ""
 
 #: src/Admin/SettingsTab.php:152
@@ -1086,7 +1086,7 @@ msgid "How many page views to look at"
 msgstr ""
 
 #: src/Admin/SettingsTab.php:163
-msgid "Looking at fewer page views keeps Upshift light on busy sites. Nothing leaves your site."
+msgid "Looking at fewer page views keeps Qasim PHP Upgrade Check & Guard light on busy sites. Nothing leaves your site."
 msgstr ""
 
 #: src/Admin/SettingsTab.php:165
@@ -1095,7 +1095,7 @@ msgid "Delete collected data"
 msgstr ""
 
 #: src/Admin/SettingsTab.php:167
-msgid "Upshift keeps its collected data under 50 MB. Your latest check results stay until you check again."
+msgid "Qasim PHP Upgrade Check & Guard keeps its collected data under 50 MB. Your latest check results stay until you check again."
 msgstr ""
 
 #: src/Admin/SettingsTab.php:168
@@ -1109,21 +1109,21 @@ msgstr ""
 #. translators: %s: size in MB.
 #: src/Admin/SettingsTab.php:193
 #, php-format
-msgid "Upshift uses %s MB of your database."
+msgid "Qasim PHP Upgrade Check & Guard uses %s MB of your database."
 msgstr ""
 
 #: src/Admin/SettingsTab.php:195
-msgid "This is normal for a large site. Upshift removes collected data older than 30 days automatically."
+msgid "This is normal for a large site. Qasim PHP Upgrade Check & Guard removes collected data older than 30 days automatically."
 msgstr ""
 
 #. translators: %s: size in MB.
 #: src/Admin/SettingsTab.php:206
 #, php-format
-msgid "Upshift uses about %s MB of your database."
+msgid "Qasim PHP Upgrade Check & Guard uses about %s MB of your database."
 msgstr ""
 
 #: src/Admin/WatchTab.php:60
-msgid "Upgrade guard started. Upshift compares the next 7 days with the 7 days before."
+msgid "Upgrade guard started. Qasim PHP Upgrade Check & Guard compares the next 7 days with the 7 days before."
 msgstr ""
 
 #: src/Admin/WatchTab.php:62
@@ -1159,7 +1159,7 @@ msgid "Start comparing now"
 msgstr ""
 
 #: src/Admin/WatchTab.php:126
-msgid "Stop comparing? Upshift keeps watching and starts a new comparison when your PHP version changes."
+msgid "Stop comparing? Qasim PHP Upgrade Check & Guard keeps watching and starts a new comparison when your PHP version changes."
 msgstr ""
 
 #: src/Admin/WatchTab.php:130
@@ -1175,7 +1175,7 @@ msgid "Use this only if your host changed PHP recently."
 msgstr ""
 
 #: src/Admin/WatchTab.php:155
-msgid "Upgrade guard is on. Nothing more to do. When your host changes PHP, Upshift starts comparing automatically for 7 days."
+msgid "Upgrade guard is on. Nothing more to do. When your host changes PHP, Qasim PHP Upgrade Check & Guard starts comparing automatically for 7 days."
 msgstr ""
 
 #: src/Admin/WatchTab.php:158
@@ -1237,14 +1237,14 @@ msgid "Last seen"
 msgstr ""
 
 #: src/Admin/WatchTab.php:316
-msgid "Upshift didn't have time to learn how your site normally behaves before this. A few warnings listed as new may have been there before."
+msgid "Qasim PHP Upgrade Check & Guard didn't have time to learn how your site normally behaves before this. A few warnings listed as new may have been there before."
 msgstr ""
 
 #. translators: %s: number of days.
 #: src/Admin/WatchTab.php:319
 #, php-format
-msgid "Upshift had only %s day to learn how your site normally behaves. A few warnings listed as new may have been there before."
-msgid_plural "Upshift had only %s days to learn how your site normally behaves. A few warnings listed as new may have been there before."
+msgid "Qasim PHP Upgrade Check & Guard had only %s day to learn how your site normally behaves. A few warnings listed as new may have been there before."
+msgid_plural "Qasim PHP Upgrade Check & Guard had only %s days to learn how your site normally behaves. A few warnings listed as new may have been there before."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -1253,15 +1253,15 @@ msgid "Upgrade guard paused itself for a few minutes after a database error. It 
 msgstr ""
 
 #: src/Admin/WatchTab.php:326
-msgid "So many different warnings appeared today that Upshift stopped counting new ones until tomorrow. Crashes are still counted."
+msgid "So many different warnings appeared today that Qasim PHP Upgrade Check & Guard stopped counting new ones until tomorrow. Crashes are still counted."
 msgstr ""
 
 #: src/Admin/WatchTab.php:339
-msgid "How Upshift counts problems"
+msgid "How Qasim PHP Upgrade Check & Guard counts problems"
 msgstr ""
 
 #: src/Admin/WatchTab.php:350
-msgid "Upshift counts every crash."
+msgid "Qasim PHP Upgrade Check & Guard counts every crash."
 msgstr ""
 
 #. translators: %s: a number, e.g. 4 in "1 in 4 page views".
@@ -1271,7 +1271,7 @@ msgid "To keep your site fast, it looks at about 1 in %s page views for smaller 
 msgstr ""
 
 #: src/Admin/WatchTab.php:355
-msgid "Must-use plugins load before Upshift, so their crashes aren't included."
+msgid "Must-use plugins load before Qasim PHP Upgrade Check & Guard, so their crashes aren't included."
 msgstr ""
 
 #. translators: %s: PHP version string as given.
@@ -1304,7 +1304,7 @@ msgid "The scan engine (vendor-prefixed folder) is missing. Reinstall the plugin
 msgstr ""
 
 #: src/Install.php:429
-msgid "Upshift was updated while this scan was running. Please start a new scan."
+msgid "Qasim PHP Upgrade Check & Guard was updated while this scan was running. Please start a new scan."
 msgstr ""
 
 #: src/Report/Check.php:212
@@ -2333,14 +2333,14 @@ msgid "request died while scanning (memory/time limit)"
 msgstr ""
 
 #: src/Usage/Health.php:94
-msgid "Upshift's hourly job has not run for more than a day, so Smart results is not being updated. WordPress scheduled tasks (WP-Cron) may be off on this site. Your host can check this."
+msgid "Qasim PHP Upgrade Check & Guard's hourly job has not run for more than a day, so Smart results is not being updated. WordPress scheduled tasks (WP-Cron) may be off on this site. Your host can check this."
 msgstr ""
 
 #. translators: %s: number of page views.
 #: src/Usage/Health.php:102
 #, php-format
-msgid "Upshift could not save %s page view because of a database problem. Recording continues by itself."
-msgid_plural "Upshift could not save %s page views because of a database problem. Recording continues by itself."
+msgid "Qasim PHP Upgrade Check & Guard could not save %s page view because of a database problem. Recording continues by itself."
+msgid_plural "Qasim PHP Upgrade Check & Guard could not save %s page views because of a database problem. Recording continues by itself."
 msgstr[0] ""
 msgstr[1] ""
 

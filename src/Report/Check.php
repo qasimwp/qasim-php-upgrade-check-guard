@@ -2,17 +2,17 @@
 /**
  * Everything the Check tab shows, in plain words (docs/UI-v1.md §1, §3; DECISIONS D58).
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Report;
+namespace Qpucg\Report;
 
-use Upshift\Install;
-use Upshift\Scan\Categories;
-use Upshift\Scan\Runner;
-use Upshift\Settings;
-use Upshift\Usage\Recorder;
-use Upshift\Usage\Rollup;
+use Qpucg\Install;
+use Qpucg\Scan\Categories;
+use Qpucg\Scan\Runner;
+use Qpucg\Settings;
+use Qpucg\Usage\Recorder;
+use Qpucg\Usage\Rollup;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -209,10 +209,10 @@ class Check {
 		if ( isset( $list[ $id ] ) ) {
 			$item = array_merge( $item, $list[ $id ] );
 		} elseif ( 'mu-plugins' === $id ) {
-			$item['name'] = __( 'Must-use plugins', 'upshift' );
+			$item['name'] = __( 'Must-use plugins', 'qasim-php-upgrade-check-guard' );
 		} elseif ( 0 === strpos( $id, 'dropin:' ) ) {
 			/* translators: %s: file name, e.g. object-cache.php. */
-			$item['name'] = sprintf( __( 'Special WordPress file (%s)', 'upshift' ), substr( $id, 7 ) . '.php' );
+			$item['name'] = sprintf( __( 'Special WordPress file (%s)', 'qasim-php-upgrade-check-guard' ), substr( $id, 7 ) . '.php' );
 		} elseif ( false !== strpos( $id, ':' ) ) {
 			$item['name'] = substr( $id, strpos( $id, ':' ) + 1 );
 		}
@@ -355,7 +355,7 @@ class Check {
 	 * @return string
 	 */
 	public static function note_label() {
-		return __( "Doesn't affect this upgrade", 'upshift' );
+		return __( "Doesn't affect this upgrade", 'qasim-php-upgrade-check-guard' );
 	}
 
 	/**
@@ -371,7 +371,7 @@ class Check {
 		}
 		if ( ! empty( $row['baseline'] ) ) {
 			/* translators: %s: current PHP version. */
-			return sprintf( __( 'Already like this on PHP %s, so the upgrade changes nothing.', 'upshift' ), $from );
+			return sprintf( __( 'Already like this on PHP %s, so the upgrade changes nothing.', 'qasim-php-upgrade-check-guard' ), $from );
 		}
 		return Explain::impact( $row['category'], $row['severity'] );
 	}
@@ -395,23 +395,23 @@ class Check {
 		if ( ! $active ) {
 			$out['rank']  = 6;
 			$out['kind']  = 'inactive';
-			$out['text']  = __( 'Not active', 'upshift' );
+			$out['text']  = __( 'Not active', 'qasim-php-upgrade-check-guard' );
 			$out['table'] = $out['text'];
-			$out['chips'] = array( array( 'dashicons-hidden', __( 'not active', 'upshift' ) ) );
+			$out['chips'] = array( array( 'dashicons-hidden', __( 'not active', 'qasim-php-upgrade-check-guard' ) ) );
 			return $out;
 		}
 		if ( $days <= 0 ) {
 			// The CSV cell is never empty (the page shows no chip).
-			$out['table'] = __( 'Not known yet: Smart results has no data', 'upshift' );
+			$out['table'] = __( 'Not known yet: Smart results has no data', 'qasim-php-upgrade-check-guard' );
 			return $out;
 		}
 		if ( $usage['rows'] <= 0 ) {
 			$out['kind'] = 'never';
 			/* translators: %s: number of days. */
-			$out['text']  = sprintf( _n( 'Not seen running in the last %s day', 'Not seen running in the last %s days', $days, 'upshift' ), number_format_i18n( $days ) );
+			$out['text']  = sprintf( _n( 'Not seen running in the last %s day', 'Not seen running in the last %s days', $days, 'qasim-php-upgrade-check-guard' ), number_format_i18n( $days ) );
 			$out['table'] = $out['text'];
 			/* translators: %s: number of days. */
-			$out['chips'] = array( array( 'dashicons-hidden', sprintf( _n( 'not seen running in the last %s day', 'not seen running in the last %s days', $days, 'upshift' ), number_format_i18n( $days ) ) ) );
+			$out['chips'] = array( array( 'dashicons-hidden', sprintf( _n( 'not seen running in the last %s day', 'not seen running in the last %s days', $days, 'qasim-php-upgrade-check-guard' ), number_format_i18n( $days ) ) ) );
 			return $out;
 		}
 
@@ -420,9 +420,9 @@ class Check {
 			// Seen only in WP-CLI commands (for example a plugin's own "wp" command files).
 			$out['rank']  = 4;
 			$out['kind']  = 'cli';
-			$out['text']  = __( 'Only when run from the command line', 'upshift' );
+			$out['text']  = __( 'Only when run from the command line', 'qasim-php-upgrade-check-guard' );
 			$out['table'] = $out['text'];
-			$out['chips'] = array( array( 'dashicons-editor-code', __( 'command line only', 'upshift' ) ) );
+			$out['chips'] = array( array( 'dashicons-editor-code', __( 'command line only', 'qasim-php-upgrade-check-guard' ) ) );
 			return $out;
 		}
 		$shop = Recorder::WC_SHOP | Recorder::WC_PRODUCT | Recorder::WC_ACCOUNT;
@@ -440,9 +440,9 @@ class Check {
 
 		if ( $usage['whole'] ) {
 			$out['kind']  = 'every';
-			$out['text']  = __( 'Runs on every page', 'upshift' );
-			$out['table'] = __( 'every page', 'upshift' );
-			$out['chips'] = array( array( 'dashicons-admin-site-alt3', __( 'every page', 'upshift' ) ) );
+			$out['text']  = __( 'Runs on every page', 'qasim-php-upgrade-check-guard' );
+			$out['table'] = __( 'every page', 'qasim-php-upgrade-check-guard' );
+			$out['chips'] = array( array( 'dashicons-admin-site-alt3', __( 'every page', 'qasim-php-upgrade-check-guard' ) ) );
 			if ( $contexts & Recorder::WC_CHECKOUT ) {
 				$out['kind'] = 'checkout';
 			}
@@ -463,9 +463,9 @@ class Check {
 			// Seen in every kind of page, under 95% in at least one: the full list stays in Technical details ('list').
 			$out['kind']   = 'almost';
 			$out['almost'] = true;
-			$out['text']   = __( 'Runs on almost every page', 'upshift' );
-			$out['table']  = __( 'almost every page', 'upshift' );
-			$out['chips']  = array( array( 'dashicons-admin-site-alt3', __( 'almost every page', 'upshift' ) ) );
+			$out['text']   = __( 'Runs on almost every page', 'qasim-php-upgrade-check-guard' );
+			$out['table']  = __( 'almost every page', 'qasim-php-upgrade-check-guard' );
+			$out['chips']  = array( array( 'dashicons-admin-site-alt3', __( 'almost every page', 'qasim-php-upgrade-check-guard' ) ) );
 			if ( $contexts & Recorder::WC_CHECKOUT ) {
 				$out['kind'] = 'checkout';
 			}
@@ -475,7 +475,7 @@ class Check {
 		$out['chips'] = $chips;
 		$out['kind']  = $contexts & Recorder::WC_CHECKOUT ? 'checkout' : 'some';
 		/* translators: %s: list of places, e.g. "checkout, cart and admin". */
-		$out['text']  = sprintf( __( 'Runs on: %s', 'upshift' ), $out['list'] );
+		$out['text']  = sprintf( __( 'Runs on: %s', 'qasim-php-upgrade-check-guard' ), $out['list'] );
 		$out['table'] = $out['list'];
 		return $out;
 	}
@@ -525,17 +525,17 @@ class Check {
 	 */
 	public static function chip_list() {
 		return array(
-			Recorder::WC_CHECKOUT => array( 'dashicons-cart', __( 'checkout', 'upshift' ) ),
-			Recorder::WC_CART     => array( 'dashicons-cart', __( 'cart', 'upshift' ) ),
-			Recorder::WC_SHOP     => array( 'dashicons-store', __( 'shop', 'upshift' ) ),
-			Recorder::WC_PRODUCT  => array( 'dashicons-store', __( 'product pages', 'upshift' ) ),
-			Recorder::WC_ACCOUNT  => array( 'dashicons-admin-users', __( 'customer account', 'upshift' ) ),
-			Recorder::FRONT       => array( 'dashicons-admin-site-alt3', __( 'site pages', 'upshift' ) ),
-			Recorder::ADMIN       => array( 'dashicons-dashboard', __( 'admin', 'upshift' ) ),
-			Recorder::LOGIN       => array( 'dashicons-lock', __( 'login', 'upshift' ) ),
-			Recorder::CRON        => array( 'dashicons-clock', __( 'scheduled tasks', 'upshift' ) ),
-			Recorder::AJAX        => array( 'dashicons-update', __( 'background requests', 'upshift' ) ),
-			Recorder::REST        => array( 'dashicons-update', __( 'connected apps', 'upshift' ) ),
+			Recorder::WC_CHECKOUT => array( 'dashicons-cart', __( 'checkout', 'qasim-php-upgrade-check-guard' ) ),
+			Recorder::WC_CART     => array( 'dashicons-cart', __( 'cart', 'qasim-php-upgrade-check-guard' ) ),
+			Recorder::WC_SHOP     => array( 'dashicons-store', __( 'shop', 'qasim-php-upgrade-check-guard' ) ),
+			Recorder::WC_PRODUCT  => array( 'dashicons-store', __( 'product pages', 'qasim-php-upgrade-check-guard' ) ),
+			Recorder::WC_ACCOUNT  => array( 'dashicons-admin-users', __( 'customer account', 'qasim-php-upgrade-check-guard' ) ),
+			Recorder::FRONT       => array( 'dashicons-admin-site-alt3', __( 'site pages', 'qasim-php-upgrade-check-guard' ) ),
+			Recorder::ADMIN       => array( 'dashicons-dashboard', __( 'admin', 'qasim-php-upgrade-check-guard' ) ),
+			Recorder::LOGIN       => array( 'dashicons-lock', __( 'login', 'qasim-php-upgrade-check-guard' ) ),
+			Recorder::CRON        => array( 'dashicons-clock', __( 'scheduled tasks', 'qasim-php-upgrade-check-guard' ) ),
+			Recorder::AJAX        => array( 'dashicons-update', __( 'background requests', 'qasim-php-upgrade-check-guard' ) ),
+			Recorder::REST        => array( 'dashicons-update', __( 'connected apps', 'qasim-php-upgrade-check-guard' ) ),
 		);
 	}
 
@@ -582,7 +582,7 @@ class Check {
 			'status'    => $item['status'],
 			'action'    => '',
 			'reason'    => '',
-			'todo'      => __( 'Nothing to do.', 'upshift' ),
+			'todo'      => __( 'Nothing to do.', 'qasim-php-upgrade-check-guard' ),
 			'link'      => '',
 			'link_text' => '',
 			'copy'      => '',
@@ -595,38 +595,38 @@ class Check {
 		$theme = 'theme' === $item['kind'];
 		if ( ! empty( $item['update'] ) ) {
 			/* translators: %s: plugin or theme name. */
-			$out['action']    = sprintf( __( 'Update %s.', 'upshift' ), $name );
+			$out['action']    = sprintf( __( 'Update %s.', 'qasim-php-upgrade-check-guard' ), $name );
 			$out['reason']    = self::update_reason( $item['where'], $theme );
 			$out['link']      = self_admin_url( 'update-core.php' );
-			$out['link_text'] = __( 'Go to updates', 'upshift' );
+			$out['link_text'] = __( 'Go to updates', 'qasim-php-upgrade-check-guard' );
 		} elseif ( Status::HOST === $item['status'] ) {
 			$out = self::host_advice( $out, $item, $days, $target, $from );
 		} elseif ( Status::BREAKS === $item['status'] ) {
 			/* translators: 1: plugin or theme name, 2: target PHP version. */
-			$out['action'] = sprintf( __( '%1$s uses features PHP %2$s removed.', 'upshift' ), $name, $target );
+			$out['action'] = sprintf( __( '%1$s uses features PHP %2$s removed.', 'qasim-php-upgrade-check-guard' ), $name, $target );
 			if ( 'never' === $item['where']['kind'] ) {
 				$out['reason'] = $theme
 					/* translators: %s: number of days. */
-					? sprintf( _n( 'It hasn\'t run in %s day: switch to another theme, or contact the theme developer.', 'It hasn\'t run in %s days: switch to another theme, or contact the theme developer.', $days, 'upshift' ), number_format_i18n( $days ) )
+					? sprintf( _n( 'It hasn\'t run in %s day: switch to another theme, or contact the theme developer.', 'It hasn\'t run in %s days: switch to another theme, or contact the theme developer.', $days, 'qasim-php-upgrade-check-guard' ), number_format_i18n( $days ) )
 					/* translators: %s: number of days. */
-					: sprintf( _n( 'It hasn\'t run in %s day: deactivate it, or contact the plugin developer.', 'It hasn\'t run in %s days: deactivate it, or contact the plugin developer.', $days, 'upshift' ), number_format_i18n( $days ) );
+					: sprintf( _n( 'It hasn\'t run in %s day: deactivate it, or contact the plugin developer.', 'It hasn\'t run in %s days: deactivate it, or contact the plugin developer.', $days, 'qasim-php-upgrade-check-guard' ), number_format_i18n( $days ) );
 			} else {
-				$out['reason'] = $theme ? __( 'Contact the theme developer or look for a maintained alternative.', 'upshift' ) : __( 'Contact the plugin developer or look for a maintained alternative.', 'upshift' );
+				$out['reason'] = $theme ? __( 'Contact the theme developer or look for a maintained alternative.', 'qasim-php-upgrade-check-guard' ) : __( 'Contact the plugin developer or look for a maintained alternative.', 'qasim-php-upgrade-check-guard' );
 			}
 			if ( 0 === strpos( $item['id'], 'plugin:' ) ) {
 				$out['link']      = 'never' === $item['where']['kind'] ? self_admin_url( 'plugins.php' ) : self_admin_url( 'plugin-install.php?tab=search&type=term&s=' . rawurlencode( $name ) );
-				$out['link_text'] = 'never' === $item['where']['kind'] ? __( 'Go to plugins', 'upshift' ) : __( 'Find an alternative', 'upshift' );
+				$out['link_text'] = 'never' === $item['where']['kind'] ? __( 'Go to plugins', 'qasim-php-upgrade-check-guard' ) : __( 'Find an alternative', 'qasim-php-upgrade-check-guard' );
 			} elseif ( $theme ) {
 				$out['link']      = self_admin_url( 'themes.php' );
-				$out['link_text'] = __( 'Go to themes', 'upshift' );
+				$out['link_text'] = __( 'Go to themes', 'qasim-php-upgrade-check-guard' );
 			}
 		} else {
 			/* translators: 1: plugin or theme name, 2: target PHP version. */
-			$out['action'] = sprintf( __( '%1$s works on PHP %2$s but shows a warning.', 'upshift' ), $name, $target );
-			$out['reason'] = $theme ? __( 'It will stop working in a future PHP version. Ask the theme developer for a fix when you can.', 'upshift' ) : __( 'It will stop working in a future PHP version. Ask the plugin developer for a fix when you can.', 'upshift' );
+			$out['action'] = sprintf( __( '%1$s works on PHP %2$s but shows a warning.', 'qasim-php-upgrade-check-guard' ), $name, $target );
+			$out['reason'] = $theme ? __( 'It will stop working in a future PHP version. Ask the theme developer for a fix when you can.', 'qasim-php-upgrade-check-guard' ) : __( 'It will stop working in a future PHP version. Ask the plugin developer for a fix when you can.', 'qasim-php-upgrade-check-guard' );
 		}
 		/* translators: 1: a short action, 2: the reason. Both are whole sentences. */
-		$out['todo'] = sprintf( _x( '%1$s %2$s', 'action, then reason', 'upshift' ), $out['action'], $out['reason'] );
+		$out['todo'] = sprintf( _x( '%1$s %2$s', 'action, then reason', 'qasim-php-upgrade-check-guard' ), $out['action'], $out['reason'] );
 		return $out;
 	}
 
@@ -640,19 +640,19 @@ class Check {
 	private static function update_reason( array $where, $theme ) {
 		switch ( $where['kind'] ) {
 			case 'checkout':
-				return $theme ? __( 'An update is available and this theme runs on your checkout.', 'upshift' ) : __( 'An update is available and this plugin runs on your checkout.', 'upshift' );
+				return $theme ? __( 'An update is available and this theme runs on your checkout.', 'qasim-php-upgrade-check-guard' ) : __( 'An update is available and this plugin runs on your checkout.', 'qasim-php-upgrade-check-guard' );
 			case 'every':
-				return $theme ? __( 'An update is available and this theme runs on every page.', 'upshift' ) : __( 'An update is available and this plugin runs on every page.', 'upshift' );
+				return $theme ? __( 'An update is available and this theme runs on every page.', 'qasim-php-upgrade-check-guard' ) : __( 'An update is available and this plugin runs on every page.', 'qasim-php-upgrade-check-guard' );
 			case 'almost':
-				return $theme ? __( 'An update is available and this theme runs on almost every page.', 'upshift' ) : __( 'An update is available and this plugin runs on almost every page.', 'upshift' );
+				return $theme ? __( 'An update is available and this theme runs on almost every page.', 'qasim-php-upgrade-check-guard' ) : __( 'An update is available and this plugin runs on almost every page.', 'qasim-php-upgrade-check-guard' );
 			case 'some':
 				return $theme
 					/* translators: %s: list of places, e.g. "shop and admin". */
-					? sprintf( __( 'An update is available and this theme runs on: %s.', 'upshift' ), $where['list'] )
+					? sprintf( __( 'An update is available and this theme runs on: %s.', 'qasim-php-upgrade-check-guard' ), $where['list'] )
 					/* translators: %s: list of places, e.g. "shop and admin". */
-					: sprintf( __( 'An update is available and this plugin runs on: %s.', 'upshift' ), $where['list'] );
+					: sprintf( __( 'An update is available and this plugin runs on: %s.', 'qasim-php-upgrade-check-guard' ), $where['list'] );
 			default:
-				return __( 'An update is available.', 'upshift' );
+				return __( 'An update is available.', 'qasim-php-upgrade-check-guard' );
 		}
 	}
 
@@ -673,7 +673,7 @@ class Check {
 			'ext_oci8'   => 'OCI8',
 			'ext_pspell' => 'pspell',
 			'ext_xmlrpc' => 'XML-RPC',
-			'ext_other'  => __( 'a PHP add-on', 'upshift' ),
+			'ext_other'  => __( 'a PHP add-on', 'qasim-php-upgrade-check-guard' ),
 		);
 		foreach ( array_keys( $item['families'] ) as $family ) {
 			$names[] = isset( $map[ $family ] ) ? $map[ $family ] : $map['ext_other'];
@@ -682,16 +682,16 @@ class Check {
 		$list  = wp_sprintf_l( '%l', $names );
 
 		/* translators: 1: plugin or theme name, 2: list of PHP features, e.g. "IMAP and pspell", 3: target PHP version. */
-		$out['action'] = sprintf( _n( '%1$s uses the %2$s feature, which PHP %3$s no longer includes by default.', '%1$s uses %2$s, which PHP %3$s no longer includes by default.', max( 1, $count ), 'upshift' ), $item['name'], $list, $target );
+		$out['action'] = sprintf( _n( '%1$s uses the %2$s feature, which PHP %3$s no longer includes by default.', '%1$s uses %2$s, which PHP %3$s no longer includes by default.', max( 1, $count ), 'qasim-php-upgrade-check-guard' ), $item['name'], $list, $target );
 		if ( 'never' === $item['where']['kind'] ) {
 			/* translators: 1: number of days, 2: list of PHP features. */
-			$out['reason'] = sprintf( _n( 'It hasn\'t run in %1$s day: deactivate it, or ask your host to keep %2$s.', 'It hasn\'t run in %1$s days: deactivate it, or ask your host to keep %2$s.', $days, 'upshift' ), number_format_i18n( $days ), $list );
+			$out['reason'] = sprintf( _n( 'It hasn\'t run in %1$s day: deactivate it, or ask your host to keep %2$s.', 'It hasn\'t run in %1$s days: deactivate it, or ask your host to keep %2$s.', $days, 'qasim-php-upgrade-check-guard' ), number_format_i18n( $days ), $list );
 		} else {
-			$out['reason'] = _n( 'Ask your host if they keep it.', 'Ask your host if they keep them.', max( 1, $count ), 'upshift' );
+			$out['reason'] = _n( 'Ask your host if they keep it.', 'Ask your host if they keep them.', max( 1, $count ), 'qasim-php-upgrade-check-guard' );
 		}
 		/* translators: 1: target PHP version, 2: plugin or theme name, 3: list of PHP features, 4: current PHP version. */
-		$out['copy']      = sprintf( _n( 'Hello. We plan to move this site from PHP %4$s to PHP %1$s. Our %2$s uses the %3$s feature. Will it still be available after the move?', 'Hello. We plan to move this site from PHP %4$s to PHP %1$s. Our %2$s uses %3$s. Will these still be available after the move?', max( 1, $count ), 'upshift' ), $target, $item['name'], $list, $from );
-		$out['link_text'] = __( 'Copy message for your host', 'upshift' );
+		$out['copy']      = sprintf( _n( 'Hello. We plan to move this site from PHP %4$s to PHP %1$s. Our %2$s uses the %3$s feature. Will it still be available after the move?', 'Hello. We plan to move this site from PHP %4$s to PHP %1$s. Our %2$s uses %3$s. Will these still be available after the move?', max( 1, $count ), 'qasim-php-upgrade-check-guard' ), $target, $item['name'], $list, $from );
+		$out['link_text'] = __( 'Copy message for your host', 'qasim-php-upgrade-check-guard' );
 		return $out;
 	}
 
@@ -765,7 +765,7 @@ class Check {
 			if ( count( $out['reasons'][ $text ]['files'] ) < 3 ) {
 				$name = isset( $items[ $row['component'] ] ) ? $items[ $row['component'] ]['name'] : $row['component'];
 				/* translators: 1: plugin or theme name, 2: file path inside it. */
-				$out['reasons'][ $text ]['files'][] = sprintf( __( '%1$s (%2$s)', 'upshift' ), $name, self::file_label( $row['path_key'] ) );
+				$out['reasons'][ $text ]['files'][] = sprintf( __( '%1$s (%2$s)', 'qasim-php-upgrade-check-guard' ), $name, self::file_label( $row['path_key'] ) );
 			}
 		}
 		$out['reasons'] = array_values( $out['reasons'] );
@@ -782,15 +782,15 @@ class Check {
 	private static function not_checked_reason( $status, $note ) {
 		switch ( $status ) {
 			case 'unreadable':
-				return __( 'This file could not be read. Ask your host to check its file permissions, then check again.', 'upshift' );
+				return __( 'This file could not be read. Ask your host to check its file permissions, then check again.', 'qasim-php-upgrade-check-guard' );
 			case 'partial':
-				return __( 'Only part of this file could be checked. Update the plugin or theme, then check again.', 'upshift' );
+				return __( 'Only part of this file could be checked. Update the plugin or theme, then check again.', 'qasim-php-upgrade-check-guard' );
 			case 'engine_error':
-				return __( 'The check stopped on this file. Ask your host to raise the PHP memory limit to 512M, then check again.', 'upshift' );
+				return __( 'The check stopped on this file. Ask your host to raise the PHP memory limit to 512M, then check again.', 'qasim-php-upgrade-check-guard' );
 			default:
 				return false !== strpos( $note, 'too large (' )
-					? __( 'This file is too large to check. Ask the developer whether it can be split up.', 'upshift' )
-					: __( 'This file is too large for this server\'s memory limit. Ask your host to raise the PHP memory limit to 512M, then check again.', 'upshift' );
+					? __( 'This file is too large to check. Ask the developer whether it can be split up.', 'qasim-php-upgrade-check-guard' )
+					: __( 'This file is too large for this server\'s memory limit. Ask your host to raise the PHP memory limit to 512M, then check again.', 'qasim-php-upgrade-check-guard' );
 		}
 	}
 
@@ -803,9 +803,9 @@ class Check {
 	public static function text_report( array $report ) {
 		$lines = array(
 			/* translators: %s: site address. */
-			sprintf( __( 'PHP upgrade check for %s', 'upshift' ), home_url() ),
+			sprintf( __( 'PHP upgrade check for %s', 'qasim-php-upgrade-check-guard' ), home_url() ),
 			/* translators: 1: current PHP version, 2: target PHP version, 3: date. */
-			sprintf( __( 'PHP %1$s to PHP %2$s, checked on %3$s.', 'upshift' ), $report['from'], $report['target'], mysql2date( __( 'j M Y', 'upshift' ), (string) $report['scan']['finished'] ) ),
+			sprintf( __( 'PHP %1$s to PHP %2$s, checked on %3$s.', 'qasim-php-upgrade-check-guard' ), $report['from'], $report['target'], mysql2date( __( 'j M Y', 'qasim-php-upgrade-check-guard' ), (string) $report['scan']['finished'] ) ),
 			$report['answer']['sentence'],
 			'',
 		);
@@ -835,7 +835,7 @@ class Check {
 		}
 		if ( $left > 0 ) {
 			/* translators: %s: number of plugins and themes. */
-			$lines[] = sprintf( _n( '... and %s more plugin or theme in the CSV report.', '... and %s more plugins and themes in the CSV report.', $left, 'upshift' ), number_format_i18n( $left ) );
+			$lines[] = sprintf( _n( '... and %s more plugin or theme in the CSV report.', '... and %s more plugins and themes in the CSV report.', $left, 'qasim-php-upgrade-check-guard' ), number_format_i18n( $left ) );
 		}
 		if ( 0 === $shown && 0 === $left ) {
 			// Ready: no blank lines and no pointer to a CSV of problems.
@@ -843,13 +843,13 @@ class Check {
 			$total   = (int) $report['total'];
 			$lines[] = sprintf(
 				/* translators: %s: number of plugins and themes. */
-				_n( 'Checked %s plugin or theme. No problems found.', 'Checked %s plugins and themes. No problems found.', $total, 'upshift' ),
+				_n( 'Checked %s plugin or theme. No problems found.', 'Checked %s plugins and themes. No problems found.', $total, 'qasim-php-upgrade-check-guard' ),
 				number_format_i18n( $total )
 			);
 			return implode( "\n", $lines );
 		}
 		$lines[] = '';
-		$lines[] = __( 'Full list with files and lines: Download report (CSV)', 'upshift' );
+		$lines[] = __( 'Full list with files and lines: Download report (CSV)', 'qasim-php-upgrade-check-guard' );
 		return implode( "\n", $lines );
 	}
 
@@ -862,11 +862,11 @@ class Check {
 	private static function copy_heading( $status ) {
 		switch ( $status ) {
 			case Status::BREAKS:
-				return __( 'Will break:', 'upshift' );
+				return __( 'Will break:', 'qasim-php-upgrade-check-guard' );
 			case Status::HOST:
-				return __( 'Ask your host:', 'upshift' );
+				return __( 'Ask your host:', 'qasim-php-upgrade-check-guard' );
 			default:
-				return __( 'Works, fix later:', 'upshift' );
+				return __( 'Works, fix later:', 'qasim-php-upgrade-check-guard' );
 		}
 	}
 
@@ -880,7 +880,7 @@ class Check {
 		$count = (int) $item['problems'];
 		$line  = sprintf(
 			/* translators: 1: plugin or theme name with version, 2: number of places, 3: the main problem, a whole sentence. */
-			_n( '%1$s: %2$s place. %3$s', '%1$s: %2$s places. %3$s', $count, 'upshift' ),
+			_n( '%1$s: %2$s place. %3$s', '%1$s: %2$s places. %3$s', $count, 'qasim-php-upgrade-check-guard' ),
 			trim( $item['name'] . ' ' . $item['version'] ),
 			number_format_i18n( $count ),
 			self::main_problem( $item )
@@ -937,7 +937,7 @@ class Check {
 		$lines = array(
 			sprintf(
 				/* translators: 1: plugin or theme name with version, 2: target PHP version, 3: status word, 4: number of places. */
-				_n( '%1$s. Result for PHP %2$s: %3$s, %4$s place.', '%1$s. Result for PHP %2$s: %3$s, %4$s places.', $count, 'upshift' ),
+				_n( '%1$s. Result for PHP %2$s: %3$s, %4$s place.', '%1$s. Result for PHP %2$s: %3$s, %4$s places.', $count, 'qasim-php-upgrade-check-guard' ),
 				trim( $item['name'] . ' ' . $item['version'] ),
 				$target,
 				Status::label( $item['status'] ),
@@ -947,13 +947,13 @@ class Check {
 		foreach ( $types as $problem => $type ) {
 			$lines[] = '';
 			/* translators: 1: what the problem is, 2: how to fix it, 3: number of places. */
-			$lines[] = sprintf( _n( '- %1$s %2$s (%3$s place)', '- %1$s %2$s (%3$s places)', $type['count'], 'upshift' ), $problem, $type['fix'], number_format_i18n( $type['count'] ) );
+			$lines[] = sprintf( _n( '- %1$s %2$s (%3$s place)', '- %1$s %2$s (%3$s places)', $type['count'], 'qasim-php-upgrade-check-guard' ), $problem, $type['fix'], number_format_i18n( $type['count'] ) );
 			$lines[] = '  ' . implode( ', ', $type['examples'] );
 		}
 		if ( $item['more'] > 0 ) {
 			$lines[] = '';
 			/* translators: %s: number of places. */
-			$lines[] = sprintf( _n( '%s more place is in the CSV report.', '%s more places are in the CSV report.', (int) $item['more'], 'upshift' ), number_format_i18n( (int) $item['more'] ) );
+			$lines[] = sprintf( _n( '%s more place is in the CSV report.', '%s more places are in the CSV report.', (int) $item['more'], 'qasim-php-upgrade-check-guard' ), number_format_i18n( (int) $item['more'] ) );
 		}
 		return implode( "\n", $lines );
 	}

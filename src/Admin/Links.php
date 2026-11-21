@@ -2,10 +2,10 @@
 /**
  * Outside links, in one place, so the docs domain can be added later with one edit.
  *
- * @package Upshift
+ * @package QasimPHPUpgradeCheckGuard
  */
 
-namespace Upshift\Admin;
+namespace Qpucg\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -16,8 +16,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Links {
 
-	const SUPPORT = 'https://wordpress.org/support/plugin/upshift/';
-	const REVIEWS = 'https://wordpress.org/support/plugin/upshift/reviews/';
+	const SUPPORT = 'https://wordpress.org/support/plugin/qasim-php-upgrade-check-guard/';
+	const REVIEWS = 'https://wordpress.org/support/plugin/qasim-php-upgrade-check-guard/reviews/';
 
 	const CHECKOUT_LAB = 'https://wordpress.org/plugins/qasim-checkout-test-lab-for-woocommerce/';
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<ruleset name="Upshift">
-	<description>WPCS + PHP 7.2 compatibility for Upshift's own code.</description>
+<ruleset name="Qasim PHP Upgrade Check & Guard">
+	<description>WPCS + PHP 7.2 compatibility for the plugin's own code.</description>
 
 	<file>.</file>
 
@@ -42,7 +42,7 @@
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array">
-				<element value="upshift"/>
+				<element value="qasim-php-upgrade-check-guard"/>
 			</property>
 		</properties>
 	</rule>
@@ -50,8 +50,8 @@
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>
 			<property name="prefixes" type="array">
-				<element value="upshift"/>
-				<element value="Upshift"/>
+				<element value="qpucg"/>
+				<element value="Qpucg"/>
 			</property>
 		</properties>
 	</rule>
