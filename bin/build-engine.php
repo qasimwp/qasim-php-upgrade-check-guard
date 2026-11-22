@@ -249,13 +249,9 @@ $qpucg_strip_trees = array(
 	'squizlabs/php_codesniffer/src/Generators',                 // The doc generator.
 	'squizlabs/php_codesniffer/src/Reports',                    // CLI reports; the engine reads errors from the File object.
 	'phpcsstandards/phpcsutils/PHPCSUtils/TestUtils',           // PHPUnit helpers.
-	'phpcompatibility/phpcompatibility-paragonie/Test',         // Unit tests of the standard.
-	'phpcompatibility/phpcompatibility-wp/Test',                 // Unit tests of the standard.
-	'squizlabs/php_codesniffer/scripts',                         // Release and PHAR build scripts.
 );
 $qpucg_strip_files = array(
 	'squizlabs/php_codesniffer/requirements.php', // CLI requirement check.
-	'scoper-autoload.php',                       // PHP-Scoper's own generated loader; the plugin loads autoload.php.
 	'squizlabs/php_codesniffer/phpcs.xsd',        // Ruleset schema for editors.
 	'composer/installed.json',                    // Composer metadata (InstalledVersions uses installed.php).
 	'squizlabs/php_codesniffer/composer.json',
@@ -264,6 +260,20 @@ $qpucg_strip_files = array(
 	'phpcompatibility/phpcompatibility-paragonie/composer.json',
 	'phpcsstandards/phpcsutils/composer.json',
 );
+// Removed when present. Whether Composer's download of a package contains these depends on the machine and Composer
+// version (an archive built with export-ignore leaves them out), so a missing one is not an error. Without them in the
+// strip list a build on one machine would ship them and a build on another would not.
+$qpucg_strip_optional = array(
+	'phpcompatibility/phpcompatibility-paragonie/Test', // Unit tests of the standard.
+	'phpcompatibility/phpcompatibility-wp/Test',        // Unit tests of the standard.
+	'squizlabs/php_codesniffer/scripts',                // Release and PHAR build scripts.
+	'scoper-autoload.php',                              // PHP-Scoper's own generated loader; the plugin loads autoload.php.
+);
+foreach ( $qpucg_strip_optional as $qpucg_path ) {
+	if ( file_exists( $qpucg_target . '/' . $qpucg_path ) ) {
+		qpucg_build_delete( $qpucg_target . '/' . $qpucg_path );
+	}
+}
 foreach ( array_merge( $qpucg_strip_trees, $qpucg_strip_files ) as $qpucg_path ) {
 	if ( ! file_exists( $qpucg_target . '/' . $qpucg_path ) ) {
 		qpucg_build_fail( "Expected engine path to strip is missing (package update?): {$qpucg_path}" );
