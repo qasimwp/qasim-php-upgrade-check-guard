@@ -76,6 +76,12 @@ The check runs only when you start it. Smart results and Upgrade guard are off u
 
 Each site has its own check and data under Tools > PHP Upgrade. Deleting the plugin from the network removes the data of every site (unless a site turned off "Delete all data").
 
+== External services ==
+
+This plugin does not connect to any external service. It makes no remote requests and sends no data.
+
+The Help tab shows three plain links to WordPress.org: the support forum (https://wordpress.org/support/plugin/qasim-php-upgrade-check-guard/), the reviews page (https://wordpress.org/support/plugin/qasim-php-upgrade-check-guard/reviews/) and the author's other plugin (https://wordpress.org/plugins/qasim-checkout-test-lab-for-woocommerce/). Nothing is loaded from these addresses. A page on WordPress.org opens only if an administrator clicks a link, and WordPress.org's own privacy policy (https://wordpress.org/about/privacy/) then applies.
+
 == Privacy ==
 
 Qasim PHP Upgrade Check & Guard makes no remote requests, has no tracking and loads no files from other servers.

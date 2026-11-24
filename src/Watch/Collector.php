@@ -5,8 +5,8 @@
  * Loaded only while Upgrade watch is on. It must never break a site: the handler only adds to an array (no database, no
  * output, nothing thrown by this code), and all writes happen once, at the end of the request, inside try/catch.
  *
- * A handler set without an error mask is called for every error type, whatever error_reporting says, so it sees
- * deprecations even when error_reporting hides them from the log. That is intended: a site that hides deprecations still
+ * A handler set without an error mask is called for every error type, whatever the site's error display level says, so it sees
+ * deprecations even when the site's error level hides them from the log. That is intended: a site that hides deprecations still
  * learns about them here. PHP's own handling is unchanged, because the handler returns the previous handler's result, or
  * false when there is none, which hands the error back to PHP's standard handler. Errors silenced with @ are skipped.
  *
