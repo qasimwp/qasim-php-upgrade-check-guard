@@ -203,9 +203,8 @@ class Paths {
 		}
 
 		// Symlinks: compare the file's real path too.
-		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- realpath() warns under open_basedir when a symlink resolves outside the allowed paths; a warning isn't a Throwable, and false is handled.
-		$real = @realpath( (string) $abs );
-		if ( false !== $real ) {
+		$real = self::safe_realpath( (string) $abs );
+		if ( '' !== $real ) {
 			$real = wp_normalize_path( $real );
 			if ( $real !== $display ) {
 				return self::match_normalized( $real );
@@ -274,6 +273,68 @@ class Paths {
 	}
 
 	/**
+	 * Resolves a path with realpath() after basic input validation (no @ error suppression).
+	 *
+	 * @param string $path File or directory path.
+	 * @return string Resolved path, or '' when it cannot be resolved.
+	 */
+	public static function safe_realpath( $path ) {
+		if ( ! is_string( $path ) || '' === $path ) {
+			return '';
+		}
+		$real = realpath( $path );
+		return false === $real ? '' : $real;
+	}
+
+	/**
+	 * Site root prefixes for redacting absolute paths in stored error samples (display-only).
+	 *
+	 * @return array List of array( path, replacement ), wp-content first.
+	 */
+	public static function scrub_roots() {
+		$content = self::content_dir();
+		$abspath = wp_normalize_path( ABSPATH );
+		return array(
+			array( $content, 'wp-content/' ),
+			array( self::safe_realpath( $content ), 'wp-content/' ),
+			array( $abspath, '' ),
+			array( self::safe_realpath( $abspath ), '' ),
+		);
+	}
+
+	/**
+	 * Resolves a CLI file argument (absolute, relative to cwd, or relative to WordPress root).
+	 *
+	 * @param string $arg Raw path argument.
+	 * @return string Resolved real path, or '' when not found.
+	 */
+	public static function resolve_cli_file( $arg ) {
+		$arg = (string) $arg;
+		if ( '' === $arg ) {
+			return '';
+		}
+		if ( path_is_absolute( $arg ) ) {
+			$candidates = array( $arg );
+		} else {
+			$candidates = array();
+			$cwd        = getcwd();
+			if ( is_string( $cwd ) && '' !== $cwd ) {
+				$candidates[] = trailingslashit( wp_normalize_path( $cwd ) ) . ltrim( wp_normalize_path( $arg ), '/' );
+			}
+			$candidates[] = trailingslashit( wp_normalize_path( ABSPATH ) ) . ltrim( wp_normalize_path( $arg ), '/' );
+		}
+		foreach ( $candidates as $candidate ) {
+			if ( is_file( $candidate ) ) {
+				$real = self::safe_realpath( $candidate );
+				if ( '' !== $real ) {
+					return $real;
+				}
+			}
+		}
+		return '';
+	}
+
+	/**
 	 * Builds and caches the bases, longest first.
 	 *
 	 * @return array
@@ -294,10 +355,9 @@ class Paths {
 
 		$bases = array();
 		foreach ( $dirs as $pair ) {
-			$dir = trailingslashit( wp_normalize_path( $pair[1] ) );
-			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- realpath() warns under open_basedir when a symlinked base resolves outside the allowed paths; false is handled.
-			$real    = @realpath( $pair[1] );
-			$real    = false === $real ? '' : trailingslashit( wp_normalize_path( $real ) );
+			$dir     = trailingslashit( wp_normalize_path( $pair[1] ) );
+			$real    = self::safe_realpath( $pair[1] );
+			$real    = '' === $real ? '' : trailingslashit( wp_normalize_path( $real ) );
 			$real    = $real === $dir ? '' : $real;
 			$bases[] = array(
 				'name'     => $pair[0],
@@ -348,16 +408,31 @@ class Paths {
 	}
 
 	/**
-	 * Known drop-in file names (keys of _get_dropins()).
+	 * Known WordPress core drop-in file names. Uses _get_dropins() when already loaded in wp-admin,
+	 * and falls back to the documented core drop-in list otherwise (avoiding loading wp-admin files on front-end requests).
 	 *
 	 * @return array
 	 */
 	private static function dropins() {
 		if ( null === self::$dropins ) {
-			if ( ! function_exists( '_get_dropins' ) ) {
-				require_once ABSPATH . 'wp-admin/includes/plugin.php';
+			if ( function_exists( '_get_dropins' ) ) {
+				self::$dropins = _get_dropins();
+			} else {
+				self::$dropins = array(
+					'advanced-cache.php'      => true,
+					'db.php'                  => true,
+					'db-error.php'            => true,
+					'install.php'             => true,
+					'maintenance.php'         => true,
+					'object-cache.php'        => true,
+					'php-error.php'           => true,
+					'fatal-error-handler.php' => true,
+					'sunrise.php'             => true,
+					'blog-deleted.php'        => true,
+					'blog-inactive.php'       => true,
+					'blog-suspended.php'      => true,
+				);
 			}
-			self::$dropins = _get_dropins();
 		}
 		return self::$dropins;
 	}

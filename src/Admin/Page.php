@@ -255,21 +255,15 @@ class Page {
 	}
 
 	/**
-	 * Footer with the plugin version and the build id written by bin/build-zip.php (DECISIONS D32).
+	 * Footer with the plugin version (developer mode only).
 	 */
 	private static function render_footer() {
-		// The build line is for developers only.
+		// The footer line is for developers only.
 		if ( ! self::is_dev() ) {
 			return;
 		}
-		$build = '';
-		$file  = QPUCG_DIR . '/build.txt';
-		if ( is_readable( $file ) ) {
-			$build = trim( (string) file_get_contents( $file ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local file.
-		}
-		$build = preg_match( '/^[0-9a-f]{7,12}(-dirty)?$/', $build ) ? $build : __( 'dev (not from zip)', 'qasim-php-upgrade-check-guard' );
-		/* translators: 1: plugin version, 2: build id. */
-		echo '<p class="description" style="margin-top:3em">' . esc_html( sprintf( __( 'Qasim PHP Upgrade Check & Guard %1$s · build %2$s', 'qasim-php-upgrade-check-guard' ), QPUCG_VERSION, $build ) ) . '</p>';
+		/* translators: %s: plugin version. */
+		echo '<p class="description" style="margin-top:3em">' . esc_html( sprintf( __( 'Qasim PHP Upgrade Check & Guard %s', 'qasim-php-upgrade-check-guard' ), QPUCG_VERSION ) ) . '</p>';
 	}
 
 	/**
@@ -473,14 +467,14 @@ class Page {
 		$files_table = Install::table( 'scan_files' );
 
 		$seen = array();
-		foreach ( (array) $wpdb->get_results( "SELECT component, COUNT(*) AS files FROM {$usage_table} GROUP BY component", ARRAY_A ) as $row ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT component, COUNT(*) AS files FROM %i GROUP BY component', $usage_table ), ARRAY_A ) as $row ) {
 			$seen[ $row['component'] ] = (int) $row['files'];
 		}
 
 		$total   = array();
-		$scan_id = (int) $wpdb->get_var( "SELECT id FROM {$scans_table} WHERE status = 'done' ORDER BY id DESC LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		$scan_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM %i WHERE status = 'done' ORDER BY id DESC LIMIT 1", $scans_table ) );
 		if ( $scan_id > 0 ) {
-			foreach ( (array) $wpdb->get_results( $wpdb->prepare( "SELECT component, COUNT(*) AS files FROM {$files_table} WHERE scan_id = %d GROUP BY component", $scan_id ), ARRAY_A ) as $row ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+			foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT component, COUNT(*) AS files FROM %i WHERE scan_id = %d GROUP BY component', $files_table, $scan_id ), ARRAY_A ) as $row ) {
 				$total[ $row['component'] ] = (int) $row['files'];
 			}
 		}

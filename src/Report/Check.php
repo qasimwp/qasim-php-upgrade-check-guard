@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Queries our own custom tables (spec §6); the object cache does not apply to them.
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
  * Builds the report data for one finished scan. Never loads the engine.
@@ -131,12 +131,13 @@ class Check {
 		if ( ! function_exists( 'get_plugins' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
+		$plugins = get_plugins();
 		$out     = array(
 			'plugins' => array(),
 			'themes'  => array(),
 		);
 		$updates = get_site_transient( 'update_plugins' );
-		foreach ( get_plugins() as $file => $data ) {
+		foreach ( $plugins as $file => $data ) {
 			$dir = dirname( $file );
 			$id  = 'plugin:' . ( '.' === $dir ? $file : $dir );
 			// One folder can hold several plugin files: the first wins, unless a later one is active.
@@ -170,7 +171,7 @@ class Check {
 
 		$table = Install::table( 'usage' );
 		$out   = array();
-		foreach ( (array) $wpdb->get_results( "SELECT component, BIT_OR(contexts) AS contexts FROM {$table} GROUP BY component", ARRAY_A ) as $row ) {
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT component, BIT_OR(contexts) AS contexts FROM %i GROUP BY component', $table ), ARRAY_A ) as $row ) {
 			$out[ $row['component'] ] = (int) $row['contexts'];
 		}
 		return $out;
@@ -751,7 +752,7 @@ class Check {
 			return $out;
 		}
 		$files = Install::table( 'scan_files' );
-		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT component, path_key, status, note FROM {$files} WHERE scan_id = %d AND component_active = 1 AND status IN ('skipped_large','unreadable','partial','engine_error') AND NOT ( status = 'skipped_large' AND note LIKE %s ) ORDER BY id LIMIT %d", (int) $scan_id, '%' . $wpdb->esc_like( 'data/classmap' ) . '%', self::MAX_NOT_CHECKED ), ARRAY_A );
+		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT component, path_key, status, note FROM %i WHERE scan_id = %d AND component_active = 1 AND status IN ('skipped_large','unreadable','partial','engine_error') AND NOT ( status = 'skipped_large' AND note LIKE %s ) ORDER BY id LIMIT %d", $files, (int) $scan_id, '%' . $wpdb->esc_like( 'data/classmap' ) . '%', self::MAX_NOT_CHECKED ), ARRAY_A );
 		foreach ( (array) $rows as $row ) {
 			$text = self::not_checked_reason( $row['status'], (string) $row['note'] );
 			if ( ! isset( $out['reasons'][ $text ] ) ) {

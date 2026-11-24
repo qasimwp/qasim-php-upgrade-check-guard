@@ -298,7 +298,7 @@ class Bench {
 		global $wpdb;
 
 		$sets_table = Install::table( 'filesets' );
-		return (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$sets_table} WHERE set_hash LIKE %s AND created < %s", $wpdb->esc_like( self::HASH_PREFIX ) . '%', wp_date( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		return (int) $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE set_hash LIKE %s AND created < %s', $sets_table, $wpdb->esc_like( self::HASH_PREFIX ) . '%', wp_date( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) ) );
 	}
 
 	/**
@@ -314,13 +314,39 @@ class Bench {
 		$hits_table = Install::table( 'fileset_hits' );
 		$sets_table = Install::table( 'filesets' );
 
-		$hits = (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$hits_table} WHERE set_hash = %s AND day = %s", $hit_hash, self::FAKE_DAY ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		$hits = (int) $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE set_hash = %s AND day = %s', $hits_table, $hit_hash, self::FAKE_DAY ) );
 
 		$sets = 0;
-		foreach ( array_chunk( $set_hashes, self::DELETE_CHUNK ) as $chunk ) {
-			$in = implode( ', ', array_fill( 0, count( $chunk ), '%s' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name from $wpdb->prefix; $in is only %s placeholders.
-			$sets += (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$sets_table} WHERE set_hash IN ({$in})", $chunk ) );
+		if ( ! empty( $set_hashes ) ) {
+			foreach ( array_chunk( array_values( $set_hashes ), 20 ) as $chunk ) {
+				$padded = array_pad( $chunk, 20, end( $chunk ) );
+				$sets  += (int) $wpdb->query(
+					$wpdb->prepare(
+						'DELETE FROM %i WHERE set_hash IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+						$sets_table,
+						$padded[0],
+						$padded[1],
+						$padded[2],
+						$padded[3],
+						$padded[4],
+						$padded[5],
+						$padded[6],
+						$padded[7],
+						$padded[8],
+						$padded[9],
+						$padded[10],
+						$padded[11],
+						$padded[12],
+						$padded[13],
+						$padded[14],
+						$padded[15],
+						$padded[16],
+						$padded[17],
+						$padded[18],
+						$padded[19]
+					)
+				);
+			}
 		}
 
 		return array(

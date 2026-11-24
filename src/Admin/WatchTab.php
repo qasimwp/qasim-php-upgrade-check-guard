@@ -352,7 +352,7 @@ class WatchTab {
 			/* translators: %s: a number, e.g. 4 in "1 in 4 page views". */
 			$parts[] = sprintf( __( 'To keep your site fast, it looks at about 1 in %s page views for smaller warnings.', 'qasim-php-upgrade-check-guard' ), number_format_i18n( (int) round( 100 / $rate ) ) );
 		}
-		$parts[] = __( "Must-use plugins load before Qasim PHP Upgrade Check & Guard, so their crashes aren't included.", 'qasim-php-upgrade-check-guard' );
+		$parts[] = __( "Crashes that happen before Qasim PHP Upgrade Check & Guard loads (such as in must-use plugins or during initial loading of earlier plugins) aren't included.", 'qasim-php-upgrade-check-guard' );
 		return implode( ' ', $parts );
 	}
 

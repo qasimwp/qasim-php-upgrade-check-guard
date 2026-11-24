@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Queries our own custom tables (spec §6); the object cache does not apply to them.
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
  * Rendered from Page::render(), which checks the capability first. Every handler checks it again, then its nonce.
@@ -200,7 +200,7 @@ class SettingsTab {
 		$rows = 0;
 		foreach ( Install::tables() as $name ) {
 			$table = Install::table( $name );
-			$rows += (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+			$rows += (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table ) );
 		}
 		/* translators: %s: size in MB. */
 		return sprintf( __( 'Qasim PHP Upgrade Check & Guard uses about %s MB of your database.', 'qasim-php-upgrade-check-guard' ), number_format_i18n( max( 0.1, $rows * 150 / Storage::MB ), 1 ) );
@@ -256,13 +256,8 @@ class SettingsTab {
 		}
 		Settings::update( $changes );
 
-		if ( $changes['upgrade_watch'] ) {
-			if ( ! $was_on ) {
-				State::save( State::enabled( State::get(), State::version(), current_time( 'Y-m-d' ) ) );
-			}
-			State::move_first();
-		} elseif ( $was_on ) {
-			State::move_back();
+		if ( $changes['upgrade_watch'] && ! $was_on ) {
+			State::save( State::enabled( State::get(), State::version(), current_time( 'Y-m-d' ) ) );
 		}
 
 		self::redirect( 'watch' === $section ? 'watch' : 'settings', 'saved' );
@@ -285,7 +280,7 @@ class SettingsTab {
 		Rollup::reset();
 		foreach ( array( 'scans', 'scan_files', 'findings', 'file_cache', 'errors' ) as $name ) {
 			$table = Install::table( $name );
-			$wpdb->query( "TRUNCATE TABLE {$table}" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange -- table name from $wpdb->prefix.
+			$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange -- emptying our own table on user request.
 		}
 		delete_option( Status::OPTION );
 		delete_option( Runner::STATS );

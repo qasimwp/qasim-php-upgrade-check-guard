@@ -24,24 +24,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Queries our own custom table (spec §6); the object cache does not apply to it.
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
  * Error handler, in-memory buffer and the single write per request.
  */
 class Collector {
 
-	const TABLE         = 'qpucg_errors';
-	const DEFAULT_RATE  = 0.25; // Used when Activity watch is off.
-	const MAX_DISTINCT  = 200;  // Different errors kept in memory per request.
-	const MAX_RAW       = 2000; // Bytes of one message kept until it is cleaned.
-	const SAMPLE_CHARS  = 300;
-	const DAILY_CAP     = 1000; // Rows per day; after that only crashes are written that day.
-	const PAUSE_SECONDS = 600;
-	const RESERVE_BYTES = 262144; // Freed first after a crash, so a memory-limit fatal leaves room to write the row.
-	const RETENTION     = 30;
-	const PURGE_CHUNK   = 100;
-	const PURGE_SECONDS = 5;
+	const TABLE             = 'qpucg_errors';
+	const DEFAULT_RATE      = 0.25; // Used when Activity watch is off.
+	const MAX_DISTINCT      = 200;  // Different errors kept in memory per request.
+	const MAX_RAW           = 2000; // Bytes of one message kept until it is cleaned.
+	const SAMPLE_CHARS      = 300;
+	const DAILY_CAP         = 1000; // Rows per day; after that only crashes are written that day.
+	const PAUSE_SECONDS     = 600;
+	const RESERVE_BYTES     = 262144; // Freed first after a crash, so a memory-limit fatal leaves room to write the row.
+	const RETENTION         = 30;
+	const PURGE_CHUNK       = 100;
+	const PURGE_SECONDS     = 5;
+	const SILENCE_MAX_BYTES = 2097152; // 2 MB cap for shutdown-time @-operator source inspection.
+	const SILENCE_LOOKBACK  = 5;       // Max lines ending at $errline inspected for @-suppression.
 
 	const CRASH       = 'crash';
 	const ERROR       = 'error';
@@ -109,6 +111,13 @@ class Collector {
 	 * @var array|null
 	 */
 	private static $roots = null;
+
+	/**
+	 * Per-shutdown cache of source file lines for @-suppression checks (path => string[]|false).
+	 *
+	 * @var array
+	 */
+	private static $file_lines = array();
 
 	/**
 	 * Starts collecting for this request. Crashes are always captured; other errors only on watched page views.
@@ -182,11 +191,6 @@ class Collector {
 	private static function note( $errno, $errstr, $errfile, $errline ) {
 		try {
 			if ( ! self::$active || ( defined( 'QPUCG_SCANNING' ) && QPUCG_SCANNING ) ) {
-				return;
-			}
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting, WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_error_reporting -- read only: 0 (below PHP 8) or 4437 means the @ operator.
-			$reporting = error_reporting();
-			if ( 0 === $reporting || 4437 === $reporting ) {
 				return;
 			}
 			$key = $errno . '|' . $errline . '|' . $errfile . '|' . crc32( (string) $errstr );
@@ -268,6 +272,10 @@ class Collector {
 			if ( ! isset( self::LEVELS[ $item[0] ] ) ) {
 				continue;
 			}
+			// Skip non-fatal warnings/notices/deprecations silenced with PHP's @ operator at the source line.
+			if ( self::ERROR !== self::LEVELS[ $item[0] ] && self::is_silenced( $item[2], $item[3] ) ) {
+				continue;
+			}
 			$key       = Paths::key( $item[2] );
 			$component = null === $key ? self::CORE : Paths::component( $key );
 			$row       = self::row( $component, self::LEVELS[ $item[0] ], $item[2], $item[3], $item[1], $item[4] );
@@ -277,8 +285,81 @@ class Collector {
 				$rows[ $row['hash'] ] = $row;
 			}
 		}
-		self::$buffer = array();
+		self::$buffer     = array();
+		self::$file_lines = array();
+		if ( empty( $rows ) ) {
+			return;
+		}
 		self::store( array_values( $rows ), '' !== self::$caught_by ? self::base_context() : Recorder::context() );
+	}
+
+	/**
+	 * Checks at shutdown whether a buffered error originated from an @-silenced expression.
+	 *
+	 * Inspects up to SILENCE_LOOKBACK lines ending at $line, stopping at the previous statement boundary (; { }),
+	 * using token_get_all() without altering runtime error state, stack inspection, or @ suppression.
+	 *
+	 * @param string $file Source file path.
+	 * @param int    $line 1-based line number.
+	 * @return bool
+	 */
+	private static function is_silenced( $file, $line ) {
+		try {
+			if ( ! is_string( $file ) || '' === $file || $line <= 0 || false !== strpos( $file, "eval()'d code" ) ) {
+				return false;
+			}
+			if ( ! array_key_exists( $file, self::$file_lines ) ) {
+				if ( ! is_file( $file ) || ! is_readable( $file ) ) {
+					self::$file_lines[ $file ] = false;
+				} else {
+					$size = filesize( $file );
+					if ( false === $size || $size > self::SILENCE_MAX_BYTES ) {
+						self::$file_lines[ $file ] = false;
+					} else {
+						$lines                     = file( $file );
+						self::$file_lines[ $file ] = is_array( $lines ) ? $lines : false;
+					}
+				}
+			}
+			$lines = self::$file_lines[ $file ];
+			if ( ! is_array( $lines ) ) {
+				return false;
+			}
+			$idx = (int) $line - 1;
+			if ( ! isset( $lines[ $idx ] ) ) {
+				return false;
+			}
+			$start   = max( 0, $idx - self::SILENCE_LOOKBACK + 1 );
+			$snippet = implode( '', array_slice( $lines, $start, $idx - $start + 1 ) );
+			if ( false === strpos( $snippet, '@' ) ) {
+				return false;
+			}
+			$tokens = token_get_all( "<?php\n" . $snippet );
+			$skip   = array( T_WHITESPACE, T_COMMENT, T_DOC_COMMENT );
+			$i      = count( $tokens ) - 1;
+			// Skip trailing whitespace/comments and a single statement terminator on the error line.
+			while ( $i >= 0 && is_array( $tokens[ $i ] ) && in_array( $tokens[ $i ][0], $skip, true ) ) {
+				--$i;
+			}
+			if ( $i >= 0 && ( ';' === $tokens[ $i ] || '{' === $tokens[ $i ] ) ) {
+				--$i;
+			}
+			for ( ; $i >= 0; --$i ) {
+				$tok = $tokens[ $i ];
+				if ( '@' === $tok ) {
+					return true;
+				}
+				if ( ';' === $tok || '{' === $tok || '}' === $tok ) {
+					return false;
+				}
+				if ( is_array( $tok ) && T_OPEN_TAG === $tok[0] ) {
+					return false;
+				}
+			}
+		} catch ( \Throwable $e ) {
+			return false;
+		}
+		return false;
 	}
 
 	/**
@@ -375,19 +456,10 @@ class Collector {
 		if ( null !== self::$roots ) {
 			return self::$roots;
 		}
-		// phpcs:disable WordPress.PHP.NoSilencedErrors.Discouraged -- realpath() warns under open_basedir; false is handled.
-		// Display-only: strip site paths from error samples. No file read/write. ABSPATH is the
-		// WordPress root constant (no equivalent function for this prefix-strip). Content dir via Paths.
-		$dirs = array(
-			array( Paths::content_dir(), 'wp-content/' ),
-			array( @realpath( Paths::content_dir() ), 'wp-content/' ),
-			array( ABSPATH, '' ),
-			array( @realpath( ABSPATH ), '' ),
-		);
-		// phpcs:enable WordPress.PHP.NoSilencedErrors.Discouraged
+		$dirs        = Paths::scrub_roots();
 		self::$roots = array();
 		foreach ( $dirs as $dir ) {
-			if ( false === $dir[0] || '' === $dir[0] ) {
+			if ( '' === $dir[0] ) {
 				continue;
 			}
 			$parts   = preg_split( '#[\\\\/]+#', rtrim( (string) $dir[0], '\\/' ) );
@@ -487,33 +559,52 @@ class Collector {
 	}
 
 	/**
-	 * The upsert.
+	 * The upsert (single transaction, one prepared statement per buffered row).
+	 * Preserves cumulative rows_affected semantics (1 per insert, 2 per update) for check_cap().
 	 *
 	 * @param array  $rows    Rows.
 	 * @param int    $context Page type bits.
 	 * @param string $day     Y-m-d.
-	 * @return int|false Rows affected, false on error.
+	 * @return int|false Total rows affected, false on error.
 	 */
 	private static function upsert( array $rows, $context, $day ) {
 		global $wpdb;
 
-		$table  = $wpdb->prefix . self::TABLE;
-		$php    = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
-		$places = array();
-		$values = array();
-		foreach ( $rows as $row ) {
-			$places[] = '(%s, %s, %s, %s, %s, %d, %d, %s)';
-			array_push( $values, $day, $php, $row['component'], $row['level'], $row['hash'], $row['hits'], $context, $row['sample'] );
+		$table = $wpdb->prefix . self::TABLE;
+		$php   = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
+		$total = 0;
+
+		$use_tx = count( $rows ) > 1;
+		if ( $use_tx ) {
+			$wpdb->query( 'START TRANSACTION' );
 		}
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders -- table name from $wpdb->prefix, one fixed placeholder group per row.
-		$result = $wpdb->query(
-			$wpdb->prepare(
-				"INSERT INTO {$table} (day, php_version, component, level, message_hash, hits, context, sample) VALUES " . implode( ', ', $places ) . ' ON DUPLICATE KEY UPDATE hits = hits + VALUES(hits), context = context | VALUES(context)',
-				$values
-			)
-		);
-		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders
-		return false === $result ? false : (int) $wpdb->rows_affected;
+		foreach ( $rows as $row ) {
+			$result = $wpdb->query(
+				$wpdb->prepare(
+					'INSERT INTO %i (day, php_version, component, level, message_hash, hits, context, sample) VALUES (%s, %s, %s, %s, %s, %d, %d, %s) ON DUPLICATE KEY UPDATE hits = hits + VALUES(hits), context = context | VALUES(context)',
+					$table,
+					$day,
+					$php,
+					$row['component'],
+					$row['level'],
+					$row['hash'],
+					$row['hits'],
+					$context,
+					$row['sample']
+				)
+			);
+			if ( false === $result ) {
+				if ( $use_tx ) {
+					$wpdb->query( 'ROLLBACK' );
+				}
+				return false;
+			}
+			$total += (int) $wpdb->rows_affected;
+		}
+		if ( $use_tx ) {
+			$wpdb->query( 'COMMIT' );
+		}
+		return $total;
 	}
 
 	/**
@@ -525,7 +616,7 @@ class Collector {
 		global $wpdb;
 
 		$table = $wpdb->prefix . self::TABLE;
-		$rows  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE day = %s", $day ) );
+		$rows  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE day = %s', $table, $day ) );
 		if ( $rows >= self::DAILY_CAP ) {
 			$state               = State::get();
 			$state['capped_day'] = $day;
@@ -567,14 +658,14 @@ class Collector {
 		$cutoff   = wp_date( 'Y-m-d', time() - self::RETENTION * DAY_IN_SECONDS );
 		$deadline = microtime( true ) + self::PURGE_SECONDS;
 		do {
-			$count = $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE day < %s LIMIT %d", $cutoff, self::PURGE_CHUNK ) );
+			$count = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE day < %s LIMIT %d', $table, $cutoff, self::PURGE_CHUNK ) );
 			if ( false === $count ) {
 				Recorder::set_error( 'upgrade watch purge: ' . $wpdb->last_error );
 				return;
 			}
 		} while ( self::PURGE_CHUNK === (int) $count && microtime( true ) < $deadline );
 
-		if ( empty( Settings::get( 'upgrade_watch' ) ) && 0 === (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ) ) {
+		if ( empty( Settings::get( 'upgrade_watch' ) ) && 0 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table ) ) ) {
 			delete_option( State::OPTION );
 		}
 	}

@@ -563,9 +563,8 @@ class Recorder {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'qpucg_fileset_hits';
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
-		$hits = (int) $wpdb->get_var( $wpdb->prepare( "SELECT hits FROM {$table} WHERE set_hash = %s AND day = %s AND context = %d", $hash, $day, $context ) );
-		if ( $hits > 0 && 1 === (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE set_hash = %s AND day = %s AND context = %d AND hits = %d", $hash, $day, $context, $hits ) ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		$hits  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT hits FROM %i WHERE set_hash = %s AND day = %s AND context = %d', $table, $hash, $day, $context ) );
+		if ( $hits > 0 && 1 === (int) $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE set_hash = %s AND day = %s AND context = %d AND hits = %d', $table, $hash, $day, $context, $hits ) ) ) {
 			return $hits;
 		}
 		return 1;
@@ -612,8 +611,7 @@ class Recorder {
 		$table  = $wpdb->prefix . 'qpucg_fileset_hits';
 		$result = $wpdb->query(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix; one query by design (spec §7.2).
-				"INSERT INTO {$table} (set_hash, day, context, hits, prep_ms_total, prep_ms_max, slow_hits, req_hits, req_ms_total, ovh_0, ovh_1, ovh_2, ovh_3, ovh_4, ovh_5, ovh_6)
+				'INSERT INTO %i (set_hash, day, context, hits, prep_ms_total, prep_ms_max, slow_hits, req_hits, req_ms_total, ovh_0, ovh_1, ovh_2, ovh_3, ovh_4, ovh_5, ovh_6)
 				VALUES (%s, %s, %d, 1, %f, %f, %d, %d, %f, %d, %d, %d, %d, %d, %d, %d)
 				ON DUPLICATE KEY UPDATE hits = hits + 1,
 					prep_ms_total = prep_ms_total + VALUES(prep_ms_total),
@@ -623,7 +621,8 @@ class Recorder {
 					req_ms_total = req_ms_total + VALUES(req_ms_total),
 					ovh_0 = ovh_0 + VALUES(ovh_0), ovh_1 = ovh_1 + VALUES(ovh_1), ovh_2 = ovh_2 + VALUES(ovh_2),
 					ovh_3 = ovh_3 + VALUES(ovh_3), ovh_4 = ovh_4 + VALUES(ovh_4), ovh_5 = ovh_5 + VALUES(ovh_5),
-					ovh_6 = ovh_6 + VALUES(ovh_6)",
+					ovh_6 = ovh_6 + VALUES(ovh_6)',
+				$table,
 				$hash,
 				$day,
 				$context,
@@ -660,7 +659,7 @@ class Recorder {
 		global $wpdb;
 
 		$table  = $wpdb->prefix . 'qpucg_filesets';
-		$exists = $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$table} WHERE set_hash = %s LIMIT 1", $hash ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		$exists = $wpdb->get_var( $wpdb->prepare( 'SELECT 1 FROM %i WHERE set_hash = %s LIMIT 1', $table, $hash ) );
 		if ( '' !== (string) $wpdb->last_error ) {
 			self::set_error( 'filesets: ' . self::db_error() );
 			return false;
@@ -683,7 +682,8 @@ class Recorder {
 		// Hex keeps the query ASCII so wpdb's invalid-text check can't reject binary data (DECISIONS D15).
 		$result = $wpdb->query(
 			$wpdb->prepare(
-				"INSERT IGNORE INTO {$table} (set_hash, file_count, files, is_compressed, format, created) VALUES (%s, %d, UNHEX(%s), %d, %d, %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+				'INSERT IGNORE INTO %i (set_hash, file_count, files, is_compressed, format, created) VALUES (%s, %d, UNHEX(%s), %d, %d, %s)',
+				$table,
 				$hash,
 				count( $paths ),
 				bin2hex( $list ),
@@ -801,10 +801,9 @@ class Recorder {
 	private static function own_prefixes() {
 		if ( null === self::$own_prefixes ) {
 			$out = array();
-			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- realpath() warns under open_basedir when a symlinked plugin dir resolves outside the allowed paths; false is handled.
-			$dirs = array( QPUCG_DIR, @realpath( QPUCG_DIR ) );
+			$dirs = array( QPUCG_DIR, Paths::safe_realpath( QPUCG_DIR ) );
 			foreach ( $dirs as $dir ) {
-				if ( false !== $dir && '' !== $dir ) {
+				if ( '' !== $dir ) {
 					$prefix         = Paths::normalize( trailingslashit( $dir ) );
 					$out[ $prefix ] = strlen( $prefix );
 				}

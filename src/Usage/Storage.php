@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Queries our own custom tables (spec §6); the object cache does not apply to them.
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 
 /**
  * Size, cap and rebuild.
@@ -29,6 +29,7 @@ class Storage {
 	const TARGET = 42991616; // 41 MB when idle: a rollup's staging rows (about 9 MB on the largest site seen) still fit under the cap.
 
 	const HOOK             = 'qpucg_storage';
+	const STEP_HOOK        = 'qpucg_storage_step';
 	const OPTION           = 'qpucg_storage_state';
 	const QUIET_HOUR       = 3;
 	const REBUILD_MIN_FREE = 10485760;
@@ -56,10 +57,35 @@ class Storage {
 		foreach ( Install::tables() as $name ) {
 			$names[ Install::table( $name ) ] = $name;
 		}
-		$restore = self::fresh_stats();
-		$in      = implode( ', ', array_fill( 0, count( $names ), '%s' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $in is only %s placeholders.
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT table_name AS t, data_length AS d, index_length AS i, data_free AS f, table_rows AS r, engine AS e FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ({$in})", array_keys( $names ) ), ARRAY_A );
+		$restore    = self::fresh_stats();
+		$table_keys = array_keys( $names );
+		$rows       = array();
+		if ( ! empty( $table_keys ) ) {
+			foreach ( array_chunk( $table_keys, 12 ) as $chunk ) {
+				$padded = array_pad( $chunk, 12, end( $chunk ) );
+				$part   = $wpdb->get_results(
+					$wpdb->prepare(
+						'SELECT table_name AS t, data_length AS d, index_length AS i, data_free AS f, table_rows AS r, engine AS e FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+						$padded[0],
+						$padded[1],
+						$padded[2],
+						$padded[3],
+						$padded[4],
+						$padded[5],
+						$padded[6],
+						$padded[7],
+						$padded[8],
+						$padded[9],
+						$padded[10],
+						$padded[11]
+					),
+					ARRAY_A
+				);
+				if ( is_array( $part ) ) {
+					$rows = array_merge( $rows, $part );
+				}
+			}
+		}
 		if ( null !== $restore ) {
 			$wpdb->query( $wpdb->prepare( 'SET SESSION information_schema_stats_expiry = %d', $restore ) );
 		}
@@ -197,6 +223,7 @@ class Storage {
 		if ( ! empty( $state['pending_cutoff'] ) || ! empty( $state['orphans'] ) ) {
 			if ( ! empty( $state['pending_cutoff'] ) && ! self::delete_hits_before( $state['pending_cutoff'], $deadline ) ) {
 				self::save( $state );
+				self::continue_soon();
 				return false;
 			}
 			unset( $state['pending_cutoff'] );
@@ -204,6 +231,7 @@ class Storage {
 			self::save( $state );
 			self::rollup_soon();
 			if ( $state['orphans'] ) {
+				self::continue_soon();
 				return false;
 			}
 			$size = self::size();
@@ -234,10 +262,13 @@ class Storage {
 			$state['last_cap_at']   = $now;
 			if ( ! empty( $state['pending_cutoff'] ) ) {
 				self::save( $state );
+				self::continue_soon();
 				return true;
 			}
 			$state['orphans'] = ! self::purge_orphans( $state, $deadline );
-			if ( ! $state['orphans'] && self::may_rebuild( $state, $now, true ) ) {
+			if ( $state['orphans'] ) {
+				self::continue_soon();
+			} elseif ( self::may_rebuild( $state, $now, true ) ) {
 				// Both tables the delete emptied: their pages only come back with a rebuild.
 				foreach ( array( 'filesets', 'fileset_hits' ) as $name ) {
 					if ( microtime( true ) < $deadline && ! self::rebuild_one( self::size(), $state, $now, $name ) ) {
@@ -291,7 +322,7 @@ class Storage {
 			return (int) $size['total'];
 		}
 		$table  = Install::table( 'filesets' );
-		$row    = $wpdb->get_row( "SELECT COUNT(*) AS n, COALESCE(SUM(LENGTH(files)), 0) AS b FROM {$table}", ARRAY_A );
+		$row    = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS n, COALESCE(SUM(LENGTH(files)), 0) AS b FROM %i', $table ), ARRAY_A );
 		$sets   = $size['tables']['filesets'];
 		$actual = $sets['data'] + $sets['index'];
 		$live   = (int) $row['b'] + (int) $row['n'] * self::ROW_OVERHEAD;
@@ -342,7 +373,7 @@ class Storage {
 		self::save( $state );
 
 		$table = Install::table( $name );
-		$rows  = $wpdb->get_results( "OPTIMIZE TABLE `{$table}`", ARRAY_A );
+		$rows  = $wpdb->get_results( $wpdb->prepare( 'OPTIMIZE TABLE %i', $table ), ARRAY_A );
 		$error = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : '';
 		foreach ( (array) $rows as $row ) {
 			$row = array_change_key_case( $row, CASE_LOWER );
@@ -377,7 +408,7 @@ class Storage {
 			$value = $info['free'];
 			if ( 'filesets' === $name ) {
 				$table = Install::table( 'filesets' );
-				$row   = $wpdb->get_row( "SELECT COUNT(*) AS n, COALESCE(SUM(LENGTH(files)), 0) AS b FROM {$table}", ARRAY_A );
+				$row   = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS n, COALESCE(SUM(LENGTH(files)), 0) AS b FROM %i', $table ), ARRAY_A );
 				$value = max( $value, $info['data'] + $info['index'] - (int) $row['b'] - (int) $row['n'] * self::ROW_OVERHEAD );
 			}
 			if ( $value >= self::REBUILD_MIN_FREE && $value > $gain ) {
@@ -404,9 +435,9 @@ class Storage {
 
 		$hits_table = Install::table( 'fileset_hits' );
 		$days_table = Install::table( 'usage_days' );
-		$raw        = (array) $wpdb->get_col( "SELECT DISTINCT day FROM {$hits_table} ORDER BY day" );
+		$raw        = (array) $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT day FROM %i ORDER BY day', $hits_table ) );
 		$folded     = array();
-		foreach ( (array) $wpdb->get_results( "SELECT day, SUM(LENGTH(data)) AS b FROM {$days_table} GROUP BY day", ARRAY_A ) as $row ) {
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT day, SUM(LENGTH(data)) AS b FROM %i GROUP BY day', $days_table ), ARRAY_A ) as $row ) {
 			$folded[ $row['day'] ] = (int) $row['b'] + 100;
 		}
 		$all = array_unique( array_merge( $raw, array_keys( $folded ) ) );
@@ -457,9 +488,35 @@ class Storage {
 		}
 		$folded_gone = array_values( array_intersect( $gone, array_keys( $folded ) ) );
 		if ( ! empty( $folded_gone ) ) {
-			$in = implode( ', ', array_fill( 0, count( $folded_gone ), '%s' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $in is only %s placeholders.
-			$wpdb->query( $wpdb->prepare( "DELETE FROM {$days_table} WHERE day IN ({$in})", $folded_gone ) );
+			foreach ( array_chunk( $folded_gone, 20 ) as $chunk ) {
+				$padded = array_pad( $chunk, 20, end( $chunk ) );
+				$wpdb->query(
+					$wpdb->prepare(
+						'DELETE FROM %i WHERE day IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+						$days_table,
+						$padded[0],
+						$padded[1],
+						$padded[2],
+						$padded[3],
+						$padded[4],
+						$padded[5],
+						$padded[6],
+						$padded[7],
+						$padded[8],
+						$padded[9],
+						$padded[10],
+						$padded[11],
+						$padded[12],
+						$padded[13],
+						$padded[14],
+						$padded[15],
+						$padded[16],
+						$padded[17],
+						$padded[18],
+						$padded[19]
+					)
+				);
+			}
 		}
 		if ( '' !== $raw_cutoff ) {
 			// Delete hit rows up to and including the last day chosen.
@@ -485,7 +542,7 @@ class Storage {
 
 		$table = Install::table( 'fileset_hits' );
 		do {
-			$done = $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE day < %s LIMIT %d", $cutoff, self::DELETE_CHUNK ) );
+			$done = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE day < %s LIMIT %d', $table, $cutoff, self::DELETE_CHUNK ) );
 			if ( false === $done ) {
 				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- stored in the recorder flags, escaped when displayed.
 				throw new \RuntimeException( 'storage: ' . $wpdb->last_error );
@@ -498,22 +555,26 @@ class Storage {
 	}
 
 	/**
-	 * Seconds a run may use. The nightly run raises the time limit where the host allows it, so the cap is reached in
-	 * one run; the hourly check stays short.
+	 * Seconds a run may use, derived strictly from the host's current max_execution_time.
+	 * Unfinished work is resumed across short continuation batches via STEP_HOOK.
 	 *
 	 * @param bool $nightly Nightly run.
 	 * @return float
 	 */
 	private static function budget( $nightly ) {
-		if ( ! $nightly ) {
-			return self::BUDGET;
-		}
+		$cap   = $nightly ? self::NIGHTLY_BUDGET : self::BUDGET;
 		$limit = (int) ini_get( 'max_execution_time' );
-		if ( $limit > 0 && function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( max( $limit, (int) self::NIGHTLY_BUDGET + 60 ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- may be disallowed by the host; then the limit stays.
-			$limit = (int) ini_get( 'max_execution_time' );
+		return $limit > 0 ? min( $cap, max( 5.0, $limit * 0.5 ) ) : $cap;
+	}
+
+	/**
+	 * Schedules one continuation batch on a dedicated single-event hook so unfinished cleanup finishes quickly
+	 * without colliding with the recurring nightly schedule or stacking duplicates.
+	 */
+	private static function continue_soon() {
+		if ( ! wp_next_scheduled( self::STEP_HOOK ) ) {
+			wp_schedule_single_event( time() + 60, self::STEP_HOOK );
 		}
-		return $limit > 0 ? min( self::NIGHTLY_BUDGET, $limit * 0.6 ) : self::NIGHTLY_BUDGET;
 	}
 
 	/**
@@ -547,7 +608,7 @@ class Storage {
 		global $wpdb;
 		foreach ( array( 'filesets', 'fileset_hits' ) as $name ) {
 			$table = Install::table( $name );
-			$wpdb->query( "ANALYZE TABLE `{$table}`" );
+			$wpdb->query( $wpdb->prepare( 'ANALYZE TABLE %i', $table ) );
 		}
 	}
 
@@ -557,7 +618,7 @@ class Storage {
 	private static function clear_cache() {
 		global $wpdb;
 		$table = Install::table( 'file_cache' );
-		$wpdb->query( "TRUNCATE TABLE `{$table}`" );
+		$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $table ) );
 	}
 
 	/**

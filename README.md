@@ -31,7 +31,6 @@ Two files are in `src/` but are **not** in the release zip (`bin/build-zip.php` 
 - PHP 8.2 or newer on the command line (PHP-Scoper needs it; the plugin itself runs on PHP 7.4 and newer, see `readme.txt`)
 - Composer 2
 - PHP extensions: `zip`, `tokenizer`, `simplexml`, `xmlwriter`, `libxml`, `mbstring`
-- Git (the zip build writes the commit hash into `build.txt`)
 - [PHP-Scoper](https://github.com/humbug/php-scoper) as a PHAR at `tools/php-scoper.phar` (version 0.18.20 was used)
 
 ## Build steps

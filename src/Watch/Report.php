@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Queries our own custom table (spec §6); the object cache does not apply to it.
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
  * Builds the report for the Upgrade watch tab.
@@ -122,7 +122,7 @@ class Report {
 		);
 
 		$table = $wpdb->prefix . Collector::TABLE;
-		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT level, SUM(hits) AS hits FROM {$table} WHERE day >= %s GROUP BY level", State::add_days( $today, 1 - self::BEFORE_DAYS ) ), ARRAY_A );
+		$rows  = $wpdb->get_results( $wpdb->prepare( 'SELECT level, SUM(hits) AS hits FROM %i WHERE day >= %s GROUP BY level', $table, State::add_days( $today, 1 - self::BEFORE_DAYS ) ), ARRAY_A );
 		foreach ( (array) $rows as $row ) {
 			$out[ $row['level'] ] = (int) $row['hits'];
 		}
@@ -173,9 +173,9 @@ class Report {
 
 		list( $php, $first, $last ) = self::ranges( $state, self::WATCHING, $today )['before'];
 		if ( '' === $php ) {
-			$seen = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE message_hash = %s AND day BETWEEN %s AND %s", $hash, $first, $last ) );
+			$seen = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE message_hash = %s AND day BETWEEN %s AND %s', $table, $hash, $first, $last ) );
 		} else {
-			$seen = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE message_hash = %s AND php_version = %s AND day BETWEEN %s AND %s", $hash, $php, $first, $last ) );
+			$seen = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE message_hash = %s AND php_version = %s AND day BETWEEN %s AND %s', $table, $hash, $php, $first, $last ) );
 		}
 		return 0 === (int) $seen;
 	}
@@ -193,15 +193,15 @@ class Report {
 
 		list( $before_php, $before_first, $before_last ) = $ranges['before'];
 		if ( '' === $before_php ) {
-			$seen = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT message_hash FROM {$table} WHERE day BETWEEN %s AND %s", $before_first, $before_last ) );
+			$seen = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT message_hash FROM %i WHERE day BETWEEN %s AND %s', $table, $before_first, $before_last ) );
 		} else {
-			$seen = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT message_hash FROM {$table} WHERE php_version = %s AND day BETWEEN %s AND %s", $before_php, $before_first, $before_last ) );
+			$seen = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT message_hash FROM %i WHERE php_version = %s AND day BETWEEN %s AND %s', $table, $before_php, $before_first, $before_last ) );
 		}
 		$seen = array_flip( (array) $seen );
 
 		list( $after_php, $after_first, $after_last ) = $ranges['after'];
 
-		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT component, level, message_hash, SUM(hits) AS hits, BIT_OR(context) AS context, MAX(day) AS day, MAX(sample) AS sample FROM {$table} WHERE php_version = %s AND day BETWEEN %s AND %s GROUP BY component, level, message_hash", $after_php, $after_first, $after_last ), ARRAY_A );
+		$rows  = $wpdb->get_results( $wpdb->prepare( 'SELECT component, level, message_hash, SUM(hits) AS hits, BIT_OR(context) AS context, MAX(day) AS day, MAX(sample) AS sample FROM %i WHERE php_version = %s AND day BETWEEN %s AND %s GROUP BY component, level, message_hash', $table, $after_php, $after_first, $after_last ), ARRAY_A );
 		$items = array();
 		foreach ( (array) $rows as $row ) {
 			if ( isset( $seen[ $row['message_hash'] ] ) ) {

@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Queries our own custom tables (spec §6); the object cache does not apply to them.
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
  * Scan runner. Every query uses table names from $wpdb->prefix only.
@@ -159,7 +159,8 @@ class Runner {
 		$table = Install::table( 'scans' );
 		$wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$table} SET status = 'failed', finished = %s, error = %s WHERE status = 'queued'",
+				"UPDATE %i SET status = 'failed', finished = %s, error = %s WHERE status = 'queued'",
+				$table,
 				current_time( 'mysql' ),
 				sprintf(
 					/* translators: %s: WP-CLI command. */
@@ -214,7 +215,7 @@ class Runner {
 			$total += $count['files'];
 		}
 		// Only while still ours and still queued: an inventory slower than the lock TTL may have been marked failed.
-		$updated = $wpdb->query( $wpdb->prepare( "UPDATE {$table} SET status = 'running', files_total = %d, files_done = %d WHERE id = %d AND status = 'queued'", $total, self::done_count( $scan_id ), $scan_id ) );
+		$updated = $wpdb->query( $wpdb->prepare( "UPDATE %i SET status = 'running', files_total = %d, files_done = %d WHERE id = %d AND status = 'queued'", $table, $total, self::done_count( $scan_id ), $scan_id ) );
 		if ( 1 !== $updated || ! self::refresh( $token ) ) {
 			self::fail( $scan_id, __( 'The file inventory took longer than the scan lock allows.', 'qasim-php-upgrade-check-guard' ) );
 			return new \WP_Error( 'inventory', __( 'The file inventory took longer than the scan lock allows.', 'qasim-php-upgrade-check-guard' ) );
@@ -404,13 +405,13 @@ class Runner {
 			$scans = Install::table( 'scans' );
 
 			while ( '' === $stopped ) {
-				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, path_hash, path_key, component, component_active, note FROM {$files} WHERE scan_id = %d AND status = 'pending' ORDER BY id LIMIT %d", $scan_id, self::CHUNK ), ARRAY_A );
+				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, path_hash, path_key, component, component_active, note FROM %i WHERE scan_id = %d AND status = 'pending' ORDER BY id LIMIT %d", $files, $scan_id, self::CHUNK ), ARRAY_A );
 				if ( empty( $rows ) ) {
 					// A Cancel during the last chunk leaves no pending rows: not done (DECISIONS D51).
-					$stopped = 'running' === $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$scans} WHERE id = %d", $scan_id ) ) ? 'done' : 'cancelled';
+					$stopped = 'running' === $wpdb->get_var( $wpdb->prepare( 'SELECT status FROM %i WHERE id = %d', $scans, $scan_id ) ) ? 'done' : 'cancelled';
 					break;
 				}
-				if ( 'running' !== $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$scans} WHERE id = %d", $scan_id ) ) ) {
+				if ( 'running' !== $wpdb->get_var( $wpdb->prepare( 'SELECT status FROM %i WHERE id = %d', $scans, $scan_id ) ) ) {
 					$stopped = 'cancelled';
 					break;
 				}
@@ -564,7 +565,7 @@ class Runner {
 				}
 				if ( 'retry' === $stopped && $retry_id > 0 ) {
 					// The file that didn't fit keeps count of its tries, in its note, for the next request.
-					$wpdb->query( $wpdb->prepare( "UPDATE {$files} SET note = %s WHERE id = %d AND status = 'pending'", 'memory-retry:' . $retry_n, $retry_id ) );
+					$wpdb->query( $wpdb->prepare( "UPDATE %i SET note = %s WHERE id = %d AND status = 'pending'", $files, 'memory-retry:' . $retry_n, $retry_id ) );
 				}
 			}
 			if ( 'memory' === $stopped && 0 === $processed ) {
@@ -611,7 +612,8 @@ class Runner {
 		$scans = Install::table( 'scans' );
 		$wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$scans} SET files_done = %d, batches = batches + 1, peak_memory = GREATEST(peak_memory, %d), engine_seconds = engine_seconds + %f, baseline_seconds = IF(baseline_seconds < 0, baseline_seconds, baseline_seconds + %f), files_reused = files_reused + %d, memory_limit = GREATEST(memory_limit, %d), memory_ini = %s, sapi = %s WHERE id = %d",
+				'UPDATE %i SET files_done = %d, batches = batches + 1, peak_memory = GREATEST(peak_memory, %d), engine_seconds = engine_seconds + %f, baseline_seconds = IF(baseline_seconds < 0, baseline_seconds, baseline_seconds + %f), files_reused = files_reused + %d, memory_limit = GREATEST(memory_limit, %d), memory_ini = %s, sapi = %s WHERE id = %d',
+				$scans,
 				self::done_count( $scan_id ),
 				$peak,
 				$seconds,
@@ -642,7 +644,7 @@ class Runner {
 	public static function cancel( $scan_id ) {
 		global $wpdb;
 		$scans   = Install::table( 'scans' );
-		$changed = $wpdb->query( $wpdb->prepare( "UPDATE {$scans} SET status = 'cancelled', finished = %s WHERE id = %d AND status IN ('queued','running')", current_time( 'mysql' ), (int) $scan_id ) );
+		$changed = $wpdb->query( $wpdb->prepare( "UPDATE %i SET status = 'cancelled', finished = %s WHERE id = %d AND status IN ('queued','running')", $scans, current_time( 'mysql' ), (int) $scan_id ) );
 		self::clear_step( $scan_id );
 		return $changed > 0;
 	}
@@ -656,7 +658,7 @@ class Runner {
 	public static function get( $scan_id ) {
 		global $wpdb;
 		$scans = Install::table( 'scans' );
-		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$scans} WHERE id = %d", (int) $scan_id ), ARRAY_A );
+		$row   = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $scans, (int) $scan_id ), ARRAY_A );
 		return is_array( $row ) ? $row : null;
 	}
 
@@ -670,9 +672,9 @@ class Runner {
 		global $wpdb;
 		$table = Install::table( 'scans' );
 		if ( '' === $status ) {
-			$row = $wpdb->get_row( "SELECT * FROM {$table} ORDER BY id DESC LIMIT 1", ARRAY_A );
+			$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i ORDER BY id DESC LIMIT 1', $table ), ARRAY_A );
 		} else {
-			$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE status = %s ORDER BY id DESC LIMIT 1", $status ), ARRAY_A );
+			$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE status = %s ORDER BY id DESC LIMIT 1', $table, $status ), ARRAY_A );
 		}
 		return is_array( $row ) ? $row : null;
 	}
@@ -727,7 +729,7 @@ class Runner {
 		}
 		$files = Install::table( 'scan_files' );
 		// Components in inventory order: the files of a scan are scanned in that order, one component after the other.
-		$rows    = $wpdb->get_results( $wpdb->prepare( "SELECT component, COUNT(*) AS total, SUM(status NOT IN ('pending','scanning')) AS done FROM {$files} WHERE scan_id = %d GROUP BY component ORDER BY MIN(id)", $scan_id ), ARRAY_A );
+		$rows    = $wpdb->get_results( $wpdb->prepare( "SELECT component, COUNT(*) AS total, SUM(status NOT IN ('pending','scanning')) AS done FROM %i WHERE scan_id = %d GROUP BY component ORDER BY MIN(id)", $files, $scan_id ), ARRAY_A );
 		$current = null;
 		foreach ( (array) $rows as $row ) {
 			if ( (int) $row['done'] >= (int) $row['total'] ) {
@@ -775,7 +777,7 @@ class Runner {
 
 		$components = array();
 		$statuses   = array();
-		foreach ( (array) $wpdb->get_results( $wpdb->prepare( "SELECT component, component_active, status, COUNT(*) AS n FROM {$files} WHERE scan_id = %d GROUP BY component, component_active, status", $scan['id'] ), ARRAY_A ) as $row ) {
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT component, component_active, status, COUNT(*) AS n FROM %i WHERE scan_id = %d GROUP BY component, component_active, status', $files, $scan['id'] ), ARRAY_A ) as $row ) {
 			$id = $row['component'];
 			if ( ! isset( $components[ $id ] ) ) {
 				$components[ $id ] = array(
@@ -803,7 +805,7 @@ class Runner {
 		$by_severity_active = $by_severity;
 		$current            = 0;
 		$guarded            = 0;
-		foreach ( (array) $wpdb->get_results( $wpdb->prepare( "SELECT component, category, severity, baseline, guarded, COUNT(*) AS n FROM {$findings} WHERE scan_id = %d GROUP BY component, category, severity, baseline, guarded", $scan['id'] ), ARRAY_A ) as $row ) {
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT component, category, severity, baseline, guarded, COUNT(*) AS n FROM %i WHERE scan_id = %d GROUP BY component, category, severity, baseline, guarded', $findings, $scan['id'] ), ARRAY_A ) as $row ) {
 			$n = (int) $row['n'];
 			// Code that can't run on the target (DECISIONS D56): counted once, here, even if also true on "from".
 			if ( '1' === (string) $row['guarded'] ) {
@@ -832,10 +834,10 @@ class Runner {
 		}
 		ksort( $components );
 
-		$engine_errors = $wpdb->get_results( $wpdb->prepare( "SELECT path_key, note FROM {$files} WHERE scan_id = %d AND status = 'engine_error' ORDER BY id LIMIT 50", $scan['id'] ), ARRAY_A );
+		$engine_errors = $wpdb->get_results( $wpdb->prepare( "SELECT path_key, note FROM %i WHERE scan_id = %d AND status = 'engine_error' ORDER BY id LIMIT 50", $files, $scan['id'] ), ARRAY_A );
 		// Files not scanned (size, data/classmap, memory, unreadable) or not fully checked (partial, D52): always
 		// listed, never hidden (DECISIONS D40).
-		$skipped_files = $wpdb->get_results( $wpdb->prepare( "SELECT path_key, component, status, note FROM {$files} WHERE scan_id = %d AND status IN ('skipped_large','unreadable','partial') ORDER BY id LIMIT 200", $scan['id'] ), ARRAY_A );
+		$skipped_files = $wpdb->get_results( $wpdb->prepare( "SELECT path_key, component, status, note FROM %i WHERE scan_id = %d AND status IN ('skipped_large','unreadable','partial') ORDER BY id LIMIT 200", $files, $scan['id'] ), ARRAY_A );
 
 		$stats = get_option( self::STATS );
 		return array(
@@ -868,7 +870,7 @@ class Runner {
 	public static function inactive_scanned( $scan_id ) {
 		global $wpdb;
 		$files = Install::table( 'scan_files' );
-		return null !== $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$files} WHERE scan_id = %d AND component_active = 0 LIMIT 1", (int) $scan_id ) );
+		return null !== $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE scan_id = %d AND component_active = 0 LIMIT 1', $files, (int) $scan_id ) );
 	}
 
 	/**
@@ -888,7 +890,7 @@ class Runner {
 			'code_active' => 0,
 		);
 		// The note of a data file is "skipped: too large (data/classmap file, … KB)" (Inventory::skip_note()).
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT component_active, ( status = 'skipped_large' AND note LIKE %s ) AS is_data, COUNT(*) AS n FROM {$files} WHERE scan_id = %d AND status IN ('skipped_large','unreadable','partial','engine_error') GROUP BY component_active, is_data", '%' . $wpdb->esc_like( 'data/classmap' ) . '%', (int) $scan_id ), ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT component_active, ( status = 'skipped_large' AND note LIKE %s ) AS is_data, COUNT(*) AS n FROM %i WHERE scan_id = %d AND status IN ('skipped_large','unreadable','partial','engine_error') GROUP BY component_active, is_data", '%' . $wpdb->esc_like( 'data/classmap' ) . '%', $files, (int) $scan_id ), ARRAY_A );
 		foreach ( (array) $rows as $row ) {
 			$n = (int) $row['n'];
 			if ( '1' === (string) $row['is_data'] ) {
@@ -910,7 +912,7 @@ class Runner {
 	public static function not_scanned( $scan_id ) {
 		global $wpdb;
 		$files = Install::table( 'scan_files' );
-		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$files} WHERE scan_id = %d AND status IN ('skipped_large','unreadable','partial')", (int) $scan_id ) );
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE scan_id = %d AND status IN ('skipped_large','unreadable','partial')", $files, (int) $scan_id ) );
 	}
 
 	/**
@@ -1016,10 +1018,10 @@ class Runner {
 		}
 		// Only while the claim is still ours; otherwise drop what this file inserted (reap() marked it already).
 		$files = Install::table( 'scan_files' );
-		$saved = $wpdb->query( $wpdb->prepare( "UPDATE {$files} SET status = %s, note = %s WHERE id = %d AND status = 'scanning' AND note = %s", $out['status'], (string) $note, (int) $row['id'], $token ) );
+		$saved = $wpdb->query( $wpdb->prepare( "UPDATE %i SET status = %s, note = %s WHERE id = %d AND status = 'scanning' AND note = %s", $files, $out['status'], (string) $note, (int) $row['id'], $token ) );
 		if ( 1 !== $saved ) {
 			$findings = Install::table( 'findings' );
-			$wpdb->query( $wpdb->prepare( "DELETE FROM {$findings} WHERE scan_id = %d AND path_hash = %s", (int) $scan_id, $row['path_hash'] ) );
+			$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE scan_id = %d AND path_hash = %s', $findings, (int) $scan_id, $row['path_hash'] ) );
 			$out['status'] = 'lost';
 		}
 		return $out;
@@ -1059,23 +1061,29 @@ class Runner {
 	}
 
 	/**
-	 * Version of the rules a cached result was made with: the engine build (BUILD-OK 'inputs' line) and the code that
-	 * shapes a result (this class, Engine, Guards, Categories). Any change to them makes every cached result a miss.
+	 * Version of the rules a cached result was made with: the plugin version, bundled engine files, and the code that
+	 * shapes a result (this class, Engine, Guards, Categories). Cached statically per request; any change makes cached
+	 * results a miss. Fails gracefully to '' (caching disabled) if any file is unreadable.
 	 *
-	 * @return string 32 hex characters, or '' when the engine build is unknown (no caching).
+	 * @return string 32 hex characters, or '' when the engine fingerprint cannot be computed.
 	 */
 	public static function cache_rules() {
 		if ( null !== self::$cache_rules ) {
 			return self::$cache_rules;
 		}
 		self::$cache_rules = '';
-		$marker            = Requirements::vendor_dir() . '/BUILD-OK';
-		$text              = is_readable( $marker ) ? file_get_contents( $marker ) : false; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- our own local file.
-		if ( ! is_string( $text ) || ! preg_match( '/^inputs ([0-9a-f]{32})\s*$/m', $text, $match ) ) {
-			return self::$cache_rules;
-		}
-		$parts = array( $match[1] );
-		foreach ( array( __FILE__, QPUCG_DIR . '/src/Engine/Engine.php', QPUCG_DIR . '/src/Engine/Guards.php', QPUCG_DIR . '/src/Scan/Categories.php' ) as $file ) {
+		$vendor            = Requirements::vendor_dir();
+		$files             = array(
+			$vendor . '/autoload.php',
+			$vendor . '/composer/installed.php',
+			$vendor . '/phpcompatibility/phpcompatibility-wp/PHPCompatibilityWP/ruleset.xml',
+			__FILE__,
+			QPUCG_DIR . '/src/Engine/Engine.php',
+			QPUCG_DIR . '/src/Engine/Guards.php',
+			QPUCG_DIR . '/src/Scan/Categories.php',
+		);
+		$parts             = array( QPUCG_VERSION );
+		foreach ( $files as $file ) {
 			$hash = is_readable( $file ) ? md5_file( $file ) : false;
 			if ( false === $hash ) {
 				return self::$cache_rules;
@@ -1121,16 +1129,45 @@ class Runner {
 				$hashes[] = $row['path_hash'];
 			}
 		}
-		if ( ! $hashes ) {
+		if ( empty( $hashes ) ) {
 			return array();
 		}
-		$cache        = Install::table( 'file_cache' );
-		$placeholders = implode( ', ', array_fill( 0, count( $hashes ), 'UNHEX(%s)' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholders built above.
-		$found = $wpdb->get_results( $wpdb->prepare( "SELECT LOWER(HEX(path_hash)) AS h, size, mtime, LOWER(HEX(content_hash)) AS c, findings FROM {$cache} WHERE range_key = %s AND rules = UNHEX(%s) AND path_hash IN ({$placeholders})", array_merge( array( $ctx['range'], $ctx['rules'] ), $hashes ) ), ARRAY_A );
+		$cache = Install::table( 'file_cache' );
 		$out   = array();
-		foreach ( (array) $found as $found_row ) {
-			$out[ $found_row['h'] ] = $found_row;
+		foreach ( array_chunk( array_values( $hashes ), 20 ) as $chunk ) {
+			$padded = array_pad( $chunk, 20, end( $chunk ) );
+			$found  = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT LOWER(HEX(path_hash)) AS h, size, mtime, LOWER(HEX(content_hash)) AS c, findings FROM %i WHERE range_key = %s AND rules = UNHEX(%s) AND path_hash IN (UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s))',
+					$cache,
+					$ctx['range'],
+					$ctx['rules'],
+					$padded[0],
+					$padded[1],
+					$padded[2],
+					$padded[3],
+					$padded[4],
+					$padded[5],
+					$padded[6],
+					$padded[7],
+					$padded[8],
+					$padded[9],
+					$padded[10],
+					$padded[11],
+					$padded[12],
+					$padded[13],
+					$padded[14],
+					$padded[15],
+					$padded[16],
+					$padded[17],
+					$padded[18],
+					$padded[19]
+				),
+				ARRAY_A
+			);
+			foreach ( (array) $found as $found_row ) {
+				$out[ $found_row['h'] ] = $found_row;
+			}
 		}
 		return $out;
 	}
@@ -1209,10 +1246,21 @@ class Runner {
 			return;
 		}
 		$cache = Install::table( 'file_cache' );
-		$args  = array( $row['path_hash'], $ctx['range'], $signature['hash'], $ctx['rules'], $signature['size'], $signature['mtime'], time() );
+		$now   = time();
 		if ( ! $findings ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- table name from $wpdb->prefix; arguments built above.
-			$wpdb->query( $wpdb->prepare( "REPLACE INTO {$cache} (path_hash, range_key, content_hash, rules, size, mtime, last_used, findings) VALUES (UNHEX(%s), %s, UNHEX(%s), UNHEX(%s), %d, %d, %d, NULL)", $args ) );
+			$wpdb->query(
+				$wpdb->prepare(
+					'REPLACE INTO %i (path_hash, range_key, content_hash, rules, size, mtime, last_used, findings) VALUES (UNHEX(%s), %s, UNHEX(%s), UNHEX(%s), %d, %d, %d, NULL)',
+					$cache,
+					$row['path_hash'],
+					$ctx['range'],
+					$signature['hash'],
+					$ctx['rules'],
+					$signature['size'],
+					$signature['mtime'],
+					$now
+				)
+			);
 			return;
 		}
 		$list = array();
@@ -1224,9 +1272,20 @@ class Runner {
 		if ( false === $blob ) {
 			return;
 		}
-		$args[] = bin2hex( $blob );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- table name from $wpdb->prefix; arguments built above.
-		$wpdb->query( $wpdb->prepare( "REPLACE INTO {$cache} (path_hash, range_key, content_hash, rules, size, mtime, last_used, findings) VALUES (UNHEX(%s), %s, UNHEX(%s), UNHEX(%s), %d, %d, %d, UNHEX(%s))", $args ) );
+		$wpdb->query(
+			$wpdb->prepare(
+				'REPLACE INTO %i (path_hash, range_key, content_hash, rules, size, mtime, last_used, findings) VALUES (UNHEX(%s), %s, UNHEX(%s), UNHEX(%s), %d, %d, %d, UNHEX(%s))',
+				$cache,
+				$row['path_hash'],
+				$ctx['range'],
+				$signature['hash'],
+				$ctx['rules'],
+				$signature['size'],
+				$signature['mtime'],
+				$now,
+				bin2hex( $blob )
+			)
+		);
 	}
 
 	/**
@@ -1243,13 +1302,44 @@ class Runner {
 				$valid[] = $hash;
 			}
 		}
-		if ( ! $valid ) {
+		if ( empty( $valid ) ) {
 			return;
 		}
-		$cache        = Install::table( 'file_cache' );
-		$placeholders = implode( ', ', array_fill( 0, count( $valid ), 'UNHEX(%s)' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholders built above.
-		$wpdb->query( $wpdb->prepare( "UPDATE {$cache} SET last_used = %d WHERE range_key = %s AND last_used < %d AND path_hash IN ({$placeholders})", array_merge( array( time(), $ctx['range'], time() - DAY_IN_SECONDS ), $valid ) ) );
+		$cache  = Install::table( 'file_cache' );
+		$now    = time();
+		$cutoff = $now - DAY_IN_SECONDS;
+		foreach ( array_chunk( array_values( $valid ), 20 ) as $chunk ) {
+			$padded = array_pad( $chunk, 20, end( $chunk ) );
+			$wpdb->query(
+				$wpdb->prepare(
+					'UPDATE %i SET last_used = %d WHERE range_key = %s AND last_used < %d AND path_hash IN (UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s), UNHEX(%s))',
+					$cache,
+					$now,
+					$ctx['range'],
+					$cutoff,
+					$padded[0],
+					$padded[1],
+					$padded[2],
+					$padded[3],
+					$padded[4],
+					$padded[5],
+					$padded[6],
+					$padded[7],
+					$padded[8],
+					$padded[9],
+					$padded[10],
+					$padded[11],
+					$padded[12],
+					$padded[13],
+					$padded[14],
+					$padded[15],
+					$padded[16],
+					$padded[17],
+					$padded[18],
+					$padded[19]
+				)
+			);
+		}
 	}
 
 	/**
@@ -1326,7 +1416,7 @@ class Runner {
 	private static function claim( $id, $token ) {
 		global $wpdb;
 		$files = Install::table( 'scan_files' );
-		return 1 === $wpdb->query( $wpdb->prepare( "UPDATE {$files} SET status = 'scanning', note = %s WHERE id = %d AND status = 'pending'", $token, (int) $id ) );
+		return 1 === $wpdb->query( $wpdb->prepare( "UPDATE %i SET status = 'scanning', note = %s WHERE id = %d AND status = 'pending'", $files, $token, (int) $id ) );
 	}
 
 	/**
@@ -1343,21 +1433,21 @@ class Runner {
 		global $wpdb;
 		$files    = Install::table( 'scan_files' );
 		$findings = Install::table( 'findings' );
-		$rows     = $wpdb->get_results( $wpdb->prepare( "SELECT id, path_hash, note FROM {$files} WHERE scan_id = %d AND status = 'scanning'", (int) $scan_id ), ARRAY_A );
+		$rows     = $wpdb->get_results( $wpdb->prepare( "SELECT id, path_hash, note FROM %i WHERE scan_id = %d AND status = 'scanning'", $files, (int) $scan_id ), ARRAY_A );
 		foreach ( (array) $rows as $row ) {
 			if ( '!' === substr( (string) $row['note'], -1 ) ) {
-				$marked = $wpdb->query( $wpdb->prepare( "UPDATE {$files} SET status = 'engine_error', note = %s WHERE id = %d AND status = 'scanning' AND note = %s", __( 'request died while scanning (memory/time limit)', 'qasim-php-upgrade-check-guard' ), (int) $row['id'], (string) $row['note'] ) );
+				$marked = $wpdb->query( $wpdb->prepare( "UPDATE %i SET status = 'engine_error', note = %s WHERE id = %d AND status = 'scanning' AND note = %s", $files, __( 'request died while scanning (memory/time limit)', 'qasim-php-upgrade-check-guard' ), (int) $row['id'], (string) $row['note'] ) );
 			} else {
-				$marked = $wpdb->query( $wpdb->prepare( "UPDATE {$files} SET status = 'pending', note = %s WHERE id = %d AND status = 'scanning' AND note = %s", self::SUSPECT, (int) $row['id'], (string) $row['note'] ) );
+				$marked = $wpdb->query( $wpdb->prepare( "UPDATE %i SET status = 'pending', note = %s WHERE id = %d AND status = 'scanning' AND note = %s", $files, self::SUSPECT, (int) $row['id'], (string) $row['note'] ) );
 			}
 			if ( 1 === $marked ) {
-				$wpdb->query( $wpdb->prepare( "DELETE FROM {$findings} WHERE scan_id = %d AND path_hash = %s", (int) $scan_id, $row['path_hash'] ) );
+				$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE scan_id = %d AND path_hash = %s', $findings, (int) $scan_id, $row['path_hash'] ) );
 			}
 		}
 	}
 
 	/**
-	 * Claims the not-suspect rows of a chunk with one UPDATE (status 'scanning', note = token). Run outside a
+	 * Claims the not-suspect rows of a chunk with fixed-arity UPDATEs (status 'scanning', note = token). Run outside a
 	 * transaction, so the claim is committed before any file is scanned.
 	 *
 	 * @param array  $rows  scan_files rows (id, note).
@@ -1372,17 +1462,78 @@ class Runner {
 				$ids[] = (int) $row['id'];
 			}
 		}
-		if ( ! $ids ) {
+		if ( empty( $ids ) ) {
 			return array();
 		}
-		$files        = Install::table( 'scan_files' );
-		$placeholders = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholders built above.
-		$changed = $wpdb->query( $wpdb->prepare( "UPDATE {$files} SET status = 'scanning', note = %s WHERE status = 'pending' AND id IN ({$placeholders})", array_merge( array( $token ), $ids ) ) );
+		$files   = Install::table( 'scan_files' );
+		$changed = 0;
+		foreach ( array_chunk( $ids, 20 ) as $chunk ) {
+			$padded   = array_pad( $chunk, 20, end( $chunk ) );
+			$changed += (int) $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE %i SET status = 'scanning', note = %s WHERE status = 'pending' AND id IN (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)",
+					$files,
+					$token,
+					$padded[0],
+					$padded[1],
+					$padded[2],
+					$padded[3],
+					$padded[4],
+					$padded[5],
+					$padded[6],
+					$padded[7],
+					$padded[8],
+					$padded[9],
+					$padded[10],
+					$padded[11],
+					$padded[12],
+					$padded[13],
+					$padded[14],
+					$padded[15],
+					$padded[16],
+					$padded[17],
+					$padded[18],
+					$padded[19]
+				)
+			);
+		}
 		if ( count( $ids ) !== $changed ) {
 			// Some row was no longer pending: keep only the ones that carry our token.
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholders built above.
-			$ids = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$files} WHERE status = 'scanning' AND note = %s AND id IN ({$placeholders})", array_merge( array( $token ), $ids ) ) ) );
+			$claimed_ids = array();
+			foreach ( array_chunk( $ids, 20 ) as $chunk ) {
+				$padded = array_pad( $chunk, 20, end( $chunk ) );
+				$part   = (array) $wpdb->get_col(
+					$wpdb->prepare(
+						"SELECT id FROM %i WHERE status = 'scanning' AND note = %s AND id IN (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)",
+						$files,
+						$token,
+						$padded[0],
+						$padded[1],
+						$padded[2],
+						$padded[3],
+						$padded[4],
+						$padded[5],
+						$padded[6],
+						$padded[7],
+						$padded[8],
+						$padded[9],
+						$padded[10],
+						$padded[11],
+						$padded[12],
+						$padded[13],
+						$padded[14],
+						$padded[15],
+						$padded[16],
+						$padded[17],
+						$padded[18],
+						$padded[19]
+					)
+				);
+				foreach ( $part as $claimed_id ) {
+					$claimed_ids[] = (int) $claimed_id;
+				}
+			}
+			$ids = $claimed_ids;
 		}
 		return array_fill_keys( $ids, true );
 	}
@@ -1395,10 +1546,40 @@ class Runner {
 	 */
 	private static function release( array $ids, $token ) {
 		global $wpdb;
-		$files        = Install::table( 'scan_files' );
-		$placeholders = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholders built above.
-		$wpdb->query( $wpdb->prepare( "UPDATE {$files} SET status = 'pending', note = NULL WHERE status = 'scanning' AND note = %s AND id IN ({$placeholders})", array_merge( array( $token ), $ids ) ) );
+		if ( empty( $ids ) ) {
+			return;
+		}
+		$files = Install::table( 'scan_files' );
+		foreach ( array_chunk( array_values( array_map( 'intval', $ids ) ), 20 ) as $chunk ) {
+			$padded = array_pad( $chunk, 20, end( $chunk ) );
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE %i SET status = 'pending', note = NULL WHERE status = 'scanning' AND note = %s AND id IN (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)",
+					$files,
+					$token,
+					$padded[0],
+					$padded[1],
+					$padded[2],
+					$padded[3],
+					$padded[4],
+					$padded[5],
+					$padded[6],
+					$padded[7],
+					$padded[8],
+					$padded[9],
+					$padded[10],
+					$padded[11],
+					$padded[12],
+					$padded[13],
+					$padded[14],
+					$padded[15],
+					$padded[16],
+					$padded[17],
+					$padded[18],
+					$padded[19]
+				)
+			);
+		}
 	}
 
 	/**
@@ -1448,20 +1629,29 @@ class Runner {
 
 		$table  = Install::table( 'findings' );
 		$counts = array();
-		foreach ( array_chunk( $findings, self::FINDINGS_CHUNK ) as $chunk ) {
-			$values = array();
-			$args   = array();
-			foreach ( $chunk as $finding ) {
-				// baseline only matters for counted categories; the information categories keep their own groups.
-				$category            = Categories::of( $finding['rule'] );
-				$counts[ $category ] = ( isset( $counts[ $category ] ) ? $counts[ $category ] : 0 ) + 1;
-				$baseline            = ! empty( $finding['baseline'] ) && in_array( $category, Categories::counted(), true ) ? 1 : 0;
-				$guarded             = ! empty( $finding['guarded'] ) && in_array( $category, Categories::counted(), true ) ? 1 : 0;
-				$values[]            = '(%d, %s, %s, %s, %d, %s, %s, %s, %s, %d, %d)';
-				array_push( $args, (int) $scan_id, $row['path_hash'], $row['path_key'], $row['component'], (int) $finding['line'], $finding['severity'], $category, substr( $finding['rule'], 0, 255 ), $finding['message'], $baseline, $guarded );
-			}
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholders built above.
-			$ok = $wpdb->query( $wpdb->prepare( "INSERT INTO {$table} (scan_id, path_hash, path_key, component, line, severity, category, rule, message, baseline, guarded) VALUES " . implode( ', ', $values ), $args ) );
+		foreach ( $findings as $finding ) {
+			// baseline only matters for counted categories; the information categories keep their own groups.
+			$category            = Categories::of( $finding['rule'] );
+			$counts[ $category ] = ( isset( $counts[ $category ] ) ? $counts[ $category ] : 0 ) + 1;
+			$baseline            = ! empty( $finding['baseline'] ) && in_array( $category, Categories::counted(), true ) ? 1 : 0;
+			$guarded             = ! empty( $finding['guarded'] ) && in_array( $category, Categories::counted(), true ) ? 1 : 0;
+			$ok                  = $wpdb->query(
+				$wpdb->prepare(
+					'INSERT INTO %i (scan_id, path_hash, path_key, component, line, severity, category, rule, message, baseline, guarded) VALUES (%d, %s, %s, %s, %d, %s, %s, %s, %s, %d, %d)',
+					$table,
+					(int) $scan_id,
+					$row['path_hash'],
+					$row['path_key'],
+					$row['component'],
+					(int) $finding['line'],
+					$finding['severity'],
+					$category,
+					substr( $finding['rule'], 0, 255 ),
+					$finding['message'],
+					$baseline,
+					$guarded
+				)
+			);
 			if ( false === $ok ) {
 				throw new \RuntimeException( 'findings insert failed: ' . $wpdb->last_error ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- escaped where displayed.
 			}
@@ -1478,7 +1668,7 @@ class Runner {
 	private static function done_count( $scan_id ) {
 		global $wpdb;
 		$files = Install::table( 'scan_files' );
-		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$files} WHERE scan_id = %d AND status NOT IN ('pending','scanning')", (int) $scan_id ) );
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE scan_id = %d AND status NOT IN ('pending','scanning')", $files, (int) $scan_id ) );
 	}
 
 	/**
@@ -1493,16 +1683,16 @@ class Runner {
 		$scans    = Install::table( 'scans' );
 		$findings = Install::table( 'findings' );
 		$files    = Install::table( 'scan_files' );
-		$changed  = $wpdb->query( $wpdb->prepare( "UPDATE {$scans} SET status = 'done', finished = %s WHERE id = %d AND status = 'running'", current_time( 'mysql' ), $scan_id ) );
+		$changed  = $wpdb->query( $wpdb->prepare( "UPDATE %i SET status = 'done', finished = %s WHERE id = %d AND status = 'running'", $scans, current_time( 'mysql' ), $scan_id ) );
 		if ( 1 !== $changed ) {
 			return false;
 		}
 		self::clear_step( $scan_id );
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$findings} WHERE scan_id < %d", $scan_id ) );
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$files} WHERE scan_id < %d", $scan_id ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE scan_id < %d', $findings, $scan_id ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE scan_id < %d', $files, $scan_id ) );
 		// Cached results unused for 30 days (a file that no longer exists is never marked used again), a limited delete.
 		$cache = Install::table( 'file_cache' );
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$cache} WHERE last_used < %d LIMIT 1000", time() - self::CACHE_DAYS * DAY_IN_SECONDS ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE last_used < %d LIMIT 1000', $cache, time() - self::CACHE_DAYS * DAY_IN_SECONDS ) );
 		try {
 			Status::refresh( $scan_id ); // The small summary the Plugins screen and Site Health read (DECISIONS D58).
 		} catch ( \Throwable $e ) {

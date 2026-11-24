@@ -30,8 +30,9 @@ class Plugin {
 		// Hourly, and again while a backlog remains: new file lists become dictionary ids (DECISIONS D55).
 		add_action( 'qpucg_compact', array( __NAMESPACE__ . '\\Usage\\Rollup', 'compact' ) );
 		add_action( 'qpucg_compact_step', array( __NAMESPACE__ . '\\Usage\\Rollup', 'compact' ) );
-		// Nightly, in the site's quiet hour: the size cap and table rebuild (DECISIONS D63).
+		// Nightly, in the site's quiet hour: the size cap and table rebuild (DECISIONS D63), plus continuation batches.
 		add_action( 'qpucg_storage', array( __NAMESPACE__ . '\\Usage\\Storage', 'nightly' ) );
+		add_action( 'qpucg_storage_step', array( __NAMESPACE__ . '\\Usage\\Storage', 'nightly' ) );
 		// Single event per scan id: one batch of a running scan when no page is driving it (= Runner::STEP_HOOK, DECISIONS D57).
 		add_action( 'qpucg_scan_step', array( __NAMESPACE__ . '\\Scan\\Runner', 'cron_step' ) );
 
@@ -99,11 +100,11 @@ class Plugin {
 
 		if ( $cron ) {
 			add_action( 'qpucg_daily', array( __NAMESPACE__ . '\\Watch\\Collector', 'purge' ) );
-			add_action( 'qpucg_daily', array( __NAMESPACE__ . '\\Watch\\State', 'move_first' ) );
+		}
+		if ( ! empty( $settings['email_crashes'] ) ) {
+			add_action( 'init', array( __NAMESPACE__ . '\\Watch\\Notify', 'flush_pending' ) );
 		}
 		if ( is_admin() ) {
-			// WordPress sorts active_plugins every time a plugin is activated.
-			add_action( 'activated_plugin', array( __NAMESPACE__ . '\\Watch\\State', 'move_first' ), 10, 0 );
 			add_action( 'admin_post_qpucg_watch_start', array( __NAMESPACE__ . '\\Admin\\WatchTab', 'handle_start' ) );
 		}
 

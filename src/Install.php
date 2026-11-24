@@ -27,6 +27,7 @@ class Install {
 	const COMPACT_HOOK      = 'qpucg_compact';
 	const COMPACT_STEP_HOOK = 'qpucg_compact_step';
 	const STORAGE_HOOK      = 'qpucg_storage';
+	const STORAGE_STEP_HOOK = 'qpucg_storage_step';
 	const SCAN_STEP_HOOK    = 'qpucg_scan_step';
 	const OPTION_NOTICE     = 'qpucg_show_notice';
 
@@ -122,6 +123,7 @@ class Install {
 		wp_clear_scheduled_hook( self::COMPACT_HOOK );
 		wp_clear_scheduled_hook( self::COMPACT_STEP_HOOK );
 		wp_clear_scheduled_hook( self::STORAGE_HOOK );
+		wp_clear_scheduled_hook( self::STORAGE_STEP_HOOK );
 		// Every scan id (WP 4.9+): a scan left running resumes from the Scan tab.
 		wp_unschedule_hook( self::SCAN_STEP_HOOK );
 	}
@@ -137,12 +139,11 @@ class Install {
 
 		// Option row "{expires}", SQL only: INSERT IGNORE is atomic; an expired lock is deleted by compare-and-swap.
 		$lock = 'qpucg_upgrade_lock';
-		$sql  = "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')";
-		if ( 1 !== $wpdb->query( $wpdb->prepare( $sql, $lock, (string) ( time() + 120 ) ) ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- fixed query string.
+		if ( 1 !== $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", $lock, (string) ( time() + 120 ) ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- atomic lock row.
 			$current = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $lock ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- lock row.
 			if ( ! is_string( $current ) || (int) $current > time()
 				|| 1 !== $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", $lock, $current ) ) // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- lock row.
-				|| 1 !== $wpdb->query( $wpdb->prepare( $sql, $lock, (string) ( time() + 120 ) ) ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- fixed query string.
+				|| 1 !== $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", $lock, (string) ( time() + 120 ) ) ) // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- atomic lock row.
 			) {
 				return false;
 			}
@@ -167,8 +168,6 @@ class Install {
 	 */
 	private static function upgrade() {
 		global $wpdb;
-
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 		$collate = $wpdb->get_charset_collate();
 		$p       = $wpdb->prefix . 'qpucg_';
@@ -353,6 +352,9 @@ class Install {
   UNIQUE KEY token_seq (token,seq)
 ) {$collate};";
 
+		if ( ! function_exists( 'dbDelta' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		}
 		dbDelta( $sql );
 
 		// A CREATE that failed (privileges, disk) must not mark the upgrade done; the next admin request retries.
@@ -372,8 +374,8 @@ class Install {
 		foreach ( $columns as $name => $list ) {
 			$table = self::table( $name );
 			foreach ( $list as $column ) {
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- schema check, table name from $wpdb->prefix.
-				if ( null === $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM `{$table}` LIKE %s", $column ) ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- schema check.
+				if ( null === $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, $column ) ) ) {
 					Usage\Recorder::set_error( 'install: column ' . $table . '.' . $column . ' is missing after the upgrade; it is retried on the next admin page' );
 					return false;
 				}
@@ -406,7 +408,7 @@ class Install {
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s", 'qpucg_rollup_job' ) );
 		foreach ( array( 'usage_next', 'rollup_state' ) as $name ) {
 			$table = self::table( $name );
-			$wpdb->query( "TRUNCATE TABLE {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- table name from $wpdb->prefix.
+			$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- clearing staging tables on upgrade.
 		}
 		$flags = get_option( self::OPTION_FLAGS, array() );
 		if ( is_array( $flags ) && isset( $flags['fileset_cap_reached'] ) ) {
@@ -425,8 +427,8 @@ class Install {
 		global $wpdb;
 
 		$table = self::table( 'scans' );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- table name from $wpdb->prefix.
-		$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET status = 'failed', finished = %s, error = %s WHERE status IN ('queued','running')", current_time( 'mysql' ), __( 'Qasim PHP Upgrade Check & Guard was updated while this scan was running. Please start a new scan.', 'qasim-php-upgrade-check-guard' ) ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- our own table.
+		$wpdb->query( $wpdb->prepare( "UPDATE %i SET status = 'failed', finished = %s, error = %s WHERE status IN ('queued','running')", $table, current_time( 'mysql' ), __( 'Qasim PHP Upgrade Check & Guard was updated while this scan was running. Please start a new scan.', 'qasim-php-upgrade-check-guard' ) ) );
 	}
 
 	/**
@@ -440,8 +442,8 @@ class Install {
 
 		$table   = self::table( 'findings' );
 		$changed = 0;
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- table name from $wpdb->prefix.
-		foreach ( (array) $wpdb->get_results( "SELECT DISTINCT rule, category FROM {$table}", ARRAY_A ) as $row ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- our own table.
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT DISTINCT rule, category FROM %i', $table ), ARRAY_A ) as $row ) {
 			$category = Scan\Categories::of( $row['rule'] );
 			if ( $category !== $row['category'] ) {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- our own table.
@@ -474,14 +476,14 @@ class Install {
 			wp_clear_scheduled_hook( self::COMPACT_HOOK );
 			wp_clear_scheduled_hook( self::COMPACT_STEP_HOOK );
 			wp_clear_scheduled_hook( self::STORAGE_HOOK );
+			wp_clear_scheduled_hook( self::STORAGE_STEP_HOOK );
 			wp_unschedule_hook( self::SCAN_STEP_HOOK );
 			return;
 		}
 
 		foreach ( self::tables() as $name ) {
 			$table = self::table( $name );
-			// Table name is built from $wpdb->prefix and a fixed list; identifiers can't be prepared on WP 5.8.
-			$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- dropping our own table on uninstall.
 		}
 
 		delete_option( self::OPTION_SETTINGS );
@@ -499,6 +501,7 @@ class Install {
 		delete_option( 'qpucg_check_summary' );
 		delete_option( 'qpucg_watch_state' );
 		delete_option( 'qpucg_watch_mail_day' );
+		delete_option( 'qpucg_pending_crash_mail' );
 		delete_option( 'qpucg_compact_last' );
 		delete_option( 'qpucg_storage_state' );
 		delete_option( 'qpucg_build' );
@@ -524,6 +527,7 @@ class Install {
 		wp_clear_scheduled_hook( self::COMPACT_HOOK );
 		wp_clear_scheduled_hook( self::COMPACT_STEP_HOOK );
 		wp_clear_scheduled_hook( self::STORAGE_HOOK );
+		wp_clear_scheduled_hook( self::STORAGE_STEP_HOOK );
 		wp_unschedule_hook( self::SCAN_STEP_HOOK );
 	}
 }

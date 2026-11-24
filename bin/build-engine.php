@@ -9,7 +9,7 @@
  * 4. Copy build/engine-scoped/vendor → build/vendor-prefixed.tmp/
  * 5. Strip unused PHPCS standards, tests, docs, bin, *.md (except licenses), phpunit*, .github, *.dist, CodeSniffer.conf*;
  *    check that no exec-family call / backtick / eval() is left and that every patch landed
- * 6. Write the BUILD-OK marker, swap the temp folder in as vendor-prefixed/, print size and package versions
+ * 6. Swap the temp folder in as vendor-prefixed/, write the build/engine-build-ok.txt marker, print size and package versions
  * vendor-prefixed/ is replaced only when every step passed (DECISIONS D47); a failed build leaves it as it was.
  *
  * @package QasimPHPUpgradeCheckGuard
@@ -189,6 +189,9 @@ foreach ( (array) glob( $qpucg_standards_dir . '/*', GLOB_ONLYDIR ) as $qpucg_st
 	qpucg_build_delete( $qpucg_standard );
 }
 echo 'PHPCS standards kept: ' . ( $qpucg_kept ? implode( ', ', $qpucg_kept ) : '(none)' ) . "\n";
+if ( empty( $qpucg_kept ) && is_dir( $qpucg_standards_dir ) ) {
+	qpucg_build_delete( $qpucg_standards_dir );
+}
 
 $qpucg_strip_dirs = array( 'tests', 'Tests', 'docs', 'bin', '.github' );
 $qpucg_removed    = 0;
@@ -374,14 +377,11 @@ foreach ( $qpucg_needles as $qpucg_needle ) {
 }
 echo 'Patch check: ' . $qpucg_total . " markers in the 5 patched files, Fixer proc_open line and 3 PHPCS autoloader patches present.\n";
 
-// 6. Marker, swap, report.
+// 6. Swap, marker, report.
 echo "\n== 6/6 swap + result\n";
 // Open directory iterators keep a handle on the temp folder, and Windows refuses to rename it ("Access is denied").
 unset( $qpucg_items, $qpucg_rulesets, $qpucg_item );
 $qpucg_count = qpucg_engine_file_count( $qpucg_target );
-if ( false === file_put_contents( $qpucg_target . '/' . QPUCG_BUILD_MARKER, 'inputs ' . qpucg_engine_inputs_hash( $qpucg_root ) . "\nfiles " . $qpucg_count . "\nbuilt " . gmdate( 'c' ) . "\n" ) ) {
-	qpucg_build_fail( 'Cannot write the ' . QPUCG_BUILD_MARKER . ' marker.' );
-}
 qpucg_build_delete( $qpucg_old );
 if ( is_dir( $qpucg_final ) && ! rename( $qpucg_final, $qpucg_old ) ) {
 	qpucg_build_fail( 'Cannot move the old vendor-prefixed/ aside (a file in it may be open).' );
@@ -393,7 +393,11 @@ if ( ! rename( $qpucg_target, $qpucg_final ) ) {
 	qpucg_build_fail( 'Cannot move build/vendor-prefixed.tmp/ to vendor-prefixed/.' );
 }
 $qpucg_target = $qpucg_final;
-echo 'vendor-prefixed/ replaced; marker ' . QPUCG_BUILD_MARKER . " written ({$qpucg_count} files). The previous engine stays in build/vendor-prefixed.old/ until the next build.\n";
+$qpucg_marker = qpucg_engine_marker_path( $qpucg_root );
+if ( false === file_put_contents( $qpucg_marker, 'inputs ' . qpucg_engine_inputs_hash( $qpucg_root ) . "\nfiles " . $qpucg_count . "\nbuilt " . gmdate( 'c' ) . "\n" ) ) {
+	qpucg_build_fail( 'Cannot write the engine build marker at ' . $qpucg_marker . '.' );
+}
+echo "vendor-prefixed/ replaced; marker build/engine-build-ok.txt written ({$qpucg_count} files). The previous engine stays in build/vendor-prefixed.old/ until the next build.\n";
 list( $qpucg_bytes, $qpucg_files ) = qpucg_build_size( $qpucg_target );
 printf( "vendor-prefixed/: %d files, %.2f MB (%s bytes)%s\n", $qpucg_files, $qpucg_bytes / 1048576, number_format( $qpucg_bytes ), $qpucg_bytes < 6 * 1048576 ? '' : '  OVER the 6 MB target' );
 

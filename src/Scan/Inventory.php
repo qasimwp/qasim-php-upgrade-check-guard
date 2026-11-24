@@ -49,10 +49,11 @@ class Inventory {
 		if ( ! function_exists( 'get_plugins' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
+		$installed_plugins = get_plugins();
 
 		$out = array();
 
-		foreach ( get_plugins() as $file => $data ) {
+		foreach ( $installed_plugins as $file => $data ) {
 			$dir   = dirname( $file );
 			$root  = Paths::plugins_dir() . '/' . ( '.' === $dir ? $file : $dir );
 			$out[] = array(
@@ -154,8 +155,7 @@ class Inventory {
 
 		$table = Install::table( 'usage' );
 		$seen  = array();
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
-		foreach ( (array) $wpdb->get_results( "SELECT component, MAX(last_seen) AS last_seen FROM {$table} WHERE component LIKE 'plugin:%' OR component LIKE 'theme:%' GROUP BY component", ARRAY_A ) as $row ) {
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT component, MAX(last_seen) AS last_seen FROM %i WHERE component LIKE %s OR component LIKE %s GROUP BY component', $table, $wpdb->esc_like( 'plugin:' ) . '%', $wpdb->esc_like( 'theme:' ) . '%' ), ARRAY_A ) as $row ) {
 			$seen[ $row['component'] ] = $row['last_seen'];
 		}
 		return $seen;
@@ -192,9 +192,8 @@ class Inventory {
 			return array();
 		}
 
-		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- open_basedir warning; false is handled.
-		$real_root = @realpath( $root );
-		$real_root = false === $real_root ? $root : wp_normalize_path( $real_root );
+		$real_root = Paths::safe_realpath( $root );
+		$real_root = '' === $real_root ? $root : wp_normalize_path( $real_root );
 
 		$directory = new \RecursiveDirectoryIterator( $root, \FilesystemIterator::SKIP_DOTS );
 		$filter    = new \RecursiveCallbackFilterIterator(
@@ -212,9 +211,8 @@ class Inventory {
 				}
 				if ( $item->isLink() ) {
 					// Don't follow a directory symlink that leaves the component's base.
-					// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- open_basedir warning; false is handled.
-					$real = @realpath( $item->getPathname() );
-					return false !== $real && 0 === strpos( wp_normalize_path( $real ) . '/', trailingslashit( $real_root ) );
+					$real = Paths::safe_realpath( $item->getPathname() );
+					return '' !== $real && 0 === strpos( wp_normalize_path( $real ) . '/', trailingslashit( $real_root ) );
 				}
 				return true;
 			}
@@ -348,7 +346,8 @@ class Inventory {
 	}
 
 	/**
-	 * One prepared multi-row INSERT into scan_files.
+	 * Inserts rows into scan_files using fixed-arity 20-row batches for NULL-note rows and single-row prepared queries
+	 * for remainder / non-NULL note rows, wrapped in a transaction.
 	 *
 	 * @param array $rows Rows of array( scan_id, path_hash, path_key, component, component_active, status, note|null ).
 	 * @throws \RuntimeException When the insert fails.
@@ -356,18 +355,105 @@ class Inventory {
 	private static function insert( array $rows ) {
 		global $wpdb;
 
-		$table  = Install::table( 'scan_files' );
-		$values = array();
-		$args   = array();
-		foreach ( $rows as $row ) {
-			$note     = array_pop( $row );
-			$values[] = null === $note ? '(%d, %s, %s, %s, %d, %s, NULL)' : '(%d, %s, %s, %s, %d, %s, %s)';
-			$args     = array_merge( $args, null === $note ? $row : array_merge( $row, array( $note ) ) );
+		if ( empty( $rows ) ) {
+			return;
 		}
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name from $wpdb->prefix; placeholders built above.
-		$ok = $wpdb->query( $wpdb->prepare( "INSERT INTO {$table} (scan_id, path_hash, path_key, component, component_active, status, note) VALUES " . implode( ', ', $values ), $args ) );
-		if ( false === $ok ) {
-			throw new \RuntimeException( 'scan_files insert failed: ' . $wpdb->last_error ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- escaped where displayed.
+		$table      = Install::table( 'scan_files' );
+		$null_notes = array();
+		$with_notes = array();
+		foreach ( $rows as $row ) {
+			if ( null === $row[6] ) {
+				$null_notes[] = $row;
+			} else {
+				$with_notes[] = $row;
+			}
+		}
+
+		$wpdb->query( 'START TRANSACTION' );
+		try {
+			foreach ( array_chunk( $null_notes, 5 ) as $chunk ) {
+				if ( 5 === count( $chunk ) ) {
+					$ok = $wpdb->query(
+						$wpdb->prepare(
+							'INSERT INTO %i (scan_id, path_hash, path_key, component, component_active, status, note) VALUES (%d, %s, %s, %s, %d, %s, NULL), (%d, %s, %s, %s, %d, %s, NULL), (%d, %s, %s, %s, %d, %s, NULL), (%d, %s, %s, %s, %d, %s, NULL), (%d, %s, %s, %s, %d, %s, NULL)',
+							$table,
+							(int) $chunk[0][0],
+							$chunk[0][1],
+							$chunk[0][2],
+							$chunk[0][3],
+							(int) $chunk[0][4],
+							$chunk[0][5],
+							(int) $chunk[1][0],
+							$chunk[1][1],
+							$chunk[1][2],
+							$chunk[1][3],
+							(int) $chunk[1][4],
+							$chunk[1][5],
+							(int) $chunk[2][0],
+							$chunk[2][1],
+							$chunk[2][2],
+							$chunk[2][3],
+							(int) $chunk[2][4],
+							$chunk[2][5],
+							(int) $chunk[3][0],
+							$chunk[3][1],
+							$chunk[3][2],
+							$chunk[3][3],
+							(int) $chunk[3][4],
+							$chunk[3][5],
+							(int) $chunk[4][0],
+							$chunk[4][1],
+							$chunk[4][2],
+							$chunk[4][3],
+							(int) $chunk[4][4],
+							$chunk[4][5]
+						)
+					);
+					if ( false === $ok ) {
+						throw new \RuntimeException( 'scan_files insert failed: ' . $wpdb->last_error ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- escaped where displayed.
+					}
+				} else {
+					foreach ( $chunk as $r ) {
+						$ok = $wpdb->query(
+							$wpdb->prepare(
+								'INSERT INTO %i (scan_id, path_hash, path_key, component, component_active, status, note) VALUES (%d, %s, %s, %s, %d, %s, NULL)',
+								$table,
+								(int) $r[0],
+								$r[1],
+								$r[2],
+								$r[3],
+								(int) $r[4],
+								$r[5]
+							)
+						);
+						if ( false === $ok ) {
+							throw new \RuntimeException( 'scan_files insert failed: ' . $wpdb->last_error ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- escaped where displayed.
+						}
+					}
+				}
+			}
+			foreach ( $with_notes as $r ) {
+				$ok = $wpdb->query(
+					$wpdb->prepare(
+						'INSERT INTO %i (scan_id, path_hash, path_key, component, component_active, status, note) VALUES (%d, %s, %s, %s, %d, %s, %s)',
+						$table,
+						(int) $r[0],
+						$r[1],
+						$r[2],
+						$r[3],
+						(int) $r[4],
+						$r[5],
+						(string) $r[6]
+					)
+				);
+				if ( false === $ok ) {
+					throw new \RuntimeException( 'scan_files insert failed: ' . $wpdb->last_error ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- escaped where displayed.
+				}
+			}
+			$wpdb->query( 'COMMIT' );
+		} catch ( \Throwable $e ) {
+			$wpdb->query( 'ROLLBACK' );
+			throw $e;
 		}
 	}
 }

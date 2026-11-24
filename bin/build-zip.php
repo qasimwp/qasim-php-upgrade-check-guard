@@ -6,7 +6,7 @@
  * uninstall.php, readme.txt, licenses. Optional folders that don't exist yet are skipped.
  * Everything else (tests, docs, engine, bin, build, tools, dist, dotfiles, composer.*,
  * scoper.inc.php, CLAUDE.md) is left out because it is not on the include list.
- * Refuses without a complete engine build (vendor-prefixed/BUILD-OK matching the current build inputs and file
+ * Refuses without a complete engine build (build/engine-build-ok.txt matching the current build inputs and file
  * count), unless --no-engine is passed, which builds a zip without the engine (DECISIONS D47).
  *
  * @package QasimPHPUpgradeCheckGuard
@@ -33,18 +33,22 @@ $qpucg_files     = array_merge(
 	array_map( 'basename', array_merge( (array) glob( $qpucg_root . '/LICENSE*' ), (array) glob( $qpucg_root . '/COPYING*' ) ) )
 );
 
-// The engine must be a complete, checked build of the current inputs (bin/build-engine.php writes the marker last).
+// The engine must be a complete, checked build of the current inputs (bin/build-engine.php writes build/engine-build-ok.txt last).
 $qpucg_engine = $qpucg_root . '/vendor-prefixed';
 if ( $qpucg_no_engine ) {
 	echo "--no-engine: building a zip without vendor-prefixed/ (scans will report the engine as missing).\n";
 } else {
-	$qpucg_marker = $qpucg_engine . '/' . QPUCG_BUILD_MARKER;
+	$qpucg_marker = qpucg_engine_marker_path( $qpucg_root );
 	if ( ! is_dir( $qpucg_engine ) ) {
 		fwrite( STDERR, "Refusing to build: vendor-prefixed/ is missing. Run php bin/build-engine.php (or pass --no-engine).\n" );
 		exit( 1 );
 	}
+	if ( file_exists( $qpucg_engine . '/BUILD-OK' ) ) {
+		fwrite( STDERR, "Refusing to build: legacy vendor-prefixed/BUILD-OK marker must not exist inside vendor-prefixed/. Run php bin/build-engine.php.\n" );
+		exit( 1 );
+	}
 	if ( ! is_file( $qpucg_marker ) ) {
-		fwrite( STDERR, 'Refusing to build: vendor-prefixed/' . QPUCG_BUILD_MARKER . " is missing, so the engine build did not finish its checks. Run php bin/build-engine.php.\n" );
+		fwrite( STDERR, "Refusing to build: build/engine-build-ok.txt is missing, so the engine build did not finish its checks. Run php bin/build-engine.php.\n" );
 		exit( 1 );
 	}
 	$qpucg_lines = array();
@@ -65,7 +69,7 @@ if ( $qpucg_no_engine ) {
 		exit( 1 );
 	}
 	$qpucg_dirs[] = 'vendor-prefixed';
-	echo 'Engine: ' . QPUCG_BUILD_MARKER . ' OK (' . $qpucg_count . ' files, built ' . ( isset( $qpucg_lines['built'] ) ? $qpucg_lines['built'] : '?' ) . ").\n";
+	echo 'Engine: build/engine-build-ok.txt OK (' . $qpucg_count . ' files, built ' . ( isset( $qpucg_lines['built'] ) ? $qpucg_lines['built'] : '?' ) . ").\n";
 }
 
 $qpucg_dist = $qpucg_root . '/dist';
@@ -125,30 +129,28 @@ foreach ( $qpucg_dirs as $qpucg_dir ) {
 		if ( preg_match( '#(^|/)\.#', $qpucg_relative ) || in_array( $qpucg_relative, $qpucg_dev_only, true ) ) {
 			continue;
 		}
+		if ( 'vendor-prefixed' === $qpucg_dir && preg_match( '#(/(BUILD-OK|composer\.json|installed\.json)$|\.md$|/(tests|Tests|Test|docs|Docs|bin|scripts)/)#', '/' . $qpucg_relative ) ) {
+			fwrite( STDERR, "Refusing to build: unexpected artifact in vendor-prefixed/: {$qpucg_relative}\n" );
+			exit( 1 );
+		}
 		$qpucg_zip->addFile( $qpucg_item->getPathname(), 'qasim-php-upgrade-check-guard/' . $qpucg_relative );
 		++$qpucg_count;
 	}
 }
 
-// Build id for the admin page footer (DECISIONS D32): git short hash, "-dirty" with uncommitted changes.
-// Written into the zip only, never into the repo. Dev script, so exec is allowed here.
-$qpucg_build = trim( (string) shell_exec( 'git -C ' . escapeshellarg( $qpucg_root ) . ' rev-parse --short HEAD' ) );
-if ( ! preg_match( '/^[0-9a-f]{7,12}$/', $qpucg_build ) ) {
-	fwrite( STDERR, "Cannot read the git hash for build.txt.\n" );
-	exit( 1 );
+foreach ( array( 'qasim-php-upgrade-check-guard/vendor-prefixed/BUILD-OK', 'qasim-php-upgrade-check-guard/build.txt' ) as $qpucg_forbidden ) {
+	if ( false !== $qpucg_zip->locateName( $qpucg_forbidden ) ) {
+		fwrite( STDERR, "Refusing to build: forbidden file present in zip: {$qpucg_forbidden}\n" );
+		exit( 1 );
+	}
 }
-if ( '' !== trim( (string) shell_exec( 'git -C ' . escapeshellarg( $qpucg_root ) . ' status --porcelain' ) ) ) {
-	$qpucg_build .= '-dirty';
-}
-$qpucg_zip->addFromString( 'qasim-php-upgrade-check-guard/build.txt', $qpucg_build . "\n" );
-++$qpucg_count;
 
 if ( ! $qpucg_zip->close() ) {
 	fwrite( STDERR, "Failed to write {$qpucg_zip_path}.\n" );
 	exit( 1 );
 }
 
-echo 'Built ' . $qpucg_zip_path . ': ' . $qpucg_count . ' files, ' . number_format( filesize( $qpucg_zip_path ) / 1024, 1 ) . ' KB, build ' . $qpucg_build . "\n";
+echo 'Built ' . $qpucg_zip_path . ': ' . $qpucg_count . ' files, ' . number_format( filesize( $qpucg_zip_path ) / 1024, 1 ) . " KB\n";
 if ( $qpucg_skipped ) {
 	echo 'Not present (skipped): ' . implode( ', ', $qpucg_skipped ) . "\n";
 }

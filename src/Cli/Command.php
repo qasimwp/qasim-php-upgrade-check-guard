@@ -9,6 +9,7 @@ namespace Qpucg\Cli;
 
 use Qpucg\Engine\Engine;
 use Qpucg\Install;
+use Qpucg\Paths;
 use Qpucg\Report\Join;
 use Qpucg\Scan\Categories;
 use Qpucg\Scan\Runner;
@@ -71,9 +72,9 @@ class Command {
 		$table     = Install::table( 'usage' );
 		$component = (string) WP_CLI\Utils\get_flag_value( $assoc_args, 'component', '' );
 		if ( '' !== $component ) {
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT path_key, component, hits_total, contexts, max_share, first_seen, last_seen FROM {$table} WHERE component = %s ORDER BY hits_total DESC, path_key", $component ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+			$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT path_key, component, hits_total, contexts, max_share, first_seen, last_seen FROM %i WHERE component = %s ORDER BY hits_total DESC, path_key', $table, $component ), ARRAY_A );
 		} else {
-			$rows = $wpdb->get_results( "SELECT path_key, component, hits_total, contexts, max_share, first_seen, last_seen FROM {$table} ORDER BY hits_total DESC, path_key", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+			$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT path_key, component, hits_total, contexts, max_share, first_seen, last_seen FROM %i ORDER BY hits_total DESC, path_key', $table ), ARRAY_A );
 		}
 
 		$items = array();
@@ -156,19 +157,12 @@ class Command {
 	 * default: 500
 	 * ---
 	 *
-	 * [--[no-]jit]
-	 * : --no-jit turns PCRE JIT off for this run (ini pcre.jit=0), to reproduce hosts without JIT.
-	 *
 	 * @subcommand bench-recorder
 	 *
 	 * @param array $args       Positional arguments.
 	 * @param array $assoc_args Named arguments.
 	 */
 	public function bench_recorder( $args, $assoc_args ) {
-		// Before any recorder pattern is compiled in this process (PHP caches compiled patterns).
-		if ( ! WP_CLI\Utils\get_flag_value( $assoc_args, 'jit', true ) ) {
-			ini_set( 'pcre.jit', '0' ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- dev benchmark only, this WP-CLI process.
-		}
 		$result = Bench::run( (int) WP_CLI\Utils\get_flag_value( $assoc_args, 'iterations', 500 ) );
 		// Same store as the Usage tab button: "last benchmark run" for the Usage tab and M3a information.
 		Bench::store( $result );
@@ -481,14 +475,7 @@ class Command {
 			WP_CLI::warning( 'PHP 8.5 rules may be incomplete.' );
 		}
 
-		$path       = '';
-		$candidates = path_is_absolute( $args[0] ) ? array( $args[0] ) : array( getcwd() . '/' . $args[0], ABSPATH . $args[0] );
-		foreach ( $candidates as $candidate ) {
-			if ( is_file( $candidate ) ) {
-				$path = (string) realpath( $candidate );
-				break;
-			}
-		}
+		$path = Paths::resolve_cli_file( isset( $args[0] ) ? $args[0] : '' );
 		if ( '' === $path ) {
 			WP_CLI::error( sprintf( 'File not found: %s', $args[0] ) );
 		}

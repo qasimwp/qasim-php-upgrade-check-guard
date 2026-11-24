@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'QPUCG_VERSION', '1.0.0' );
 define( 'QPUCG_DB_VERSION', '11' );
 define( 'QPUCG_FILE', __FILE__ );
-define( 'QPUCG_DIR', __DIR__ );
+define( 'QPUCG_DIR', untrailingslashit( plugin_dir_path( __FILE__ ) ) );
 
 spl_autoload_register(
 	function ( $class_name ) {

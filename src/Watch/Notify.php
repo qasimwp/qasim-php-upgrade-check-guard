@@ -14,15 +14,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Queries our own custom table and one claim row in wp_options; the object cache does not apply to them.
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// Queries our own custom table and claim rows in wp_options; the object cache does not apply to them.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
  * Sends at most one email a day.
  */
 class Notify {
 
-	const OPTION = 'qpucg_watch_mail_day';
+	const OPTION         = 'qpucg_watch_mail_day';
+	const PENDING_OPTION = 'qpucg_pending_crash_mail';
 
 	/**
 	 * Sends the email if this is a new crash during a watch and none was sent today.
@@ -51,11 +52,42 @@ class Notify {
 			remove_filter( 'doing_it_wrong_trigger_error', '__return_false' );
 		}
 
-		if ( ! function_exists( 'wp_mail' ) ) {
-			// A crash while plugins load happens before WordPress loads this file.
-			require_once ABSPATH . WPINC . '/pluggable.php';
+		if ( function_exists( 'wp_mail' ) ) {
+			wp_mail( (string) get_option( 'admin_email' ), $mail['subject'], $mail['body'], array( 'Content-Type: text/plain; charset=UTF-8' ) );
+			return;
 		}
-		wp_mail( (string) get_option( 'admin_email' ), $mail['subject'], $mail['body'], array( 'Content-Type: text/plain; charset=UTF-8' ) );
+
+		// Crash occurred before WordPress loaded its mail API: defer sending to the next init (capped at 1 pending alert).
+		update_option(
+			self::PENDING_OPTION,
+			array(
+				'subject' => $mail['subject'],
+				'body'    => $mail['body'],
+			),
+			false
+		);
+	}
+
+	/**
+	 * Sends any deferred early-crash alert once WordPress has loaded its mail API.
+	 * Deletes the pending option atomically before calling wp_mail() so concurrent requests cannot duplicate it.
+	 */
+	public static function flush_pending() {
+		global $wpdb;
+
+		if ( ! function_exists( 'wp_mail' ) ) {
+			return;
+		}
+		$pending = get_option( self::PENDING_OPTION, false );
+		if ( ! is_array( $pending ) || empty( $pending['subject'] ) || empty( $pending['body'] ) ) {
+			return;
+		}
+		$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s", self::PENDING_OPTION ) );
+		wp_cache_delete( self::PENDING_OPTION, 'options' );
+		if ( 1 !== (int) $deleted ) {
+			return;
+		}
+		wp_mail( (string) get_option( 'admin_email' ), (string) $pending['subject'], (string) $pending['body'], array( 'Content-Type: text/plain; charset=UTF-8' ) );
 	}
 
 	/**
@@ -83,7 +115,7 @@ class Notify {
 		global $wpdb;
 
 		$table = $wpdb->prefix . Collector::TABLE;
-		return max( 1, (int) $wpdb->get_var( $wpdb->prepare( "SELECT SUM(hits) FROM {$table} WHERE message_hash = %s AND day >= %s", $hash, $start ) ) );
+		return max( 1, (int) $wpdb->get_var( $wpdb->prepare( 'SELECT SUM(hits) FROM %i WHERE message_hash = %s AND day >= %s', $table, $hash, $start ) ) );
 	}
 
 	/**

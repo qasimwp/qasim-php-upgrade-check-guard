@@ -120,10 +120,8 @@ class Rollup {
 		global $wpdb;
 
 		$table = Install::table( 'filesets' );
-		$query = "SELECT id, files, is_compressed, format FROM {$table} WHERE format < %d ORDER BY id LIMIT %d";
 		// Most runs end here: the cheap check comes before the memory raise and the lock.
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
-		if ( null === $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE format < %d LIMIT 1", Recorder::FORMAT_IDS ) ) ) {
+		if ( null === $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE format < %d LIMIT 1', $table, Recorder::FORMAT_IDS ) ) ) {
 			self::check_db( 'filesets' );
 			return false;
 		}
@@ -137,8 +135,7 @@ class Rollup {
 		try {
 			$deadline = $t0 + self::budget() * 0.8;
 			while ( true ) {
-				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $query holds only the table name from $wpdb->prefix and placeholders.
-				$page = (array) $wpdb->get_results( $wpdb->prepare( $query, Recorder::FORMAT_IDS, self::PAGE_SIZE ), ARRAY_A );
+				$page = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT id, files, is_compressed, format FROM %i WHERE format < %d ORDER BY id LIMIT %d', $table, Recorder::FORMAT_IDS, self::PAGE_SIZE ), ARRAY_A );
 				self::check_db( 'filesets' );
 				if ( empty( $page ) ) {
 					return false;
@@ -237,7 +234,7 @@ class Rollup {
 			return;
 		}
 		$table          = Install::table( 'files' );
-		$rows           = $wpdb->get_results( "SELECT id, path_key, component FROM {$table}", ARRAY_N ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		$rows           = $wpdb->get_results( $wpdb->prepare( 'SELECT id, path_key, component FROM %i', $table ), ARRAY_N );
 		self::$file_ids = array();
 		self::check_db( 'files' );
 		foreach ( (array) $rows as $row ) {
@@ -285,15 +282,88 @@ class Rollup {
 			if ( empty( $values ) ) {
 				continue;
 			}
-			$placeholders = implode( ', ', array_fill( 0, count( $values ), '(%s, %s, %s)' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name from $wpdb->prefix; $placeholders is fixed.
-			$wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$table} (path_hash, path_key, component) VALUES {$placeholders}", array_merge( ...array_values( $values ) ) ) );
-			self::check_db( 'files' );
+			$wpdb->query( 'START TRANSACTION' );
+			try {
+				foreach ( array_chunk( array_values( $values ), 5 ) as $ins_chunk ) {
+					if ( 5 === count( $ins_chunk ) ) {
+						$wpdb->query(
+							$wpdb->prepare(
+								'INSERT IGNORE INTO %i (path_hash, path_key, component) VALUES (%s, %s, %s), (%s, %s, %s), (%s, %s, %s), (%s, %s, %s), (%s, %s, %s)',
+								$table,
+								$ins_chunk[0][0],
+								$ins_chunk[0][1],
+								$ins_chunk[0][2],
+								$ins_chunk[1][0],
+								$ins_chunk[1][1],
+								$ins_chunk[1][2],
+								$ins_chunk[2][0],
+								$ins_chunk[2][1],
+								$ins_chunk[2][2],
+								$ins_chunk[3][0],
+								$ins_chunk[3][1],
+								$ins_chunk[3][2],
+								$ins_chunk[4][0],
+								$ins_chunk[4][1],
+								$ins_chunk[4][2]
+							)
+						);
+						self::check_db( 'files' );
+					} else {
+						foreach ( $ins_chunk as $item ) {
+							$wpdb->query(
+								$wpdb->prepare(
+									'INSERT IGNORE INTO %i (path_hash, path_key, component) VALUES (%s, %s, %s)',
+									$table,
+									$item[0],
+									$item[1],
+									$item[2]
+								)
+							);
+							self::check_db( 'files' );
+						}
+					}
+				}
+				$wpdb->query( 'COMMIT' );
+			} catch ( \Throwable $e ) {
+				$wpdb->query( 'ROLLBACK' );
+				throw $e;
+			}
 
-			$in = implode( ', ', array_fill( 0, count( $values ), '%s' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name from $wpdb->prefix; $in is only %s placeholders.
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, path_hash, component FROM {$table} WHERE path_hash IN ({$in})", array_keys( $values ) ), ARRAY_A );
-			self::check_db( 'files' );
+			$rows = array();
+			foreach ( array_chunk( array_keys( $values ), 20 ) as $hash_chunk ) {
+				$padded = array_pad( $hash_chunk, 20, end( $hash_chunk ) );
+				$part   = $wpdb->get_results(
+					$wpdb->prepare(
+						'SELECT id, path_hash, component FROM %i WHERE path_hash IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+						$table,
+						$padded[0],
+						$padded[1],
+						$padded[2],
+						$padded[3],
+						$padded[4],
+						$padded[5],
+						$padded[6],
+						$padded[7],
+						$padded[8],
+						$padded[9],
+						$padded[10],
+						$padded[11],
+						$padded[12],
+						$padded[13],
+						$padded[14],
+						$padded[15],
+						$padded[16],
+						$padded[17],
+						$padded[18],
+						$padded[19]
+					),
+					ARRAY_A
+				);
+				self::check_db( 'files' );
+				if ( is_array( $part ) ) {
+					$rows = array_merge( $rows, $part );
+				}
+			}
 			foreach ( (array) $rows as $row ) {
 				$id                           = (int) $row['id'];
 				self::$file_components[ $id ] = $row['component'];
@@ -356,8 +426,7 @@ class Rollup {
 			$compressed = 1;
 		}
 		$table = Install::table( 'filesets' );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
-		$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET files = UNHEX(%s), is_compressed = %d, format = %d WHERE id = %d AND format = %d", bin2hex( $data ), $compressed, Recorder::FORMAT_IDS, (int) $set['id'], $format ) );
+		$wpdb->query( $wpdb->prepare( 'UPDATE %i SET files = UNHEX(%s), is_compressed = %d, format = %d WHERE id = %d AND format = %d', $table, bin2hex( $data ), $compressed, Recorder::FORMAT_IDS, (int) $set['id'], $format ) );
 		self::check_db( 'filesets' );
 		return $runs;
 	}
@@ -592,8 +661,7 @@ class Rollup {
 		$hits     = Install::table( 'fileset_hits' );
 		$folded   = Install::table( 'usage_days' );
 		$suppress = $wpdb->suppress_errors( true );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names from $wpdb->prefix.
-		$kept = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM (SELECT DISTINCT day FROM {$hits} UNION SELECT DISTINCT day FROM {$folded} WHERE day >= %s) d", wp_date( 'Y-m-d', time() - self::RETENTION_DAYS * DAY_IN_SECONDS ) ) );
+		$kept     = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM (SELECT DISTINCT day FROM %i UNION SELECT DISTINCT day FROM %i WHERE day >= %s) d', $hits, $folded, wp_date( 'Y-m-d', time() - self::RETENTION_DAYS * DAY_IN_SECONDS ) ) );
 		$wpdb->suppress_errors( $suppress );
 		return null === $kept ? $days : min( $days, (int) $kept );
 	}
@@ -1000,14 +1068,17 @@ class Rollup {
 		}
 		foreach ( array( 'usage_next', 'rollup_state' ) as $name ) {
 			$table = Install::table( $name );
-			$wpdb->query( "TRUNCATE TABLE {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- table name from $wpdb->prefix.
+			$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange -- clearing staging tables before rollup.
 			self::check_db( $name );
 		}
 		$sets_table = Install::table( 'filesets' );
 		$hits_table = Install::table( 'fileset_hits' );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
-		$only = '' === self::job_day( $job ) ? '' : $wpdb->prepare( " WHERE set_hash IN (SELECT set_hash FROM {$hits_table} WHERE day = %s)", self::job_day( $job ) );
-		$row  = $wpdb->get_row( "SELECT COUNT(*) AS sets, COALESCE(MAX(id), 0) AS max_id FROM {$sets_table}{$only}", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names from $wpdb->prefix; $only is prepared.
+		$day        = self::job_day( $job );
+		if ( '' === $day ) {
+			$row = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS sets, COALESCE(MAX(id), 0) AS max_id FROM %i', $sets_table ), ARRAY_A );
+		} else {
+			$row = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS sets, COALESCE(MAX(id), 0) AS max_id FROM %i WHERE set_hash IN (SELECT set_hash FROM %i WHERE day = %s)', $sets_table, $hits_table, $day ), ARRAY_A );
+		}
 		self::check_db( 'filesets' );
 
 		$job['phase']      = 'sets';
@@ -1041,11 +1112,14 @@ class Rollup {
 		$sets_table = Install::table( 'filesets' );
 
 		$done = false;
+		$day  = self::job_day( $job );
 		do {
 			// A fold reads only the sets with hit rows on its day (DECISIONS D63).
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
-			$only = '' === self::job_day( $job ) ? '' : $wpdb->prepare( " AND set_hash IN (SELECT set_hash FROM {$hits_table} WHERE day = %s)", self::job_day( $job ) );
-			$page = $wpdb->get_results( $wpdb->prepare( "SELECT id, set_hash, files, is_compressed, format FROM {$sets_table} WHERE id > %d AND id <= %d{$only} ORDER BY id LIMIT %d", $job['cursor'], $job['max_id'], self::PAGE_SIZE ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names from $wpdb->prefix; $only is prepared.
+			if ( '' === $day ) {
+				$page = $wpdb->get_results( $wpdb->prepare( 'SELECT id, set_hash, files, is_compressed, format FROM %i WHERE id > %d AND id <= %d ORDER BY id LIMIT %d', $sets_table, $job['cursor'], $job['max_id'], self::PAGE_SIZE ), ARRAY_A );
+			} else {
+				$page = $wpdb->get_results( $wpdb->prepare( 'SELECT id, set_hash, files, is_compressed, format FROM %i WHERE id > %d AND id <= %d AND set_hash IN (SELECT set_hash FROM %i WHERE day = %s) ORDER BY id LIMIT %d', $sets_table, $job['cursor'], $job['max_id'], $hits_table, $day, self::PAGE_SIZE ), ARRAY_A );
+			}
 			self::check_db( 'filesets' );
 			$page   = (array) $page;
 			$by_set = self::hits_for( $hits_table, wp_list_pluck( $page, 'set_hash' ), self::job_day( $job ) );
@@ -1177,14 +1251,21 @@ class Rollup {
 		global $wpdb;
 
 		$hits_table = Install::table( 'fileset_hits' );
-		$where      = '' === $day ? '' : $wpdb->prepare( ' WHERE day = %s', $day );
 
 		// Every sampled request, with or without a file list; the shares use $state['requests'] (DECISIONS D55).
-		$sampled = (int) $wpdb->get_var( "SELECT COALESCE(SUM(hits), 0) FROM {$hits_table}{$where}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		if ( '' === $day ) {
+			$sampled = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COALESCE(SUM(hits), 0) FROM %i', $hits_table ) );
+		} else {
+			$sampled = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COALESCE(SUM(hits), 0) FROM %i WHERE day = %s', $hits_table, $day ) );
+		}
 		self::check_db( 'fileset_hits' );
 		$requests = $state['requests'];
 
-		$overhead = $wpdb->get_row( "SELECT COALESCE(SUM(hits), 0) AS hits, COALESCE(SUM(prep_ms_total), 0) AS prep_ms_total, COALESCE(MAX(prep_ms_max), 0) AS prep_ms_max, COALESCE(SUM(slow_hits), 0) AS slow_hits, COALESCE(SUM(req_hits), 0) AS req_hits, COALESCE(SUM(req_ms_total), 0) AS req_ms_total, COALESCE(SUM(ovh_0), 0) AS ovh_0, COALESCE(SUM(ovh_1), 0) AS ovh_1, COALESCE(SUM(ovh_2), 0) AS ovh_2, COALESCE(SUM(ovh_3), 0) AS ovh_3, COALESCE(SUM(ovh_4), 0) AS ovh_4, COALESCE(SUM(ovh_5), 0) AS ovh_5, COALESCE(SUM(ovh_6), 0) AS ovh_6, COUNT(DISTINCT day) AS days, MIN(day) AS first_day, MAX(day) AS last_day FROM {$hits_table}{$where}", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		if ( '' === $day ) {
+			$overhead = $wpdb->get_row( $wpdb->prepare( 'SELECT COALESCE(SUM(hits), 0) AS hits, COALESCE(SUM(prep_ms_total), 0) AS prep_ms_total, COALESCE(MAX(prep_ms_max), 0) AS prep_ms_max, COALESCE(SUM(slow_hits), 0) AS slow_hits, COALESCE(SUM(req_hits), 0) AS req_hits, COALESCE(SUM(req_ms_total), 0) AS req_ms_total, COALESCE(SUM(ovh_0), 0) AS ovh_0, COALESCE(SUM(ovh_1), 0) AS ovh_1, COALESCE(SUM(ovh_2), 0) AS ovh_2, COALESCE(SUM(ovh_3), 0) AS ovh_3, COALESCE(SUM(ovh_4), 0) AS ovh_4, COALESCE(SUM(ovh_5), 0) AS ovh_5, COALESCE(SUM(ovh_6), 0) AS ovh_6, COUNT(DISTINCT day) AS days, MIN(day) AS first_day, MAX(day) AS last_day FROM %i', $hits_table ), ARRAY_A );
+		} else {
+			$overhead = $wpdb->get_row( $wpdb->prepare( 'SELECT COALESCE(SUM(hits), 0) AS hits, COALESCE(SUM(prep_ms_total), 0) AS prep_ms_total, COALESCE(MAX(prep_ms_max), 0) AS prep_ms_max, COALESCE(SUM(slow_hits), 0) AS slow_hits, COALESCE(SUM(req_hits), 0) AS req_hits, COALESCE(SUM(req_ms_total), 0) AS req_ms_total, COALESCE(SUM(ovh_0), 0) AS ovh_0, COALESCE(SUM(ovh_1), 0) AS ovh_1, COALESCE(SUM(ovh_2), 0) AS ovh_2, COALESCE(SUM(ovh_3), 0) AS ovh_3, COALESCE(SUM(ovh_4), 0) AS ovh_4, COALESCE(SUM(ovh_5), 0) AS ovh_5, COALESCE(SUM(ovh_6), 0) AS ovh_6, COUNT(DISTINCT day) AS days, MIN(day) AS first_day, MAX(day) AS last_day FROM %i WHERE day = %s', $hits_table, $day ), ARRAY_A );
+		}
 		self::check_db( 'fileset_hits' );
 		$overhead = is_array( $overhead ) ? $overhead : array();
 		$by_day   = self::lost_by_day( $day );
@@ -1263,10 +1344,9 @@ class Rollup {
 		sort( $bits );
 
 		while ( $job['cursor'] < $count ) {
-			$end          = min( $count, $job['cursor'] + self::INSERT_CHUNK );
-			$files        = self::file_rows( array_slice( $ids, $job['cursor'], $end - $job['cursor'] ) );
-			$placeholders = array();
-			$values       = array();
+			$end        = min( $count, $job['cursor'] + self::INSERT_CHUNK );
+			$files      = self::file_rows( array_slice( $ids, $job['cursor'], $end - $job['cursor'] ) );
+			$batch_rows = array();
 			for ( $i = $job['cursor']; $i < $end; $i++ ) {
 				$id = $ids[ $i ];
 				if ( ! isset( $files[ $id ] ) ) {
@@ -1286,9 +1366,7 @@ class Rollup {
 					}
 				}
 
-				$placeholders[] = '(%s, %s, %s, %s, %d, %d, %s, %f, %s, %s)';
-				array_push(
-					$values,
+				$batch_rows[] = array(
 					$job['id'],
 					$files[ $id ]['path_hash'],
 					$files[ $id ]['path_key'],
@@ -1298,16 +1376,40 @@ class Rollup {
 					wp_json_encode( (object) $by ),
 					$max_share,
 					self::day( $state['first'][ $id ] ),
-					self::day( $state['last'][ $id ] )
+					self::day( $state['last'][ $id ] ),
 				);
 			}
 			if ( ! self::hold() ) {
 				return false;
 			}
-			$sql = "REPLACE INTO {$table} (job, path_hash, path_key, component, contexts, hits_total, hits_by_context, max_share, first_seen, last_seen) VALUES " . implode( ', ', $placeholders );
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders are fixed strings; values go through prepare().
-			$wpdb->query( $wpdb->prepare( $sql, $values ) );
-			self::check_db( 'usage_next' );
+			if ( ! empty( $batch_rows ) ) {
+				$wpdb->query( 'START TRANSACTION' );
+				try {
+					foreach ( $batch_rows as $r ) {
+						$wpdb->query(
+							$wpdb->prepare(
+								'REPLACE INTO %i (job, path_hash, path_key, component, contexts, hits_total, hits_by_context, max_share, first_seen, last_seen) VALUES (%s, %s, %s, %s, %d, %d, %s, %f, %s, %s)',
+								$table,
+								$r[0],
+								$r[1],
+								$r[2],
+								$r[3],
+								$r[4],
+								$r[5],
+								$r[6],
+								$r[7],
+								$r[8],
+								$r[9]
+							)
+						);
+						self::check_db( 'usage_next' );
+					}
+					$wpdb->query( 'COMMIT' );
+				} catch ( \Throwable $e ) {
+					$wpdb->query( 'ROLLBACK' );
+					throw $e;
+				}
+			}
 
 			$job['cursor'] = $end;
 			if ( microtime( true ) >= $deadline ) {
@@ -1331,14 +1433,44 @@ class Rollup {
 	private static function file_rows( array $ids ) {
 		global $wpdb;
 
-		$table = Install::table( 'files' );
-		$in    = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name from $wpdb->prefix; $in is only %d placeholders.
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, path_hash, path_key, component FROM {$table} WHERE id IN ({$in})", $ids ), ARRAY_A );
-		self::check_db( 'files' );
 		$out = array();
-		foreach ( (array) $rows as $row ) {
-			$out[ (int) $row['id'] ] = $row;
+		if ( empty( $ids ) ) {
+			return $out;
+		}
+		$table = Install::table( 'files' );
+		foreach ( array_chunk( array_values( array_map( 'intval', $ids ) ), 20 ) as $chunk ) {
+			$padded = array_pad( $chunk, 20, end( $chunk ) );
+			$rows   = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT id, path_hash, path_key, component FROM %i WHERE id IN (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)',
+					$table,
+					$padded[0],
+					$padded[1],
+					$padded[2],
+					$padded[3],
+					$padded[4],
+					$padded[5],
+					$padded[6],
+					$padded[7],
+					$padded[8],
+					$padded[9],
+					$padded[10],
+					$padded[11],
+					$padded[12],
+					$padded[13],
+					$padded[14],
+					$padded[15],
+					$padded[16],
+					$padded[17],
+					$padded[18],
+					$padded[19]
+				),
+				ARRAY_A
+			);
+			self::check_db( 'files' );
+			foreach ( (array) $rows as $row ) {
+				$out[ (int) $row['id'] ] = $row;
+			}
 		}
 		return $out;
 	}
@@ -1358,7 +1490,7 @@ class Rollup {
 
 		$next  = Install::table( 'usage_next' );
 		$usage = Install::table( 'usage' );
-		$rows  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$next} WHERE job = %s", $job['id'] ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		$rows  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE job = %s', $next, $job['id'] ) );
 		self::check_db( 'usage_next' );
 		if ( $rows !== (int) $job['files'] ) {
 			// Not all rows of this job are staged (should not happen): write them again, at most MAX_RESTARTS times.
@@ -1375,21 +1507,26 @@ class Rollup {
 		if ( ! self::hold() ) {
 			return false;
 		}
-		self::extend_time_limit( $rows );
 
 		$job['meta']['time'] = time();
 		$job['phase']        = 'purge';
 		$job['cursor']       = 0;
-		$columns             = 'path_hash, path_key, component, contexts, hits_total, hits_by_context, max_share, first_seen, last_seen';
 
 		$new_raw = self::transaction(
-			function () use ( $wpdb, $raw, $job, $next, $usage, $columns, $rows ) {
+			function () use ( $wpdb, $raw, $job, $next, $usage, $rows ) {
 				$t = microtime( true );
-				$wpdb->query( "DELETE FROM {$usage}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+				$wpdb->query( $wpdb->prepare( 'DELETE FROM %i', $usage ) );
 				self::check_db( 'usage' );
-				$wpdb->query( $wpdb->prepare( "INSERT INTO {$usage} ({$columns}) SELECT {$columns} FROM {$next} WHERE job = %s ORDER BY id", $job['id'] ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names from $wpdb->prefix, fixed column list.
+				$wpdb->query(
+					$wpdb->prepare(
+						'INSERT INTO %i (path_hash, path_key, component, contexts, hits_total, hits_by_context, max_share, first_seen, last_seen) SELECT path_hash, path_key, component, contexts, hits_total, hits_by_context, max_share, first_seen, last_seen FROM %i WHERE job = %s ORDER BY id',
+						$usage,
+						$next,
+						$job['id']
+					)
+				);
 				self::check_db( 'usage' );
-				// Shown on the Usage tab and used for the next swap's time limit (DECISIONS D51).
+				// Shown on the Usage tab (DECISIONS D51).
 				$job['meta']['swap_seconds'] = round( microtime( true ) - $t, 3 );
 				$job['meta']['swap_rows']    = $rows;
 
@@ -1412,23 +1549,6 @@ class Rollup {
 	}
 
 	/**
-	 * Before the swap (one transaction the budget can't split): where allowed, raise the time limit to at least 3×
-	 * the estimated swap time, from the last swap's time per row (1 ms per row if none; DECISIONS D51).
-	 *
-	 * @param int $rows Rows to swap.
-	 */
-	private static function extend_time_limit( $rows ) {
-		$limit = (int) ini_get( 'max_execution_time' );
-		if ( $limit <= 0 || ! function_exists( 'set_time_limit' ) ) {
-			return;
-		}
-		$last    = self::meta();
-		$per_row = is_array( $last ) && ! empty( $last['swap_rows'] ) && isset( $last['swap_seconds'] ) ? (float) $last['swap_seconds'] / (int) $last['swap_rows'] : 0.001;
-		// set_time_limit() restarts the timer, so the swap gets the full time from here.
-		@set_time_limit( max( $limit, (int) ceil( 3 * $rows * $per_row ) ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- may be disallowed by the host; then the limit stays.
-	}
-
-	/**
 	 * Purge (after the swap): empties the staging tables, then deletes hit rows older than the retention period in
 	 * chunks of 100 rows and leftover benchmark filesets. Ends the job.
 	 *
@@ -1447,7 +1567,7 @@ class Rollup {
 		if ( empty( $job['cleaned'] ) ) {
 			foreach ( array( 'usage_next', 'rollup_state' ) as $name ) {
 				$table = Install::table( $name );
-				$wpdb->query( "TRUNCATE TABLE {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- table name from $wpdb->prefix.
+				$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange -- clearing staging tables after swap.
 				self::check_db( $name );
 			}
 			$job['cleaned']    = true;
@@ -1459,7 +1579,7 @@ class Rollup {
 		$cutoff = wp_date( 'Y-m-d', time() - self::RETENTION_DAYS * DAY_IN_SECONDS );
 		// Small chunks: one DELETE can't be split by the budget, and a row costs ~5 ms on a slow disk (XAMPP, D48).
 		do {
-			$count = $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE day < %s LIMIT %d", $cutoff, self::PURGE_CHUNK ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+			$count = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE day < %s LIMIT %d', $table, $cutoff, self::PURGE_CHUNK ) );
 			if ( false === $count ) {
 				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- stored in the recorder flags, escaped when displayed.
 				throw new \RuntimeException( 'purge: ' . $wpdb->last_error );
@@ -1475,7 +1595,7 @@ class Rollup {
 			return self::cas( $raw, $job );
 		}
 		$days = Install::table( 'usage_days' );
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$days} WHERE day < %s", $cutoff ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE day < %s', $days, $cutoff ) );
 		self::check_db( 'usage_days' );
 		Bench::delete_stale();
 		if ( ! self::hold() ) {
@@ -1506,15 +1626,44 @@ class Rollup {
 		$cursor = isset( $job['orphan_id'] ) ? (int) $job['orphan_id'] : 0;
 		// One page at a time: a single join over all sets can't be split by the budget (74 s on the large test dataset).
 		do {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
-			$page = (array) $wpdb->get_results( $wpdb->prepare( "SELECT id, set_hash, created FROM {$sets} WHERE id > %d ORDER BY id LIMIT %d", $cursor, $page_size ), ARRAY_A );
+			$page = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT id, set_hash, created FROM %i WHERE id > %d ORDER BY id LIMIT %d', $sets, $cursor, $page_size ), ARRAY_A );
 			self::check_db( 'filesets' );
 			$orphans = array();
 			if ( ! empty( $page ) ) {
-				$in = implode( ', ', array_fill( 0, count( $page ), '%s' ) );
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name from $wpdb->prefix; $in is only %s placeholders.
-				$used = array_flip( (array) $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT set_hash FROM {$hits} WHERE set_hash IN ({$in})", wp_list_pluck( $page, 'set_hash' ) ) ) );
-				self::check_db( 'fileset_hits' );
+				$used = array();
+				foreach ( array_chunk( array_values( wp_list_pluck( $page, 'set_hash' ) ), 20 ) as $hash_chunk ) {
+					$padded = array_pad( $hash_chunk, 20, end( $hash_chunk ) );
+					$part   = (array) $wpdb->get_col(
+						$wpdb->prepare(
+							'SELECT DISTINCT set_hash FROM %i WHERE set_hash IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+							$hits,
+							$padded[0],
+							$padded[1],
+							$padded[2],
+							$padded[3],
+							$padded[4],
+							$padded[5],
+							$padded[6],
+							$padded[7],
+							$padded[8],
+							$padded[9],
+							$padded[10],
+							$padded[11],
+							$padded[12],
+							$padded[13],
+							$padded[14],
+							$padded[15],
+							$padded[16],
+							$padded[17],
+							$padded[18],
+							$padded[19]
+						)
+					);
+					self::check_db( 'fileset_hits' );
+					foreach ( $part as $used_hash ) {
+						$used[ $used_hash ] = true;
+					}
+				}
 				foreach ( $page as $set ) {
 					if ( ! isset( $used[ $set['set_hash'] ] ) && $set['created'] < $cutoff ) {
 						$orphans[] = (int) $set['id'];
@@ -1522,13 +1671,37 @@ class Rollup {
 				}
 				$cursor = (int) $set['id'];
 			}
-			foreach ( array_chunk( $orphans, max( self::PURGE_CHUNK, (int) ( $page_size / 2 ) ) ) as $ids ) {
+			foreach ( array_chunk( $orphans, 20 ) as $ids ) {
 				if ( ! self::hold() ) {
 					return false;
 				}
-				$in = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name from $wpdb->prefix; $in is only %d placeholders.
-				$wpdb->query( $wpdb->prepare( "DELETE FROM {$sets} WHERE id IN ({$in})", $ids ) );
+				$padded = array_pad( $ids, 20, end( $ids ) );
+				$wpdb->query(
+					$wpdb->prepare(
+						'DELETE FROM %i WHERE id IN (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)',
+						$sets,
+						$padded[0],
+						$padded[1],
+						$padded[2],
+						$padded[3],
+						$padded[4],
+						$padded[5],
+						$padded[6],
+						$padded[7],
+						$padded[8],
+						$padded[9],
+						$padded[10],
+						$padded[11],
+						$padded[12],
+						$padded[13],
+						$padded[14],
+						$padded[15],
+						$padded[16],
+						$padded[17],
+						$padded[18],
+						$padded[19]
+					)
+				);
 				self::check_db( 'filesets' );
 			}
 			$job['orphan_id'] = $cursor;
@@ -1619,7 +1792,7 @@ class Rollup {
 			return self::empty_state();
 		}
 		$table  = Install::table( 'rollup_state' );
-		$chunks = $wpdb->get_col( $wpdb->prepare( "SELECT data FROM {$table} WHERE token = %s ORDER BY seq", $job['state'] ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		$chunks = $wpdb->get_col( $wpdb->prepare( 'SELECT data FROM %i WHERE token = %s ORDER BY seq', $table, $job['state'] ) );
 		self::check_db( 'rollup_state' );
 		if ( count( $chunks ) !== (int) $job['state_rows'] ) {
 			return false;
@@ -1672,14 +1845,14 @@ class Rollup {
 		$new_raw = self::transaction(
 			function () use ( $wpdb, $table, $raw, $job, $chunks ) {
 				foreach ( $chunks as $seq => $chunk ) {
-					$wpdb->query( $wpdb->prepare( "INSERT INTO {$table} (token, seq, data) VALUES (%s, %d, UNHEX(%s))", $job['state'], $seq, bin2hex( $chunk ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+					$wpdb->query( $wpdb->prepare( 'INSERT INTO %i (token, seq, data) VALUES (%s, %d, UNHEX(%s))', $table, $job['state'], $seq, bin2hex( $chunk ) ) );
 					self::check_db( 'rollup_state' );
 				}
 				return self::cas( $raw, $job );
 			}
 		);
 		if ( false !== $new_raw && '' !== $old_token ) {
-			$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE token = %s", $old_token ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+			$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE token = %s', $table, $old_token ) );
 		}
 		return $new_raw;
 	}
@@ -1693,7 +1866,7 @@ class Rollup {
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name IN (%s, %s)", self::JOB, self::META ) );
 		foreach ( array( 'filesets', 'fileset_hits', 'usage', 'usage_next', 'rollup_state', 'files', 'usage_days' ) as $name ) {
 			$table = Install::table( $name );
-			$wpdb->query( "TRUNCATE TABLE {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- table name from $wpdb->prefix.
+			$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange -- emptying our own table on user reset.
 		}
 		delete_transient( self::META );
 		delete_option( Recorder::FLAGS );
@@ -1724,13 +1897,70 @@ class Rollup {
 		if ( empty( $hashes ) ) {
 			return $out;
 		}
-		$in  = implode( ', ', array_fill( 0, count( $hashes ), '%s' ) );
-		$and = '' === $day ? '' : $wpdb->prepare( ' AND day = %s', $day );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name from $wpdb->prefix; $in is only %s placeholders; $and is prepared.
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT set_hash, context, SUM(hits) AS hits, MIN(day) AS first_day, MAX(day) AS last_day FROM {$hits_table} WHERE set_hash IN ({$in}){$and} GROUP BY set_hash, context", $hashes ), ARRAY_A );
-		self::check_db( 'fileset_hits' );
-		foreach ( (array) $rows as $row ) {
-			$out[ $row['set_hash'] ][] = array( (int) $row['context'], (int) $row['hits'], (int) str_replace( '-', '', $row['first_day'] ), (int) str_replace( '-', '', $row['last_day'] ) );
+		foreach ( array_chunk( array_values( $hashes ), 20 ) as $chunk ) {
+			$padded = array_pad( $chunk, 20, end( $chunk ) );
+			if ( '' === $day ) {
+				$rows = $wpdb->get_results(
+					$wpdb->prepare(
+						'SELECT set_hash, context, SUM(hits) AS hits, MIN(day) AS first_day, MAX(day) AS last_day FROM %i WHERE set_hash IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) GROUP BY set_hash, context',
+						$hits_table,
+						$padded[0],
+						$padded[1],
+						$padded[2],
+						$padded[3],
+						$padded[4],
+						$padded[5],
+						$padded[6],
+						$padded[7],
+						$padded[8],
+						$padded[9],
+						$padded[10],
+						$padded[11],
+						$padded[12],
+						$padded[13],
+						$padded[14],
+						$padded[15],
+						$padded[16],
+						$padded[17],
+						$padded[18],
+						$padded[19]
+					),
+					ARRAY_A
+				);
+			} else {
+				$rows = $wpdb->get_results(
+					$wpdb->prepare(
+						'SELECT set_hash, context, SUM(hits) AS hits, MIN(day) AS first_day, MAX(day) AS last_day FROM %i WHERE set_hash IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) AND day = %s GROUP BY set_hash, context',
+						$hits_table,
+						$padded[0],
+						$padded[1],
+						$padded[2],
+						$padded[3],
+						$padded[4],
+						$padded[5],
+						$padded[6],
+						$padded[7],
+						$padded[8],
+						$padded[9],
+						$padded[10],
+						$padded[11],
+						$padded[12],
+						$padded[13],
+						$padded[14],
+						$padded[15],
+						$padded[16],
+						$padded[17],
+						$padded[18],
+						$padded[19],
+						$day
+					),
+					ARRAY_A
+				);
+			}
+			self::check_db( 'fileset_hits' );
+			foreach ( (array) $rows as $row ) {
+				$out[ $row['set_hash'] ][] = array( (int) $row['context'], (int) $row['hits'], (int) str_replace( '-', '', $row['first_day'] ), (int) str_replace( '-', '', $row['last_day'] ) );
+			}
 		}
 		return $out;
 	}
@@ -1769,8 +1999,7 @@ class Rollup {
 		$days   = Install::table( 'usage_days' );
 		$cutoff = wp_date( 'Y-m-d', time() - self::RETENTION_DAYS * DAY_IN_SECONDS );
 		// A day already folded is never folded again: hit rows written after its fold (a request across midnight) stay as hit rows.
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names from $wpdb->prefix.
-		$day = $wpdb->get_var( $wpdb->prepare( "SELECT MIN(day) FROM {$table} WHERE day < %s AND day >= %s AND day NOT IN (SELECT day FROM {$days})", current_time( 'Y-m-d' ), $cutoff ) );
+		$day = $wpdb->get_var( $wpdb->prepare( 'SELECT MIN(day) FROM %i WHERE day < %s AND day >= %s AND day NOT IN (SELECT day FROM %i)', $table, current_time( 'Y-m-d' ), $cutoff, $days ) );
 		self::check_db( 'fileset_hits' );
 		return null === $day ? '' : (string) $day;
 	}
@@ -1807,20 +2036,20 @@ class Rollup {
 		}
 		$new = self::transaction(
 			function () use ( $wpdb, $raw, $day, $chunks, $days, $hits, $next ) {
-				$wpdb->query( $wpdb->prepare( "DELETE FROM {$days} WHERE day = %s", $day ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+				$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE day = %s', $days, $day ) );
 				self::check_db( 'usage_days' );
 				foreach ( $chunks as $seq => $chunk ) {
-					$wpdb->query( $wpdb->prepare( "INSERT INTO {$days} (day, seq, data) VALUES (%s, %d, UNHEX(%s))", $day, $seq, bin2hex( $chunk ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+					$wpdb->query( $wpdb->prepare( 'INSERT INTO %i (day, seq, data) VALUES (%s, %d, UNHEX(%s))', $days, $day, $seq, bin2hex( $chunk ) ) );
 					self::check_db( 'usage_days' );
 				}
-				$wpdb->query( $wpdb->prepare( "DELETE FROM {$hits} WHERE day = %s", $day ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+				$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE day = %s', $hits, $day ) );
 				self::check_db( 'fileset_hits' );
 				return self::cas( $raw, $next );
 			}
 		);
 		if ( false !== $new && '' !== $job['state'] ) {
 			$table = Install::table( 'rollup_state' );
-			$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE token = %s", $job['state'] ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+			$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE token = %s', $table, $job['state'] ) );
 		}
 		return $new;
 	}
@@ -1837,8 +2066,7 @@ class Rollup {
 
 		$table = Install::table( 'fileset_hits' );
 		$days  = Install::table( 'usage_days' );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names from $wpdb->prefix.
-		$next = $wpdb->get_var( $wpdb->prepare( "SELECT MIN(day) FROM {$table} WHERE day > %s AND day < %s AND day NOT IN (SELECT day FROM {$days})", $day, current_time( 'Y-m-d' ) ) );
+		$next  = $wpdb->get_var( $wpdb->prepare( 'SELECT MIN(day) FROM %i WHERE day > %s AND day < %s AND day NOT IN (SELECT day FROM %i)', $table, $day, current_time( 'Y-m-d' ), $days ) );
 		self::check_db( 'fileset_hits' );
 		return null === $next ? '' : (string) $next;
 	}
@@ -1889,16 +2117,14 @@ class Rollup {
 
 		$table  = Install::table( 'usage_days' );
 		$cutoff = wp_date( 'Y-m-d', time() - self::RETENTION_DAYS * DAY_IN_SECONDS );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
-		$days = (array) $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT day FROM {$table} WHERE day >= %s ORDER BY day", $cutoff ) );
+		$days   = (array) $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT day FROM %i WHERE day >= %s ORDER BY day', $table, $cutoff ) );
 		self::check_db( 'usage_days' );
 		$extra = array(
 			'days'  => array(),
 			'metas' => array(),
 		);
 		foreach ( $days as $day ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
-			$data = implode( '', (array) $wpdb->get_col( $wpdb->prepare( "SELECT data FROM {$table} WHERE day = %s ORDER BY seq", $day ) ) );
+			$data = implode( '', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT data FROM %i WHERE day = %s ORDER BY seq', $table, $day ) ) );
 			self::check_db( 'usage_days' );
 			if ( 'z' === substr( $data, 0, 1 ) ) {
 				$data = function_exists( 'gzuncompress' ) ? gzuncompress( substr( $data, 1 ) ) : false;
@@ -1973,11 +2199,13 @@ class Rollup {
 	private static function lost_by_day( $day ) {
 		global $wpdb;
 
-		$hits  = Install::table( 'fileset_hits' );
-		$sets  = Install::table( 'filesets' );
-		$where = '' === $day ? '' : $wpdb->prepare( ' WHERE h.day = %s', $day );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names from $wpdb->prefix; $where is prepared.
-		$rows = (array) $wpdb->get_results( "SELECT h.day AS day, SUM(h.hits) AS hits, SUM(CASE WHEN s.id IS NULL THEN h.hits ELSE 0 END) AS lost FROM {$hits} h LEFT JOIN {$sets} s ON s.set_hash = h.set_hash{$where} GROUP BY h.day", ARRAY_A );
+		$hits = Install::table( 'fileset_hits' );
+		$sets = Install::table( 'filesets' );
+		if ( '' === $day ) {
+			$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT h.day AS day, SUM(h.hits) AS hits, SUM(CASE WHEN s.id IS NULL THEN h.hits ELSE 0 END) AS lost FROM %i h LEFT JOIN %i s ON s.set_hash = h.set_hash GROUP BY h.day', $hits, $sets ), ARRAY_A );
+		} else {
+			$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT h.day AS day, SUM(h.hits) AS hits, SUM(CASE WHEN s.id IS NULL THEN h.hits ELSE 0 END) AS lost FROM %i h LEFT JOIN %i s ON s.set_hash = h.set_hash WHERE h.day = %s GROUP BY h.day', $hits, $sets, $day ), ARRAY_A );
+		}
 		self::check_db( 'fileset_hits' );
 		$out = array();
 		foreach ( $rows as $row ) {
@@ -2048,7 +2276,7 @@ class Rollup {
 		}
 		// Days: those still in the hit rows and the folded ones.
 		$table = Install::table( 'fileset_hits' );
-		$days  = array_unique( array_merge( (array) $wpdb->get_col( "SELECT DISTINCT day FROM {$table}" ), $extra['days'] ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		$days  = array_unique( array_merge( (array) $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT day FROM %i', $table ) ), $extra['days'] ) );
 		self::check_db( 'fileset_hits' );
 		sort( $days );
 		$overhead['days']      = count( $days );

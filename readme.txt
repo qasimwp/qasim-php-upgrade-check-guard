@@ -33,15 +33,13 @@ Turn it on and Qasim PHP Upgrade Check & Guard learns which plugin files your si
 
 Turn it on before your host changes PHP. Qasim PHP Upgrade Check & Guard learns how your site normally behaves, notices the PHP change by itself and compares the next 7 days with before. If a plugin starts crashing or showing new errors, the Upgrade guard tab names it and tells you what to do. It can also email the site's admin address about new crashes (off by default).
 
-To see a crash in a plugin that loads after it, the Upgrade guard moves itself to the front of the active plugins list while it is on, and back to its normal place when you turn it off. The order of your other plugins does not change.
-
 **What Qasim PHP Upgrade Check & Guard does not do**
 
 * It does not run or change your code. It reads files as text.
 * It is not a guarantee. Code that is built at run time, or loaded in unusual ways, can be missed. Always test on a staging copy before you upgrade a live shop.
 * The rules for PHP 8.5 may be incomplete.
 * It does not switch your PHP version. Your host does that.
-* It makes no requests to other servers and loads nothing from the web.
+* All PHP compatibility scanning and 7-day Upgrade guard monitoring run 100% locally on your server. The plugin makes zero external API requests, loads no remote assets, and sends no telemetry.
 
 == Installation ==
 
@@ -64,7 +62,7 @@ Large files need more memory to check. Ask your host to raise the PHP memory lim
 
 = Does it check must-use plugins? =
 
-Yes. Must-use plugins and special WordPress files (drop-ins such as object-cache.php) are checked like normal plugins. Upgrade guard cannot see crashes in must-use plugins, because they load before Qasim PHP Upgrade Check & Guard.
+Yes. Must-use plugins and special WordPress files (drop-ins such as object-cache.php) are checked like normal plugins. Upgrade guard cannot see crashes that happen before Qasim PHP Upgrade Check & Guard loads (such as in must-use plugins or during initial file loading of earlier plugins), though runtime crashes inside hooks, pages, checkout and admin are captured.
 
 = Where is my data stored? =
 
@@ -118,6 +116,6 @@ The check uses these open-source projects, bundled in `vendor-prefixed/` with th
 * PHPCSUtils 1.2.3, LGPL-3.0-or-later, https://github.com/PHPCSStandards/PHPCSUtils
 * Composer's class loader, MIT
 
-The bundled code is renamed into the `Qpucg\Vendor` namespace (with PHP-Scoper) so it cannot clash with other plugins, and a few lines that would run shell commands or `eval()` are removed.
+The bundled code in `vendor-prefixed/` contains only the stripped, namespace-prefixed runtime parser libraries required to statically check PHP files (zero dev dependencies, tests, docs, or CLI binaries). It is renamed into the `Qpucg\Vendor` namespace (with PHP-Scoper) so it cannot clash with other plugins, and any lines that would run shell commands or `eval()` are removed.
 
-Source code: https://github.com/qasimwp/qasim-php-upgrade-check-guard . The scan engine in vendor-prefixed/ is built with Composer and PHP-Scoper; the build steps are in the repository README.
+Source code: https://github.com/qasimwp/qasim-php-upgrade-check-guard . To reproduce the bundled scan engine and release package from source, run `php bin/build-engine.php` followed by `php bin/build-zip.php` (full build requirements are in the repository README).

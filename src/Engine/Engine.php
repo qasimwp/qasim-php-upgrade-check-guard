@@ -244,18 +244,22 @@ class Engine {
 	/**
 	 * Error handler during scan_file().
 	 *
+	 * Non-fatal warnings, notices and deprecations from the bundled parser (including @-silenced tokenizer calls on
+	 * malformed files) are absorbed so they neither corrupt AJAX JSON output nor falsely abort a file; fatal user/recoverable
+	 * errors become an engine_error exception.
+	 *
 	 * @param int    $code    Error level.
 	 * @param string $message Message.
 	 * @param string $file    File.
 	 * @param int    $line    Line.
 	 * @return bool
-	 * @throws \RuntimeException For every non-muted, non-deprecation error.
+	 * @throws \RuntimeException For E_USER_ERROR or E_RECOVERABLE_ERROR.
 	 */
 	public static function handle_error( $code, $message, $file, $line ) {
-		if ( 0 === ( error_reporting() & $code ) || E_DEPRECATED === $code || E_USER_DEPRECATED === $code ) { // phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting, WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_error_reporting -- reads the level only.
-			return true;
+		if ( E_USER_ERROR === $code || E_RECOVERABLE_ERROR === $code ) {
+			throw new \RuntimeException( "{$message} in {$file} on line {$line}" ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- returned as engine_error, escaped when displayed.
 		}
-		throw new \RuntimeException( "{$message} in {$file} on line {$line}" ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- returned as engine_error, escaped when displayed.
+		return true;
 	}
 
 	/**

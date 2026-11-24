@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Queries our own custom tables (spec §6); the object cache does not apply to them.
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
  * One source of truth for "how does this plugin do", shared by the Check tab, the Plugins screen and Site Health.
@@ -151,14 +151,14 @@ class Status {
 		$findings = Install::table( 'findings' );
 
 		$components = array();
-		foreach ( (array) $wpdb->get_results( $wpdb->prepare( "SELECT component, MAX(component_active) AS active FROM {$files} WHERE scan_id = %d GROUP BY component", (int) $scan_id ), ARRAY_A ) as $row ) {
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT component, MAX(component_active) AS active FROM %i WHERE scan_id = %d GROUP BY component', $files, (int) $scan_id ), ARRAY_A ) as $row ) {
 			$components[ $row['component'] ] = array(
 				'status' => self::READY,
 				'active' => (bool) $row['active'],
 			);
 		}
 		// baseline and guarded rows are not upgrade problems (DECISIONS D52, D56).
-		foreach ( (array) $wpdb->get_results( $wpdb->prepare( "SELECT component, category, severity FROM {$findings} WHERE scan_id = %d AND baseline = 0 AND guarded = 0 GROUP BY component, category, severity", (int) $scan_id ), ARRAY_A ) as $row ) {
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT component, category, severity FROM %i WHERE scan_id = %d AND baseline = 0 AND guarded = 0 GROUP BY component, category, severity', $findings, (int) $scan_id ), ARRAY_A ) as $row ) {
 			$status = self::of( $row['category'], $row['severity'] );
 			if ( null !== $status && isset( $components[ $row['component'] ] ) && self::rank( $status ) < self::rank( $components[ $row['component'] ]['status'] ) ) {
 				$components[ $row['component'] ]['status'] = $status;
@@ -197,9 +197,10 @@ class Status {
 		if ( ! function_exists( 'get_plugins' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
-		$own     = plugin_basename( QPUCG_FILE );
-		$plugins = array();
-		foreach ( get_plugins() as $file => $data ) {
+		$installed_plugins = get_plugins();
+		$own               = plugin_basename( QPUCG_FILE );
+		$plugins           = array();
+		foreach ( $installed_plugins as $file => $data ) {
 			if ( $own !== $file ) {
 				$plugins[ $file ] = isset( $data['Version'] ) ? (string) $data['Version'] : '';
 			}

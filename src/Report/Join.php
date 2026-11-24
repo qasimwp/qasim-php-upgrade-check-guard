@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Queries our own custom tables (spec §6); the object cache does not apply to them.
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
  * Joins the latest done scan's findings with the usage table. Never loads the engine.
@@ -175,11 +175,11 @@ class Join {
 		$files    = Install::table( 'scan_files' );
 
 		$active = array();
-		foreach ( (array) $wpdb->get_results( $wpdb->prepare( "SELECT component, MAX(component_active) AS active FROM {$files} WHERE scan_id = %d GROUP BY component", (int) $scan_id ), ARRAY_A ) as $row ) {
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT component, MAX(component_active) AS active FROM %i WHERE scan_id = %d GROUP BY component', $files, (int) $scan_id ), ARRAY_A ) as $row ) {
 			$active[ $row['component'] ] = (bool) $row['active'];
 		}
 
-		$rows = (array) $wpdb->get_results( $wpdb->prepare( "SELECT f.id, f.component, f.path_key, f.line, f.severity, f.category, f.rule, f.baseline, f.guarded, u.contexts, u.hits_by_context, u.id AS usage_id FROM {$findings} f LEFT JOIN {$usage} u ON u.path_hash = f.path_hash WHERE f.scan_id = %d", (int) $scan_id ), ARRAY_A );
+		$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT f.id, f.component, f.path_key, f.line, f.severity, f.category, f.rule, f.baseline, f.guarded, u.contexts, u.hits_by_context, u.id AS usage_id FROM %i f LEFT JOIN %i u ON u.path_hash = f.path_hash WHERE f.scan_id = %d', $findings, $usage, (int) $scan_id ), ARRAY_A );
 		foreach ( $rows as $i => $row ) {
 			$row['id']        = (int) $row['id'];
 			$row['line']      = (int) $row['line'];
@@ -415,12 +415,41 @@ class Join {
 	public static function messages( array $ids ) {
 		global $wpdb;
 
-		$out   = array();
+		$out = array();
+		if ( empty( $ids ) ) {
+			return $out;
+		}
 		$table = Install::table( 'findings' );
-		foreach ( array_chunk( array_map( 'intval', $ids ), self::MESSAGE_CHUNK ) as $chunk ) {
-			$in = implode( ', ', array_fill( 0, count( $chunk ), '%d' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $in is only %d placeholders.
-			foreach ( (array) $wpdb->get_results( $wpdb->prepare( "SELECT id, message FROM {$table} WHERE id IN ({$in})", $chunk ), ARRAY_A ) as $row ) {
+		foreach ( array_chunk( array_values( array_map( 'intval', $ids ) ), 20 ) as $chunk ) {
+			$padded = array_pad( $chunk, 20, end( $chunk ) );
+			$rows   = (array) $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT id, message FROM %i WHERE id IN (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)',
+					$table,
+					$padded[0],
+					$padded[1],
+					$padded[2],
+					$padded[3],
+					$padded[4],
+					$padded[5],
+					$padded[6],
+					$padded[7],
+					$padded[8],
+					$padded[9],
+					$padded[10],
+					$padded[11],
+					$padded[12],
+					$padded[13],
+					$padded[14],
+					$padded[15],
+					$padded[16],
+					$padded[17],
+					$padded[18],
+					$padded[19]
+				),
+				ARRAY_A
+			);
+			foreach ( $rows as $row ) {
 				$out[ (int) $row['id'] ] = $row['message'];
 			}
 		}

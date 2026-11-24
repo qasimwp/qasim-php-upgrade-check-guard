@@ -1,7 +1,7 @@
 <?php
 /**
  * Shared by bin/build-engine.php and bin/build-zip.php (dev scripts, not shipped): the engine's build inputs and
- * the vendor-prefixed/BUILD-OK marker (DECISIONS D47).
+ * the gitignored build/engine-build-ok.txt marker (DECISIONS D47).
  *
  * @package QasimPHPUpgradeCheckGuard
  */
@@ -9,9 +9,14 @@
 // phpcs:disable WordPress.WP.AlternativeFunctions -- CLI dev script, no WordPress loaded.
 
 /**
- * Marker file name inside vendor-prefixed/, written only after every build check passed.
+ * Marker file path inside gitignored build/, written only after every build check passed.
+ *
+ * @param string $root Repo root.
+ * @return string
  */
-const QPUCG_BUILD_MARKER = 'BUILD-OK';
+function qpucg_engine_marker_path( $root ) {
+	return $root . '/build/engine-build-ok.txt';
+}
 
 /**
  * The md5 over the files that decide what the engine build produces (line endings normalized, so a Git checkout
@@ -29,7 +34,7 @@ function qpucg_engine_inputs_hash( $root ) {
 }
 
 /**
- * Number of files in a directory tree, not counting the marker.
+ * Number of files in a directory tree.
  *
  * @param string $path Directory.
  * @return int
@@ -37,7 +42,7 @@ function qpucg_engine_inputs_hash( $root ) {
 function qpucg_engine_file_count( $path ) {
 	$files = 0;
 	foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path, FilesystemIterator::SKIP_DOTS ) ) as $item ) {
-		if ( $item->isFile() && QPUCG_BUILD_MARKER !== $item->getFilename() ) {
+		if ( $item->isFile() ) {
 			++$files;
 		}
 	}

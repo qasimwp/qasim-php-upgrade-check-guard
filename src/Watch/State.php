@@ -1,6 +1,6 @@
 <?php
 /**
- * Upgrade watch state: the small autoloaded option, the PHP version change and the load order (DECISIONS D59).
+ * Upgrade watch state: the small autoloaded option and PHP version change tracking (DECISIONS D59).
  *
  * @package QasimPHPUpgradeCheckGuard
  */
@@ -248,51 +248,5 @@ class State {
 	 */
 	public static function add_days( $day, $days ) {
 		return gmdate( 'Y-m-d', (int) strtotime( $day . ' 00:00:00 UTC' ) + (int) $days * DAY_IN_SECONDS );
-	}
-
-	/**
-	 * Qpucg's entry in active_plugins.
-	 *
-	 * @return string
-	 */
-	private static function own_plugin() {
-		return plugin_basename( QPUCG_FILE );
-	}
-
-	/**
-	 * Moves Qpucg to the front of active_plugins, so it can see a crash in a plugin that loads later. The other plugins
-	 * keep their order. Not run on every page, so a plugin that also forces itself first can't cause a write on each request.
-	 */
-	public static function move_first() {
-		$active = (array) get_option( 'active_plugins', array() );
-		$own    = array_search( self::own_plugin(), $active, true );
-		if ( false === $own || 0 === $own ) {
-			return;
-		}
-		unset( $active[ $own ] );
-		array_unshift( $active, self::own_plugin() );
-		update_option( 'active_plugins', array_values( $active ) );
-	}
-
-	/**
-	 * Puts Qpucg back at its alphabetical place. The other plugins keep their order (they may have a custom one).
-	 */
-	public static function move_back() {
-		$active = (array) get_option( 'active_plugins', array() );
-		$own    = array_search( self::own_plugin(), $active, true );
-		if ( false === $own ) {
-			return;
-		}
-		unset( $active[ $own ] );
-		$active = array_values( $active );
-		$place  = count( $active );
-		foreach ( $active as $i => $plugin ) {
-			if ( strcmp( (string) $plugin, self::own_plugin() ) > 0 ) {
-				$place = $i;
-				break;
-			}
-		}
-		array_splice( $active, $place, 0, array( self::own_plugin() ) );
-		update_option( 'active_plugins', $active );
 	}
 }
