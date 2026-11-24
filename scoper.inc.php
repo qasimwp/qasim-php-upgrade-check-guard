@@ -27,6 +27,8 @@ return array(
 			// Composer installer plugin (required by PHPCSUtils): build-time only, and
 			// PHP-Scoper leaves its namespace unprefixed (DECISIONS D21).
 			->notPath( '#^dealerdirect/#' )
+			// PHPCSUtils test-helper exceptions: unused at runtime (PHPCSUtils/TestUtils is stripped).
+			->notPath( '#^phpcsstandards/phpcsutils/PHPCSUtils/Exceptions/Test(File|Marker|Target)NotFound\.php$#' )
 			->in( $engine . '/vendor' ),
 		Finder::create()
 			->files()
@@ -117,6 +119,70 @@ return array(
 					array(
 						array( '$result = exec($cmd, $output, $retVal);' ),
 						'$result = null; $retVal = 1; // Qpucg (DECISIONS D28): no "which" / "where" shell call.',
+					),
+					// processShortArgument( 'd' ): unreachable (-d is never passed), remove ini_set() for WP.org compliance.
+					array(
+						array( '$changed = ini_set($ini[0], $ini[1]);' ),
+						'$changed = \false; // Qpucg (DECISIONS D69): -d CLI flag is unused; no ini_set() call.',
+					),
+				),
+				'#/squizlabs/php_codesniffer/src/Runner\.php$#'       => array(
+					// init(): PHPCS disables pcre.jit for parallel mode only; this plugin runs single-process and must not alter global ini.
+					array(
+						array( "ini_set('pcre.jit', \\false);" ),
+						'// Qpucg (DECISIONS D69): keep host pcre.jit unchanged; plugin never uses PHPCS parallel mode.',
+					),
+					// handleErrors(): unreachable (Engine installs its own handler); remove error_reporting() call.
+					array(
+						array(
+							'if ((error_reporting() & $code) === 0) {',
+							'// This type of error is being muted.',
+							'return \true;',
+							'}',
+						),
+						"if (\\E_USER_ERROR !== \$code && \\E_RECOVERABLE_ERROR !== \$code) {\n            // Qpucg (DECISIONS D69): unreachable (Engine uses its own error handler); no error_reporting() call.\n            return \\true;\n        }",
+					),
+				),
+				'#/squizlabs/php_codesniffer/src/Tokenizers/Tokenizer\.php$#' => array(
+					// createPositionMap(): absorb iconv_strlen() invalid-byte warnings once per file without error_reporting().
+					array(
+						array(
+							'$tabWidth = $this->config->tabWidth;',
+							'$this->numTokens = count($this->tokens);',
+							'for ($i = 0; $i < $this->numTokens; $i++) {',
+						),
+						"\$tabWidth = \$this->config->tabWidth;\n        \$this->numTokens = count(\$this->tokens);\n        // Qpucg (DECISIONS D69): absorb iconv_strlen() invalid-byte warnings once per file without error_reporting().\n        if (\$checkEncoding === \\true) {\n            set_error_handler(static function () {\n                return \\true;\n            });\n        }\n        try {\n            for (\$i = 0; \$i < \$this->numTokens; \$i++) {",
+					),
+					array(
+						array(
+							'$oldLevel = error_reporting();',
+							'error_reporting(0);',
+							'$length = iconv_strlen($this->tokens[$i][\'content\'], $encoding);',
+							'error_reporting($oldLevel);',
+						),
+						"// Qpucg (DECISIONS D69): warnings absorbed by loop-level handler above; no error_reporting().\n                    \$length = iconv_strlen(\$this->tokens[\$i]['content'], \$encoding);",
+					),
+					array(
+						array(
+							'if ($ignoring !== null && isset($this->ignoredLines[$this->tokens[$i][\'line\']]) === \false) {',
+							'$this->ignoredLines[$this->tokens[$i][\'line\']] = $ignoring;',
+							'}',
+							'}',
+							'// If annotations are being ignored, we clear out all the ignore rules',
+							'// but leave the annotations tokenized as normal.',
+							'if ($checkAnnotations === \false) {',
+						),
+						"if (\$ignoring !== null && isset(\$this->ignoredLines[\$this->tokens[\$i]['line']]) === \\false) {\n                \$this->ignoredLines[\$this->tokens[\$i]['line']] = \$ignoring;\n            }\n        }\n        } finally {\n            if (\$checkEncoding === \\true) {\n                restore_error_handler();\n            }\n        }\n        // If annotations are being ignored, we clear out all the ignore rules\n        // but leave the annotations tokenized as normal.\n        if (\$checkAnnotations === \\false) {",
+					),
+					// replaceTabsInToken(): unreachable with tabWidth === 0; still use scoped handler instead of error_reporting().
+					array(
+						array(
+							'$oldLevel = error_reporting();',
+							'error_reporting(0);',
+							'$contentLength = iconv_strlen($content, $this->config->encoding);',
+							'error_reporting($oldLevel);',
+						),
+						"// Qpucg (DECISIONS D69): scoped handler instead of error_reporting().\n                        set_error_handler(static function () {\n                            return \\true;\n                        });\n                        try {\n                            \$contentLength = iconv_strlen(\$content, \$this->config->encoding);\n                        } finally {\n                            restore_error_handler();\n                        }",
 					),
 				),
 				'#/squizlabs/php_codesniffer/src/Fixer\.php$#'       => array(

@@ -591,7 +591,7 @@ class Config
                     // Silently ignore it.
                     break;
                 }
-                $changed = ini_set($ini[0], $ini[1]);
+                $changed = \false; // Qpucg (DECISIONS D69): -d CLI flag is unused; no ini_set() call.
                 if ($changed === \false && ini_get($ini[0]) !== $ini[1]) {
                     $error = sprintf('ERROR: Ini option "%s" cannot be changed at runtime.', $ini[0]) . \PHP_EOL;
                     $error .= $this->printShortUsage(\true);

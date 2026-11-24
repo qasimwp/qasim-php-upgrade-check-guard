@@ -456,9 +456,10 @@ class Storage {
 		}
 
 		// A day in the hit rows costs its share of the hit rows and of the stored sets.
-		$hits    = isset( $size['tables']['fileset_hits'] ) ? $size['tables']['fileset_hits']['data'] + $size['tables']['fileset_hits']['index'] : 0;
-		$sets    = self::live( $size ) - ( (int) $size['total'] - $size['tables']['filesets']['data'] - $size['tables']['filesets']['index'] );
-		$per_raw = empty( $raw ) ? 0 : ( $hits + $sets ) / count( $raw );
+		$hits       = isset( $size['tables']['fileset_hits'] ) ? $size['tables']['fileset_hits']['data'] + $size['tables']['fileset_hits']['index'] : 0;
+		$sets_bytes = isset( $size['tables']['filesets'] ) ? $size['tables']['filesets']['data'] + $size['tables']['filesets']['index'] : 0;
+		$sets       = self::live( $size ) - ( (int) $size['total'] - $sets_bytes );
+		$per_raw    = empty( $raw ) ? 0 : ( $hits + $sets ) / count( $raw );
 
 		// Every day but the newest together can't cover the excess (folded days are a few KB each): deleting would only
 		// lose history.

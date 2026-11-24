@@ -221,7 +221,8 @@ class Guards {
 	 * @return bool
 	 */
 	private function is_name( $ptr ) {
-		return in_array( $this->tokens[ $ptr ]['code'], array( T_STRING, T_NAME_FULLY_QUALIFIED ), true );
+		$code = $this->tokens[ $ptr ]['code'];
+		return T_STRING === $code || ( defined( 'T_NAME_FULLY_QUALIFIED' ) && constant( 'T_NAME_FULLY_QUALIFIED' ) === $code );
 	}
 
 	/**

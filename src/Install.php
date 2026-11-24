@@ -375,7 +375,7 @@ class Install {
 			$table = self::table( $name );
 			foreach ( $list as $column ) {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- schema check.
-				if ( null === $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, $column ) ) ) {
+				if ( null === $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, $wpdb->esc_like( $column ) ) ) ) {
 					Usage\Recorder::set_error( 'install: column ' . $table . '.' . $column . ' is missing after the upgrade; it is retried on the next admin page' );
 					return false;
 				}

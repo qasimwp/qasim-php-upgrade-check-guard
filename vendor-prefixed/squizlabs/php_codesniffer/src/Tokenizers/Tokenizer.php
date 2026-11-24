@@ -165,7 +165,14 @@ abstract class Tokenizer
         $encoding = $this->config->encoding;
         $tabWidth = $this->config->tabWidth;
         $this->numTokens = count($this->tokens);
-        for ($i = 0; $i < $this->numTokens; $i++) {
+        // Qpucg (DECISIONS D69): absorb iconv_strlen() invalid-byte warnings once per file without error_reporting().
+        if ($checkEncoding === \true) {
+            set_error_handler(static function () {
+                return \true;
+            });
+        }
+        try {
+            for ($i = 0; $i < $this->numTokens; $i++) {
             $this->tokens[$i]['line'] = $lineNumber;
             $this->tokens[$i]['column'] = $currColumn;
             if (isset($this->knownLengths[$this->tokens[$i]['code']]) === \true) {
@@ -176,10 +183,8 @@ abstract class Tokenizer
                 // There are no tabs in this content, or we aren't replacing them.
                 if ($checkEncoding === \true) {
                     // Not using the default encoding, so take a bit more care.
-                    $oldLevel = error_reporting();
-                    error_reporting(0);
+                    // Qpucg (DECISIONS D69): warnings absorbed by loop-level handler above; no error_reporting().
                     $length = iconv_strlen($this->tokens[$i]['content'], $encoding);
-                    error_reporting($oldLevel);
                     if ($length === \false) {
                         // String contained invalid characters, so revert to default.
                         $length = strlen($this->tokens[$i]['content']);
@@ -369,6 +374,11 @@ abstract class Tokenizer
                 $this->ignoredLines[$this->tokens[$i]['line']] = $ignoring;
             }
         }
+        } finally {
+            if ($checkEncoding === \true) {
+                restore_error_handler();
+            }
+        }
         // If annotations are being ignored, we clear out all the ignore rules
         // but leave the annotations tokenized as normal.
         if ($checkAnnotations === \false) {
@@ -421,10 +431,15 @@ abstract class Tokenizer
                     $newContent .= $content;
                     if ($checkEncoding === \true) {
                         // Not using ASCII encoding, so take a bit more care.
-                        $oldLevel = error_reporting();
-                        error_reporting(0);
-                        $contentLength = iconv_strlen($content, $this->config->encoding);
-                        error_reporting($oldLevel);
+                        // Qpucg (DECISIONS D69): scoped handler instead of error_reporting().
+                        set_error_handler(static function () {
+                            return \true;
+                        });
+                        try {
+                            $contentLength = iconv_strlen($content, $this->config->encoding);
+                        } finally {
+                            restore_error_handler();
+                        }
                         if ($contentLength === \false) {
                             // String contained invalid characters, so revert to default.
                             $contentLength = strlen($content);

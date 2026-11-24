@@ -579,7 +579,7 @@ class Runner {
 					number_format_i18n( $in_use / 1048576, 1 ),
 					number_format_i18n( $needed / 1048576 ),
 					number_format_i18n( self::memory_limit() / 1048576 ),
-					"define( 'WP_MAX_MEMORY_LIMIT', '256M' );",
+					"define( 'WP_MAX_MEMORY_LIMIT', '" . max( 256, (int) ceil( $needed / 1048576 ) ) . "M' );",
 					'wp qpucg scan'
 				);
 			}

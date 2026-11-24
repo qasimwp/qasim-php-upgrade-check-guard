@@ -203,7 +203,7 @@ class Runner
             define('PHP_CODESNIFFER_CBF', \false);
         }
         // Disable the PCRE JIT as this caused issues with parallel running.
-        ini_set('pcre.jit', \false);
+        // Qpucg (DECISIONS D69): keep host pcre.jit unchanged; plugin never uses PHPCS parallel mode.
         // Check that the standards are valid.
         foreach ($this->config->standards as $standard) {
             if (Standards::isInstalledStandard($standard) === \false) {
@@ -436,8 +436,8 @@ class Runner
      */
     public function handleErrors(int $code, string $message, string $file, int $line)
     {
-        if ((error_reporting() & $code) === 0) {
-            // This type of error is being muted.
+        if (\E_USER_ERROR !== $code && \E_RECOVERABLE_ERROR !== $code) {
+            // Qpucg (DECISIONS D69): unreachable (Engine uses its own error handler); no error_reporting() call.
             return \true;
         }
         throw new RuntimeException("{$message} in {$file} on line {$line}");

@@ -1800,7 +1800,7 @@ class Rollup {
 		$data = implode( '', $chunks );
 		unset( $chunks );
 		if ( ! empty( $job['state_gz'] ) ) {
-			$data = function_exists( 'gzuncompress' ) ? gzuncompress( $data ) : false;
+			$data = self::decompress( $data );
 		}
 		$state = false === $data ? null : json_decode( $data, true );
 		if ( ! is_array( $state ) || ! isset( $state['hits'] ) ) {
@@ -2127,7 +2127,7 @@ class Rollup {
 			$data = implode( '', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT data FROM %i WHERE day = %s ORDER BY seq', $table, $day ) ) );
 			self::check_db( 'usage_days' );
 			if ( 'z' === substr( $data, 0, 1 ) ) {
-				$data = function_exists( 'gzuncompress' ) ? gzuncompress( substr( $data, 1 ) ) : false;
+				$data = self::decompress( substr( $data, 1 ) );
 			} else {
 				$data = substr( $data, 1 );
 			}
@@ -2270,8 +2270,8 @@ class Rollup {
 				$overhead[ $key ] = ( isset( $overhead[ $key ] ) ? (float) $overhead[ $key ] : 0 ) + (float) $o[ $key ];
 			}
 			$overhead['prep_ms_max'] = max( isset( $overhead['prep_ms_max'] ) ? (float) $overhead['prep_ms_max'] : 0, (float) $o['prep_ms_max'] );
-			foreach ( (array) $o['ovh_hist'] as $i => $count ) {
-				$overhead[ 'ovh_' . $i ] = ( isset( $overhead[ 'ovh_' . $i ] ) ? (int) $overhead[ 'ovh_' . $i ] : 0 ) + (int) $count;
+			foreach ( (array) $o['ovh_hist'] as $bucket => $count ) {
+				$overhead[ 'ovh_' . $bucket ] = ( isset( $overhead[ 'ovh_' . $bucket ] ) ? (int) $overhead[ 'ovh_' . $bucket ] : 0 ) + (int) $count;
 			}
 		}
 		// Days: those still in the hit rows and the folded ones.
@@ -2307,10 +2307,30 @@ class Rollup {
 		if ( ! $compressed ) {
 			return (string) $data;
 		}
-		if ( ! function_exists( 'gzuncompress' ) ) {
-			return '';
-		}
-		$list = gzuncompress( (string) $data );
+		$list = self::decompress( (string) $data );
 		return false === $list ? '' : $list;
+	}
+
+	/**
+	 * Safely decompresses a zlib-compressed database blob with a size cap.
+	 *
+	 * @param string $blob Compressed data.
+	 * @return string|false Decompressed string, or false on failure or corrupt data.
+	 */
+	private static function decompress( $blob ) {
+		if ( ! function_exists( 'gzuncompress' ) ) {
+			return false;
+		}
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- scoped and restored in finally; avoids warnings on corrupt DB blobs.
+		set_error_handler(
+			static function () {
+				return true;
+			}
+		);
+		try {
+			return gzuncompress( (string) $blob, 16 * 1024 * 1024 );
+		} finally {
+			restore_error_handler();
+		}
 	}
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <ruleset name="Qasim PHP Upgrade Check & Guard">
-	<description>WPCS + PHP 7.2 compatibility for the plugin's own code.</description>
+	<description>WPCS + PHP 7.4 compatibility for the plugin's own code.</description>
 
 	<file>.</file>
 
@@ -16,7 +16,7 @@
 	<arg name="colors"/>
 	<arg value="sp"/>
 
-	<config name="testVersion" value="7.2-"/>
+	<config name="testVersion" value="7.4-"/>
 	<config name="minimum_wp_version" value="6.2"/>
 
 	<rule ref="WordPress"/>
@@ -24,7 +24,7 @@
 
 	<!--
 	PHPCompatibilityWP ignores functions that WordPress polyfills, but these polyfills
-	arrived after WP 5.8 (our minimum), so re-enable them. See DECISIONS D12.
+	arrived after WP 6.2 (our minimum), so re-enable them. See DECISIONS D12.
 	-->
 	<rule ref="PHPCompatibility.FunctionUse.NewFunctions.array_key_firstFound"><severity>5</severity></rule>
 	<rule ref="PHPCompatibility.FunctionUse.NewFunctions.array_key_lastFound"><severity>5</severity></rule>

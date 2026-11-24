@@ -285,9 +285,9 @@ foreach ( array_merge( $qpucg_strip_trees, $qpucg_strip_files ) as $qpucg_path )
 }
 echo 'Removed ' . count( $qpucg_strip_trees ) . ' unused folders and ' . count( $qpucg_strip_files ) . " unused files (docs, generators, reports, test utils, Composer metadata).\n";
 
-// No exec-family call, backtick operator or eval() may remain (CLAUDE.md, D7, D28, D43). Token-based, so rule
-// messages that only mention a function name (PHPCompatibility sniffs) don't count.
-$qpucg_banned = array( 'exec', 'shell_exec', 'system', 'passthru', 'proc_open', 'popen', 'pcntl_exec' );
+// No exec-family call, backtick operator, eval(), or PHP runtime/error config call may remain (CLAUDE.md, D7, D28, D43, D69).
+// Token-based, so rule messages that only mention a function name (PHPCompatibility sniffs) don't count.
+$qpucg_banned = array( 'exec', 'shell_exec', 'system', 'passthru', 'proc_open', 'popen', 'pcntl_exec', 'ini_set', 'ini_alter', 'set_time_limit', 'error_reporting' );
 $qpucg_found  = array();
 foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $qpucg_target, FilesystemIterator::SKIP_DOTS ) ) as $qpucg_item ) {
 	if ( ! preg_match( '/\.(php|inc)$/', $qpucg_item->getFilename() ) ) {
@@ -326,16 +326,18 @@ foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $qpucg_
 	}
 }
 if ( $qpucg_found ) {
-	qpucg_build_fail( "exec-family or eval() calls left in the engine:\n  " . implode( "\n  ", $qpucg_found ) );
+	qpucg_build_fail( "Banned calls left in the engine:\n  " . implode( "\n  ", $qpucg_found ) );
 }
-echo "exec-family / eval check: 0 calls (exec, shell_exec, system, passthru, proc_open, popen, pcntl_exec, backticks, eval).\n";
+echo "Banned-call check: 0 calls (exec-family, backticks, eval, ini_set, ini_alter, set_time_limit, error_reporting).\n";
 
 // Every scoper.inc.php patch must have landed. A patcher only runs when PHP-Scoper processes a file matching its
 // path pattern, so a moved or renamed upstream file would skip its patch silently (review finding #10).
 $qpucg_markers = array(
 	'squizlabs/php_codesniffer/src/Util/Common.php' => 1,
-	'squizlabs/php_codesniffer/src/Config.php'      => 2,
+	'squizlabs/php_codesniffer/src/Config.php'      => 3,
 	'squizlabs/php_codesniffer/src/Fixer.php'       => 1,
+	'squizlabs/php_codesniffer/src/Runner.php'      => 2,
+	'squizlabs/php_codesniffer/src/Tokenizers/Tokenizer.php' => 3,
 	'phpcompatibility/php-compatibility/PHPCompatibility/Sniffs/ControlStructures/DiscouragedSwitchContinueSniff.php' => 1,
 	'phpcsstandards/phpcsutils/PHPCSUtils/AbstractSniffs/AbstractArrayDeclarationSniff.php' => 1,
 );
@@ -375,7 +377,7 @@ foreach ( $qpucg_needles as $qpucg_needle ) {
 		qpucg_build_fail( "Patch check: expected exactly one \"{$qpucg_needle[1]}\" in {$qpucg_needle[2]}." );
 	}
 }
-echo 'Patch check: ' . $qpucg_total . " markers in the 5 patched files, Fixer proc_open line and 3 PHPCS autoloader patches present.\n";
+echo 'Patch check: ' . $qpucg_total . ' markers in the ' . count( $qpucg_markers ) . " patched files, Fixer proc_open line and 3 PHPCS autoloader patches present.\n";
 
 // 6. Swap, marker, report.
 echo "\n== 6/6 swap + result\n";
