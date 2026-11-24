@@ -313,7 +313,7 @@ class WatchTab {
 		$notes = array();
 		if ( null !== $report['thin'] ) {
 			if ( 0 === $report['thin'] ) {
-				$notes[] = __( 'Qasim PHP Upgrade Check & Guard didn\'t have time to learn how your site normally behaves before this. A few warnings listed as new may have been there before.', 'qasim-php-upgrade-check-guard' );
+				$notes[] = __( 'Upgrade guard doesn\'t have a full 7 days of earlier data yet. Some warnings shown as new may have already existed.', 'qasim-php-upgrade-check-guard' );
 			} else {
 				/* translators: %s: number of days. */
 				$notes[] = sprintf( _n( 'Qasim PHP Upgrade Check & Guard had only %s day to learn how your site normally behaves. A few warnings listed as new may have been there before.', 'Qasim PHP Upgrade Check & Guard had only %s days to learn how your site normally behaves. A few warnings listed as new may have been there before.', $report['thin'], 'qasim-php-upgrade-check-guard' ), number_format_i18n( $report['thin'] ) );

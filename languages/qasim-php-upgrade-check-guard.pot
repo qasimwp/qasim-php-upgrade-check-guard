@@ -1237,7 +1237,7 @@ msgid "Last seen"
 msgstr ""
 
 #: src/Admin/WatchTab.php:316
-msgid "Qasim PHP Upgrade Check & Guard didn't have time to learn how your site normally behaves before this. A few warnings listed as new may have been there before."
+msgid "Upgrade guard doesn't have a full 7 days of earlier data yet. Some warnings shown as new may have already existed."
 msgstr ""
 
 #. translators: %s: number of days.
