@@ -99,9 +99,17 @@ class Notify {
 	private static function claim( $today ) {
 		global $wpdb;
 
-		// Rows affected: 1 inserted, 2 changed, 0 already today.
-		$result = $wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no') ON DUPLICATE KEY UPDATE option_value = VALUES(option_value)", self::OPTION, $today ) );
-		return false !== $result && (int) $wpdb->rows_affected > 0;
+		// INSERT IGNORE + conditional UPDATE avoids relying on MySQL's rows_affected=0 for no-op ON DUPLICATE KEY UPDATE,
+		// which SQLite reports as 1 affected row.
+		$inserted = $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", self::OPTION, $today ) );
+		if ( 1 === $inserted ) {
+			return true;
+		}
+		if ( false === $inserted ) {
+			return false;
+		}
+		$updated = $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value <> %s", $today, self::OPTION, $today ) );
+		return 1 === $updated;
 	}
 
 	/**

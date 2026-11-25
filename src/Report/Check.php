@@ -171,8 +171,11 @@ class Check {
 
 		$table = Install::table( 'usage' );
 		$out   = array();
-		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT component, BIT_OR(contexts) AS contexts FROM %i GROUP BY component', $table ), ARRAY_A ) as $row ) {
-			$out[ $row['component'] ] = (int) $row['contexts'];
+		// Bitwise OR is combined in PHP because SQLite has no BIT_OR() aggregate.
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT DISTINCT component, contexts FROM %i', $table ), ARRAY_A );
+		foreach ( (array) $rows as $row ) {
+			$component         = (string) $row['component'];
+			$out[ $component ] = ( isset( $out[ $component ] ) ? $out[ $component ] : 0 ) | (int) $row['contexts'];
 		}
 		return $out;
 	}

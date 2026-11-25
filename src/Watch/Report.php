@@ -201,13 +201,42 @@ class Report {
 
 		list( $after_php, $after_first, $after_last ) = $ranges['after'];
 
-		$rows  = $wpdb->get_results( $wpdb->prepare( 'SELECT component, level, message_hash, SUM(hits) AS hits, BIT_OR(context) AS context, MAX(day) AS day, MAX(sample) AS sample FROM %i WHERE php_version = %s AND day BETWEEN %s AND %s GROUP BY component, level, message_hash', $table, $after_php, $after_first, $after_last ), ARRAY_A );
-		$items = array();
+		// Context is in GROUP BY and combined with bitwise OR in PHP because SQLite has no BIT_OR() aggregate.
+		$rows    = $wpdb->get_results( $wpdb->prepare( 'SELECT component, level, message_hash, context, SUM(hits) AS hits, MAX(day) AS day, MAX(sample) AS sample FROM %i WHERE php_version = %s AND day BETWEEN %s AND %s GROUP BY component, level, message_hash, context', $table, $after_php, $after_first, $after_last ), ARRAY_A );
+		$grouped = array();
 		foreach ( (array) $rows as $row ) {
 			if ( isset( $seen[ $row['message_hash'] ] ) ) {
 				continue;
 			}
-			$id = (string) $row['component'];
+			$component = (string) $row['component'];
+			$level     = (string) $row['level'];
+			$key       = $component . "\0" . $level . "\0" . (string) $row['message_hash'];
+			$day       = (string) $row['day'];
+			$sample    = (string) $row['sample'];
+			if ( ! isset( $grouped[ $key ] ) ) {
+				$grouped[ $key ] = array(
+					'component' => $component,
+					'level'     => $level,
+					'hits'      => (int) $row['hits'],
+					'context'   => (int) $row['context'],
+					'day'       => $day,
+					'sample'    => $sample,
+				);
+			} else {
+				$grouped[ $key ]['hits']    += (int) $row['hits'];
+				$grouped[ $key ]['context'] |= (int) $row['context'];
+				if ( strcmp( $day, $grouped[ $key ]['day'] ) > 0 ) {
+					$grouped[ $key ]['day'] = $day;
+				}
+				if ( strcmp( $sample, $grouped[ $key ]['sample'] ) > 0 ) {
+					$grouped[ $key ]['sample'] = $sample;
+				}
+			}
+		}
+
+		$items = array();
+		foreach ( $grouped as $row ) {
+			$id = $row['component'];
 			if ( ! isset( $items[ $id ] ) ) {
 				$items[ $id ] = array(
 					'id'                   => $id,
@@ -221,13 +250,17 @@ class Report {
 					'samples'              => array(),
 				);
 			}
-			$items[ $id ][ $row['level'] ] += (int) $row['hits'];
-			$items[ $id ]['context']       |= (int) $row['context'];
-			$items[ $id ]['day']            = max( $items[ $id ]['day'], (string) $row['day'] );
-			$items[ $id ]['samples'][]      = array(
-				'level'  => (string) $row['level'],
-				'hits'   => (int) $row['hits'],
-				'sample' => (string) $row['sample'],
+			if ( isset( $items[ $id ][ $row['level'] ] ) ) {
+				$items[ $id ][ $row['level'] ] += $row['hits'];
+			}
+			$items[ $id ]['context'] |= $row['context'];
+			if ( strcmp( $row['day'], $items[ $id ]['day'] ) > 0 ) {
+				$items[ $id ]['day'] = $row['day'];
+			}
+			$items[ $id ]['samples'][] = array(
+				'level'  => $row['level'],
+				'hits'   => $row['hits'],
+				'sample' => $row['sample'],
 			);
 		}
 
