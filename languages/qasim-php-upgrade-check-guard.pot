@@ -9,13 +9,14 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-16T10:33:45+01:00\n"
+"POT-Creation-Date: 2026-11-25T12:43:10+01:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: qasim-php-upgrade-check-guard\n"
 
 #. Plugin Name of the plugin
 #: qasim-php-upgrade-check-guard.php
+#: src/Admin/Page.php:153
 msgid "Qasim PHP Upgrade Check & Guard"
 msgstr ""
 
@@ -36,7 +37,7 @@ msgid "https://profiles.wordpress.org/qasimwp/"
 msgstr ""
 
 #: src/Admin/Ajax.php:116
-#: src/Scan/Runner.php:333
+#: src/Scan/Runner.php:334
 msgid "Scan not found."
 msgstr ""
 
@@ -47,11 +48,11 @@ msgstr ""
 #: src/Admin/Ajax.php:160
 #: src/Admin/CheckTab.php:623
 #: src/Admin/CheckTab.php:651
-#: src/Admin/Page.php:601
-#: src/Admin/Page.php:615
-#: src/Admin/Page.php:638
+#: src/Admin/Page.php:595
+#: src/Admin/Page.php:609
+#: src/Admin/Page.php:632
 #: src/Admin/SettingsTab.php:233
-#: src/Admin/SettingsTab.php:278
+#: src/Admin/SettingsTab.php:273
 #: src/Admin/WatchTab.php:364
 #: src/Admin/WatchTab.php:388
 msgid "You do not have permission to do this."
@@ -207,7 +208,7 @@ msgstr ""
 
 #. translators: 1: current PHP version, 2: target PHP version, 3: date.
 #: src/Admin/CheckTab.php:307
-#: src/Report/Check.php:808
+#: src/Report/Check.php:809
 msgid "j M Y"
 msgstr ""
 
@@ -289,7 +290,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/Admin/CheckTab.php:454
-#: src/Report/Check.php:398
+#: src/Report/Check.php:399
 msgid "Not active"
 msgstr ""
 
@@ -332,7 +333,7 @@ msgstr ""
 
 #. translators: %s: number of places.
 #: src/Admin/CheckTab.php:553
-#: src/Report/Check.php:956
+#: src/Report/Check.php:957
 #, php-format
 msgid "%s more place is in the CSV report."
 msgid_plural "%s more places are in the CSV report."
@@ -341,7 +342,7 @@ msgstr[1] ""
 
 #. translators: %s: list of places, e.g. "checkout, cart and admin".
 #: src/Admin/CheckTab.php:559
-#: src/Report/Check.php:478
+#: src/Report/Check.php:479
 #, php-format
 msgid "Runs on: %s"
 msgstr ""
@@ -413,7 +414,7 @@ msgid "Questions"
 msgstr ""
 
 #: src/Admin/HelpTab.php:56
-msgid "Does Qasim PHP Upgrade Check & Guard send my data anywhere?"
+msgid "Does this plugin send my data anywhere?"
 msgstr ""
 
 #: src/Admin/HelpTab.php:57
@@ -490,47 +491,47 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: src/Admin/Integrations.php:126
+#: src/Admin/Integrations.php:129
 msgid "Your plugins and PHP version"
 msgstr ""
 
-#: src/Admin/Integrations.php:131
+#: src/Admin/Integrations.php:134
 msgid "Qasim PHP Upgrade Check & Guard Smart results"
 msgstr ""
 
-#: src/Admin/Integrations.php:161
+#: src/Admin/Integrations.php:164
 msgid "Qasim PHP Upgrade Check & Guard is recording normally, or Smart results is off."
 msgstr ""
 
-#: src/Admin/Integrations.php:165
+#: src/Admin/Integrations.php:168
 msgid "Qasim PHP Upgrade Check & Guard Smart results is working"
 msgstr ""
 
-#: src/Admin/Integrations.php:165
+#: src/Admin/Integrations.php:168
 msgid "Qasim PHP Upgrade Check & Guard Smart results needs a look"
 msgstr ""
 
-#: src/Admin/Integrations.php:168
-#: src/Admin/Integrations.php:202
+#: src/Admin/Integrations.php:171
+#: src/Admin/Integrations.php:205
 msgid "PHP upgrade"
 msgstr ""
 
 #. translators: %s: target PHP version.
-#: src/Admin/Integrations.php:199
+#: src/Admin/Integrations.php:202
 #, php-format
 msgid "Your plugins and PHP %s"
 msgstr ""
 
-#: src/Admin/Integrations.php:206
+#: src/Admin/Integrations.php:209
 msgid "See the details"
 msgstr ""
 
-#: src/Admin/Integrations.php:224
+#: src/Admin/Integrations.php:227
 msgid "Tools → PHP Upgrade"
 msgstr ""
 
 #. translators: %s: link to the Tools → PHP Upgrade page.
-#: src/Admin/Integrations.php:226
+#: src/Admin/Integrations.php:229
 #, php-format
 msgid "Qasim PHP Upgrade Check & Guard is ready. Open %s to check your site for PHP upgrade problems."
 msgstr ""
@@ -572,12 +573,8 @@ msgstr ""
 msgid "You do not have permission to access this page."
 msgstr ""
 
-#: src/Admin/Page.php:153
-msgid "Qasim PHP Upgrade Check & Guard – PHP Upgrade"
-msgstr ""
-
 #: src/Admin/Page.php:154
-msgid "Qasim PHP Upgrade Check & Guard sections"
+msgid "PHP Upgrade sections"
 msgstr ""
 
 #: src/Admin/Page.php:229
@@ -658,352 +655,348 @@ msgstr ""
 msgid "no response from the server (network error or timeout)"
 msgstr ""
 
-#: src/Admin/Page.php:270
-msgid "dev (not from zip)"
-msgstr ""
-
-#. translators: 1: plugin version, 2: build id.
-#: src/Admin/Page.php:272
+#. translators: %s: plugin version.
+#: src/Admin/Page.php:266
 #, php-format
-msgid "Qasim PHP Upgrade Check & Guard %1$s · build %2$s"
+msgid "Qasim PHP Upgrade Check & Guard %s"
 msgstr ""
 
-#: src/Admin/Page.php:285
+#: src/Admin/Page.php:279
 msgid "Usage settings saved."
 msgstr ""
 
-#: src/Admin/Page.php:287
+#: src/Admin/Page.php:281
 msgid "Usage data deleted."
 msgstr ""
 
-#: src/Admin/Page.php:289
+#: src/Admin/Page.php:283
 msgid "Recorder benchmark finished. Results are below."
 msgstr ""
 
-#: src/Admin/Page.php:292
+#: src/Admin/Page.php:286
 msgid "Records only file paths and counts. No URLs, IPs or user data."
 msgstr ""
 
-#: src/Admin/Page.php:299
+#: src/Admin/Page.php:293
 msgid "Usage recording"
 msgstr ""
 
-#: src/Admin/Page.php:299
+#: src/Admin/Page.php:293
 msgid "Record which plugin and theme files load (sampled)"
 msgstr ""
 
-#: src/Admin/Page.php:300
+#: src/Admin/Page.php:294
 msgid "Sample rate"
 msgstr ""
 
-#: src/Admin/Page.php:307
+#: src/Admin/Page.php:301
 msgid "Share of requests recorded, 0.01 to 1.0. Use 0.25 for sites with 1,000+ visits a day, 1.0 for smaller sites."
 msgstr ""
 
-#: src/Admin/Page.php:309
+#: src/Admin/Page.php:303
 msgid "Save usage settings"
 msgstr ""
 
-#: src/Admin/Page.php:312
+#: src/Admin/Page.php:306
 msgid "Observation"
 msgstr ""
 
-#: src/Admin/Page.php:315
+#: src/Admin/Page.php:309
 msgid "Components"
 msgstr ""
 
-#: src/Admin/Page.php:318
+#: src/Admin/Page.php:312
 msgid "Recorder benchmark"
 msgstr ""
 
-#: src/Admin/Page.php:321
+#: src/Admin/Page.php:315
 msgid "Reset"
 msgstr ""
 
-#: src/Admin/Page.php:322
+#: src/Admin/Page.php:316
 msgid "Delete all recorded usage data? This cannot be undone."
 msgstr ""
 
-#: src/Admin/Page.php:325
+#: src/Admin/Page.php:319
 msgid "Reset usage data"
 msgstr ""
 
-#: src/Admin/Page.php:335
-msgid "This button cannot work: the page settings for Qasim PHP Upgrade Check & Guard's script (qpucgScan) did not load. A caching or script optimization plugin may have removed them; exclude this admin page from it and reload."
+#: src/Admin/Page.php:329
+msgid "This button cannot work: the page settings for this plugin's script (qpucgScan) did not load. A caching or script optimization plugin may have removed them; exclude this admin page from it and reload."
 msgstr ""
 
-#: src/Admin/Page.php:355
+#: src/Admin/Page.php:349
 msgid "No usage data yet"
 msgstr ""
 
 #. translators: %s: human time difference.
-#: src/Admin/Page.php:357
+#: src/Admin/Page.php:351
 #, php-format
 msgid "Usage data updated %s ago"
 msgstr ""
 
 #. translators: %s: percent done.
-#: src/Admin/Page.php:361
+#: src/Admin/Page.php:355
 #, php-format
 msgid "an update is %s %% done (it runs in the background, in short steps)"
 msgstr ""
 
-#: src/Admin/Page.php:363
+#: src/Admin/Page.php:357
 msgid "update stopped after repeated errors (see \"Last recorder error\" on the Usage tab); the daily run tries again"
 msgstr ""
 
-#: src/Admin/Page.php:365
+#: src/Admin/Page.php:359
 msgid "a background update is scheduled; WP-Cron starts it on a later visit to the site"
 msgstr ""
 
-#: src/Admin/Page.php:367
+#: src/Admin/Page.php:361
 msgid "no background update could be scheduled; use the button"
 msgstr ""
 
 #. translators: %s: human time difference.
-#: src/Admin/Page.php:372
+#: src/Admin/Page.php:366
 #, php-format
 msgid "The scheduled background update step is %s overdue, so background updates (WP-Cron) may not be running on this site. You can use the button to update now."
 msgstr ""
 
-#: src/Admin/Page.php:375
+#: src/Admin/Page.php:369
 msgid "WP-Cron is disabled on this site (DISABLE_WP_CRON), so the update runs when the server runs wp-cron.php, or press the button."
 msgstr ""
 
-#: src/Admin/Page.php:378
+#: src/Admin/Page.php:372
 msgid "Update usage data now"
 msgstr ""
 
-#: src/Admin/Page.php:396
+#: src/Admin/Page.php:390
 msgid "Observing since"
 msgstr ""
 
-#: src/Admin/Page.php:396
+#: src/Admin/Page.php:390
 msgid "not started"
 msgstr ""
 
-#: src/Admin/Page.php:399
+#: src/Admin/Page.php:393
 msgid "Data"
 msgstr ""
 
-#: src/Admin/Page.php:399
+#: src/Admin/Page.php:393
 msgid "No rollup yet."
 msgstr ""
 
-#: src/Admin/Page.php:410
+#: src/Admin/Page.php:404
 msgid "Days observed"
 msgstr ""
 
-#: src/Admin/Page.php:411
+#: src/Admin/Page.php:405
 msgid "Sampled requests"
 msgstr ""
 
-#: src/Admin/Page.php:412
+#: src/Admin/Page.php:406
 msgid "Filesets"
 msgstr ""
 
-#: src/Admin/Page.php:413
-#: src/Admin/Page.php:506
+#: src/Admin/Page.php:407
+#: src/Admin/Page.php:500
 msgid "Files seen"
 msgstr ""
 
 #. translators: 1: average prep ms, 2: max prep ms, 3: percent of requests with prep >= 3 ms.
-#: src/Admin/Page.php:415
+#: src/Admin/Page.php:409
 msgid "Recorder prep time (filter + sort + hash; no DB write)"
 msgstr ""
 
 #. translators: 1: average prep ms, 2: max prep ms, 3: percent of requests with prep >= 3 ms.
-#: src/Admin/Page.php:415
+#: src/Admin/Page.php:409
 #, php-format
 msgid "avg %1$s ms, max %2$s ms, %3$s%% of requests ≥ 3 ms"
 msgstr ""
 
-#: src/Admin/Page.php:418
+#: src/Admin/Page.php:412
 msgid "Recorder prep as % of request time"
 msgstr ""
 
 #. translators: 1: median range, 2: p95 range, 3: requests, 4: average request ms.
-#: src/Admin/Page.php:421
+#: src/Admin/Page.php:415
 #, php-format
 msgid "median %1$s, p95 %2$s (%3$s requests with a request time, avg request %4$s ms)"
 msgstr ""
 
-#: src/Admin/Page.php:422
+#: src/Admin/Page.php:416
 msgid "no data yet (recorded from version T6.1 on)"
 msgstr ""
 
-#: src/Admin/Page.php:424
+#: src/Admin/Page.php:418
 msgid "Requests without a file list"
 msgstr ""
 
 #. translators: %s: human time difference.
-#: src/Admin/Page.php:427
+#: src/Admin/Page.php:421
 #, php-format
 msgid "%s ago"
 msgstr ""
 
 #. translators: 1: seconds, 2: rows.
-#: src/Admin/Page.php:431
+#: src/Admin/Page.php:425
 #, php-format
 msgid "swap %1$s s (%2$s rows)"
 msgstr ""
 
-#: src/Admin/Page.php:433
+#: src/Admin/Page.php:427
 msgid "Last rollup"
 msgstr ""
 
-#: src/Admin/Page.php:437
+#: src/Admin/Page.php:431
 msgid "Slowest recorder run over 500 ms"
 msgstr ""
 
 #. translators: 1: duration in ms, 2: date and time.
-#: src/Admin/Page.php:439
+#: src/Admin/Page.php:433
 #, php-format
 msgid "%1$s ms (%2$s)"
 msgstr ""
 
 #. translators: 1: duration in ms, 2: date and time.
 #. translators: 1: counter could not be written, 2: file list could not be stored, 3: unexpected error.
-#: src/Admin/Page.php:439
-#: src/Admin/Page.php:449
-#: src/Admin/Page.php:453
+#: src/Admin/Page.php:433
+#: src/Admin/Page.php:443
+#: src/Admin/Page.php:447
 msgid "none"
 msgstr ""
 
 #. translators: %s: date and time.
-#: src/Admin/Page.php:443
+#: src/Admin/Page.php:437
 msgid "Recording paused"
 msgstr ""
 
 #. translators: %s: date and time.
-#: src/Admin/Page.php:443
+#: src/Admin/Page.php:437
 #, php-format
 msgid "until %s, after a database error (saving the settings with recording on resumes it)"
 msgstr ""
 
-#: src/Admin/Page.php:447
+#: src/Admin/Page.php:441
 msgid "Page views dropped"
 msgstr ""
 
 #. translators: 1: counter could not be written, 2: file list could not be stored, 3: unexpected error.
-#: src/Admin/Page.php:449
+#: src/Admin/Page.php:443
 #, php-format
 msgid "%1$d counter write failed, %2$d file list not stored, %3$d unexpected error"
 msgstr ""
 
-#: src/Admin/Page.php:452
+#: src/Admin/Page.php:446
 msgid "Last recorder error"
 msgstr ""
 
-#: src/Admin/Page.php:492
+#: src/Admin/Page.php:486
 msgid "No usage recorded yet."
 msgstr ""
 
-#: src/Admin/Page.php:505
+#: src/Admin/Page.php:499
 msgid "Component"
 msgstr ""
 
-#: src/Admin/Page.php:507
+#: src/Admin/Page.php:501
 msgid "Files total (last scan)"
 msgstr ""
 
-#: src/Admin/Page.php:508
+#: src/Admin/Page.php:502
 msgid "Requests"
 msgstr ""
 
-#: src/Admin/Page.php:509
+#: src/Admin/Page.php:503
 msgid "Share of sampled requests"
 msgstr ""
 
-#: src/Admin/Page.php:523
+#: src/Admin/Page.php:517
 msgid "Files total appears after the first completed scan."
 msgstr ""
 
-#: src/Admin/Page.php:531
+#: src/Admin/Page.php:525
 msgid "Measures the recorder on this request: hot-path prep, the database write, and the cost of storing a new file set. Runs up to 50 iterations or 10 seconds, using temporary rows that are deleted afterwards."
 msgstr ""
 
-#: src/Admin/Page.php:536
+#: src/Admin/Page.php:530
 msgid "Hot-path prep (filter + sort + hash)"
 msgstr ""
 
-#: src/Admin/Page.php:537
+#: src/Admin/Page.php:531
 msgid "Database write (lock limit + upsert + restore)"
 msgstr ""
 
-#: src/Admin/Page.php:538
+#: src/Admin/Page.php:532
 msgid "New file set (keys + insert)"
 msgstr ""
 
-#: src/Admin/Page.php:541
+#: src/Admin/Page.php:535
 msgid "Part"
 msgstr ""
 
-#: src/Admin/Page.php:541
+#: src/Admin/Page.php:535
 msgid "Median (ms)"
 msgstr ""
 
-#: src/Admin/Page.php:541
+#: src/Admin/Page.php:535
 msgid "p95 (ms)"
 msgstr ""
 
-#: src/Admin/Page.php:541
+#: src/Admin/Page.php:535
 msgid "Max (ms)"
 msgstr ""
 
 #. translators: %s: prep phase name (setup, filter, sort, hash, context).
-#: src/Admin/Page.php:550
+#: src/Admin/Page.php:544
 #, php-format
 msgid "Prep phase: %s"
 msgstr ""
 
 #. translators: 1: iterations run, 2: iterations requested, 3: content files per set, 4: human time difference.
-#: src/Admin/Page.php:557
+#: src/Admin/Page.php:551
 #, php-format
 msgid "%1$d of %2$d iterations, %3$d content files per set, %4$s ago."
 msgstr ""
 
 #. translators: 1: included files, 2: their path bytes, 3: content files per set, 4: their path bytes, 5: hash algorithm.
-#: src/Admin/Page.php:561
+#: src/Admin/Page.php:555
 #, php-format
 msgid "Included files: %1$d (%2$s path bytes). Content files per set: %3$d (%4$s path bytes). Set hash: %5$s. The prep phases come from a separate phase-by-phase run of the same prep."
 msgstr ""
 
 #. translators: %s: PHP version, PCRE JIT state and filter prefix counts (technical, English).
-#: src/Admin/Page.php:565
+#: src/Admin/Page.php:559
 #, php-format
 msgid "Environment: %s"
 msgstr ""
 
-#: src/Admin/Page.php:568
+#: src/Admin/Page.php:562
 msgid "Stopped early at the 10-second limit."
 msgstr ""
 
 #. translators: %s: error message.
-#: src/Admin/Page.php:572
+#: src/Admin/Page.php:566
 #, php-format
 msgid "Error: %s"
 msgstr ""
 
 #. translators: %s: limit in ms.
-#: src/Admin/Page.php:576
+#: src/Admin/Page.php:570
 #, php-format
 msgid "M3b: PASS (prep median at most %s ms)."
 msgstr ""
 
 #. translators: %s: limit in ms.
-#: src/Admin/Page.php:578
+#: src/Admin/Page.php:572
 #, php-format
 msgid "M3b: FAIL (prep median over %s ms)."
 msgstr ""
 
 #. translators: %s: limit in ms.
-#: src/Admin/Page.php:581
+#: src/Admin/Page.php:575
 #, php-format
 msgid "The database write median is over %s ms: lower the sample rate on this site."
 msgstr ""
 
-#: src/Admin/Page.php:592
+#: src/Admin/Page.php:586
 msgid "Run recorder benchmark"
 msgstr ""
 
@@ -1271,7 +1264,7 @@ msgid "To keep your site fast, it looks at about 1 in %s page views for smaller 
 msgstr ""
 
 #: src/Admin/WatchTab.php:355
-msgid "Must-use plugins load before Qasim PHP Upgrade Check & Guard, so their crashes aren't included."
+msgid "Crashes that happen before Qasim PHP Upgrade Check & Guard loads (such as in must-use plugins or during initial loading of earlier plugins) aren't included."
 msgstr ""
 
 #. translators: %s: PHP version string as given.
@@ -1303,41 +1296,41 @@ msgstr ""
 msgid "The scan engine (vendor-prefixed folder) is missing. Reinstall the plugin from the release zip."
 msgstr ""
 
-#: src/Install.php:429
+#: src/Install.php:431
 msgid "Qasim PHP Upgrade Check & Guard was updated while this scan was running. Please start a new scan."
 msgstr ""
 
-#: src/Report/Check.php:212
-#: src/Watch/Notify.php:142
+#: src/Report/Check.php:213
+#: src/Watch/Notify.php:174
 msgid "Must-use plugins"
 msgstr ""
 
 #. translators: %s: file name, e.g. object-cache.php.
-#: src/Report/Check.php:215
+#: src/Report/Check.php:216
 #, php-format
 msgid "Special WordPress file (%s)"
 msgstr ""
 
-#: src/Report/Check.php:358
+#: src/Report/Check.php:359
 msgid "Doesn't affect this upgrade"
 msgstr ""
 
 #. translators: %s: current PHP version.
-#: src/Report/Check.php:374
+#: src/Report/Check.php:375
 #, php-format
 msgid "Already like this on PHP %s, so the upgrade changes nothing."
 msgstr ""
 
-#: src/Report/Check.php:400
+#: src/Report/Check.php:401
 msgid "not active"
 msgstr ""
 
-#: src/Report/Check.php:405
+#: src/Report/Check.php:406
 msgid "Not known yet: Smart results has no data"
 msgstr ""
 
 #. translators: %s: number of days.
-#: src/Report/Check.php:411
+#: src/Report/Check.php:412
 #, php-format
 msgid "Not seen running in the last %s day"
 msgid_plural "Not seen running in the last %s days"
@@ -1345,110 +1338,110 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: number of days.
-#: src/Report/Check.php:414
+#: src/Report/Check.php:415
 #, php-format
 msgid "not seen running in the last %s day"
 msgid_plural "not seen running in the last %s days"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Report/Check.php:423
+#: src/Report/Check.php:424
 msgid "Only when run from the command line"
 msgstr ""
 
-#: src/Report/Check.php:425
+#: src/Report/Check.php:426
 msgid "command line only"
 msgstr ""
 
-#: src/Report/Check.php:443
+#: src/Report/Check.php:444
 msgid "Runs on every page"
 msgstr ""
 
-#: src/Report/Check.php:444
 #: src/Report/Check.php:445
+#: src/Report/Check.php:446
 msgid "every page"
 msgstr ""
 
-#: src/Report/Check.php:466
+#: src/Report/Check.php:467
 msgid "Runs on almost every page"
 msgstr ""
 
-#: src/Report/Check.php:467
 #: src/Report/Check.php:468
+#: src/Report/Check.php:469
 msgid "almost every page"
 msgstr ""
 
-#: src/Report/Check.php:528
-#: src/Usage/Recorder.php:877
+#: src/Report/Check.php:529
+#: src/Usage/Recorder.php:876
 msgid "checkout"
 msgstr ""
 
-#: src/Report/Check.php:529
-#: src/Usage/Recorder.php:878
+#: src/Report/Check.php:530
+#: src/Usage/Recorder.php:877
 msgid "cart"
 msgstr ""
 
-#: src/Report/Check.php:530
-#: src/Usage/Recorder.php:880
+#: src/Report/Check.php:531
+#: src/Usage/Recorder.php:879
 msgid "shop"
 msgstr ""
 
-#: src/Report/Check.php:531
+#: src/Report/Check.php:532
 msgid "product pages"
 msgstr ""
 
-#: src/Report/Check.php:532
+#: src/Report/Check.php:533
 msgid "customer account"
 msgstr ""
 
-#: src/Report/Check.php:533
+#: src/Report/Check.php:534
 msgid "site pages"
 msgstr ""
 
-#: src/Report/Check.php:534
-#: src/Usage/Recorder.php:871
+#: src/Report/Check.php:535
+#: src/Usage/Recorder.php:870
 msgid "admin"
 msgstr ""
 
-#: src/Report/Check.php:535
-#: src/Usage/Recorder.php:876
+#: src/Report/Check.php:536
+#: src/Usage/Recorder.php:875
 msgid "login"
 msgstr ""
 
-#: src/Report/Check.php:536
+#: src/Report/Check.php:537
 msgid "scheduled tasks"
 msgstr ""
 
-#: src/Report/Check.php:537
+#: src/Report/Check.php:538
 msgid "background requests"
 msgstr ""
 
-#: src/Report/Check.php:538
+#: src/Report/Check.php:539
 msgid "connected apps"
 msgstr ""
 
-#: src/Report/Check.php:585
+#: src/Report/Check.php:586
 msgid "Nothing to do."
 msgstr ""
 
 #. translators: %s: plugin or theme name.
-#: src/Report/Check.php:598
+#: src/Report/Check.php:599
 #, php-format
 msgid "Update %s."
 msgstr ""
 
-#: src/Report/Check.php:601
+#: src/Report/Check.php:602
 msgid "Go to updates"
 msgstr ""
 
 #. translators: 1: plugin or theme name, 2: target PHP version.
-#: src/Report/Check.php:606
+#: src/Report/Check.php:607
 #, php-format
 msgid "%1$s uses features PHP %2$s removed."
 msgstr ""
 
 #. translators: %s: number of days.
-#: src/Report/Check.php:610
+#: src/Report/Check.php:611
 #, php-format
 msgid "It hasn't run in %s day: switch to another theme, or contact the theme developer."
 msgid_plural "It hasn't run in %s days: switch to another theme, or contact the theme developer."
@@ -1456,100 +1449,100 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: number of days.
-#: src/Report/Check.php:612
+#: src/Report/Check.php:613
 #, php-format
 msgid "It hasn't run in %s day: deactivate it, or contact the plugin developer."
 msgid_plural "It hasn't run in %s days: deactivate it, or contact the plugin developer."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Report/Check.php:614
+#: src/Report/Check.php:615
 msgid "Contact the theme developer or look for a maintained alternative."
 msgstr ""
 
-#: src/Report/Check.php:614
+#: src/Report/Check.php:615
 msgid "Contact the plugin developer or look for a maintained alternative."
 msgstr ""
 
-#: src/Report/Check.php:618
+#: src/Report/Check.php:619
 msgid "Go to plugins"
 msgstr ""
 
-#: src/Report/Check.php:618
+#: src/Report/Check.php:619
 msgid "Find an alternative"
 msgstr ""
 
-#: src/Report/Check.php:621
+#: src/Report/Check.php:622
 msgid "Go to themes"
 msgstr ""
 
 #. translators: 1: plugin or theme name, 2: target PHP version.
-#: src/Report/Check.php:625
+#: src/Report/Check.php:626
 #, php-format
 msgid "%1$s works on PHP %2$s but shows a warning."
 msgstr ""
 
-#: src/Report/Check.php:626
+#: src/Report/Check.php:627
 msgid "It will stop working in a future PHP version. Ask the theme developer for a fix when you can."
 msgstr ""
 
-#: src/Report/Check.php:626
+#: src/Report/Check.php:627
 msgid "It will stop working in a future PHP version. Ask the plugin developer for a fix when you can."
 msgstr ""
 
 #. translators: 1: a short action, 2: the reason. Both are whole sentences.
-#: src/Report/Check.php:629
+#: src/Report/Check.php:630
 #, php-format
 msgctxt "action, then reason"
 msgid "%1$s %2$s"
 msgstr ""
 
-#: src/Report/Check.php:643
+#: src/Report/Check.php:644
 msgid "An update is available and this theme runs on your checkout."
 msgstr ""
 
-#: src/Report/Check.php:643
+#: src/Report/Check.php:644
 msgid "An update is available and this plugin runs on your checkout."
 msgstr ""
 
-#: src/Report/Check.php:645
+#: src/Report/Check.php:646
 msgid "An update is available and this theme runs on every page."
 msgstr ""
 
-#: src/Report/Check.php:645
+#: src/Report/Check.php:646
 msgid "An update is available and this plugin runs on every page."
 msgstr ""
 
-#: src/Report/Check.php:647
+#: src/Report/Check.php:648
 msgid "An update is available and this theme runs on almost every page."
 msgstr ""
 
-#: src/Report/Check.php:647
+#: src/Report/Check.php:648
 msgid "An update is available and this plugin runs on almost every page."
 msgstr ""
 
 #. translators: %s: list of places, e.g. "shop and admin".
-#: src/Report/Check.php:651
+#: src/Report/Check.php:652
 #, php-format
 msgid "An update is available and this theme runs on: %s."
 msgstr ""
 
 #. translators: %s: list of places, e.g. "shop and admin".
-#: src/Report/Check.php:653
+#: src/Report/Check.php:654
 #, php-format
 msgid "An update is available and this plugin runs on: %s."
 msgstr ""
 
-#: src/Report/Check.php:655
+#: src/Report/Check.php:656
 msgid "An update is available."
 msgstr ""
 
-#: src/Report/Check.php:676
+#: src/Report/Check.php:677
 msgid "a PHP add-on"
 msgstr ""
 
 #. translators: 1: plugin or theme name, 2: list of PHP features, e.g. "IMAP and pspell", 3: target PHP version.
-#: src/Report/Check.php:685
+#: src/Report/Check.php:686
 #, php-format
 msgid "%1$s uses the %2$s feature, which PHP %3$s no longer includes by default."
 msgid_plural "%1$s uses %2$s, which PHP %3$s no longer includes by default."
@@ -1557,71 +1550,71 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of days, 2: list of PHP features.
-#: src/Report/Check.php:688
+#: src/Report/Check.php:689
 #, php-format
 msgid "It hasn't run in %1$s day: deactivate it, or ask your host to keep %2$s."
 msgid_plural "It hasn't run in %1$s days: deactivate it, or ask your host to keep %2$s."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Report/Check.php:690
+#: src/Report/Check.php:691
 msgid "Ask your host if they keep it."
 msgid_plural "Ask your host if they keep them."
 msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: target PHP version, 2: plugin or theme name, 3: list of PHP features, 4: current PHP version.
-#: src/Report/Check.php:693
+#: src/Report/Check.php:694
 #, php-format
 msgid "Hello. We plan to move this site from PHP %4$s to PHP %1$s. Our %2$s uses the %3$s feature. Will it still be available after the move?"
 msgid_plural "Hello. We plan to move this site from PHP %4$s to PHP %1$s. Our %2$s uses %3$s. Will these still be available after the move?"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Report/Check.php:694
+#: src/Report/Check.php:695
 msgid "Copy message for your host"
 msgstr ""
 
 #. translators: 1: plugin or theme name, 2: file path inside it.
-#: src/Report/Check.php:768
+#: src/Report/Check.php:769
 #, php-format
 msgid "%1$s (%2$s)"
 msgstr ""
 
-#: src/Report/Check.php:785
+#: src/Report/Check.php:786
 msgid "This file could not be read. Ask your host to check its file permissions, then check again."
 msgstr ""
 
-#: src/Report/Check.php:787
+#: src/Report/Check.php:788
 msgid "Only part of this file could be checked. Update the plugin or theme, then check again."
 msgstr ""
 
-#: src/Report/Check.php:789
+#: src/Report/Check.php:790
 msgid "The check stopped on this file. Ask your host to raise the PHP memory limit to 512M, then check again."
 msgstr ""
 
-#: src/Report/Check.php:792
+#: src/Report/Check.php:793
 msgid "This file is too large to check. Ask the developer whether it can be split up."
 msgstr ""
 
-#: src/Report/Check.php:793
+#: src/Report/Check.php:794
 msgid "This file is too large for this server's memory limit. Ask your host to raise the PHP memory limit to 512M, then check again."
 msgstr ""
 
 #. translators: %s: site address.
-#: src/Report/Check.php:806
+#: src/Report/Check.php:807
 #, php-format
 msgid "PHP upgrade check for %s"
 msgstr ""
 
 #. translators: 1: current PHP version, 2: target PHP version, 3: date.
-#: src/Report/Check.php:808
+#: src/Report/Check.php:809
 #, php-format
 msgid "PHP %1$s to PHP %2$s, checked on %3$s."
 msgstr ""
 
 #. translators: %s: number of plugins and themes.
-#: src/Report/Check.php:838
+#: src/Report/Check.php:839
 #, php-format
 msgid "... and %s more plugin or theme in the CSV report."
 msgid_plural "... and %s more plugins and themes in the CSV report."
@@ -1629,31 +1622,31 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: number of plugins and themes.
-#: src/Report/Check.php:846
+#: src/Report/Check.php:847
 #, php-format
 msgid "Checked %s plugin or theme. No problems found."
 msgid_plural "Checked %s plugins and themes. No problems found."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Report/Check.php:852
+#: src/Report/Check.php:853
 msgid "Full list with files and lines: Download report (CSV)"
 msgstr ""
 
-#: src/Report/Check.php:865
+#: src/Report/Check.php:866
 msgid "Will break:"
 msgstr ""
 
-#: src/Report/Check.php:867
+#: src/Report/Check.php:868
 msgid "Ask your host:"
 msgstr ""
 
-#: src/Report/Check.php:869
+#: src/Report/Check.php:870
 msgid "Works, fix later:"
 msgstr ""
 
 #. translators: 1: plugin or theme name with version, 2: number of places, 3: the main problem, a whole sentence.
-#: src/Report/Check.php:883
+#: src/Report/Check.php:884
 #, php-format
 msgid "%1$s: %2$s place. %3$s"
 msgid_plural "%1$s: %2$s places. %3$s"
@@ -1661,7 +1654,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: plugin or theme name with version, 2: target PHP version, 3: status word, 4: number of places.
-#: src/Report/Check.php:940
+#: src/Report/Check.php:941
 #, php-format
 msgid "%1$s. Result for PHP %2$s: %3$s, %4$s place."
 msgid_plural "%1$s. Result for PHP %2$s: %3$s, %4$s places."
@@ -1669,7 +1662,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: what the problem is, 2: how to fix it, 3: number of places.
-#: src/Report/Check.php:950
+#: src/Report/Check.php:951
 #, php-format
 msgid "- %1$s %2$s (%3$s place)"
 msgid_plural "- %1$s %2$s (%3$s places)"
@@ -2090,98 +2083,98 @@ msgstr ""
 msgid "every %1$s request · seen in: %2$s"
 msgstr ""
 
-#: src/Report/Join.php:462
-#: src/Report/Join.php:467
+#: src/Report/Join.php:491
+#: src/Report/Join.php:496
 msgid "No completed scan."
 msgstr ""
 
-#: src/Report/Join.php:602
+#: src/Report/Join.php:631
 msgid "No sampled requests with a request time yet (recorded from DB version 2 on)."
 msgstr ""
 
 #. translators: 1: median range, 2: p95 range, 3: requests, 4: average request ms, 5: median limit, 6: p95 limit.
-#: src/Report/Join.php:612
+#: src/Report/Join.php:641
 #, php-format
 msgid "Prep / request time: median %1$s, p95 %2$s over %3$s requests (avg request %4$s ms). Limit: median ≤ %5$s%%, p95 ≤ %6$s%%."
 msgstr ""
 
 #. translators: 1: total ms, 2: prep ms, 3: DB write ms, 4: human time difference.
-#: src/Report/Join.php:638
+#: src/Report/Join.php:667
 #, php-format
 msgid "Absolute cost per sampled request ≈ %1$s ms (prep median %2$s + DB-write median %3$s, benchmark %4$s ago)."
 msgstr ""
 
-#: src/Report/Join.php:645
+#: src/Report/Join.php:674
 msgid "Absolute cost: no benchmark run yet (Usage tab → Run recorder benchmark)."
 msgstr ""
 
 #. translators: 1: percent, 2: number of sampled requests.
-#: src/Report/Join.php:649
+#: src/Report/Join.php:678
 #, php-format
 msgid "%1$s%% of %2$s sampled requests had prep ≥ 3 ms (old absolute rule, information)."
 msgstr ""
 
 #. translators: 1: scan id, 2: peak memory MB, 3: percent of memory_limit, 4: memory_limit MB.
-#: src/Report/Join.php:795
+#: src/Report/Join.php:824
 #, php-format
 msgid "Scan #%1$d finished; peak memory %2$s MB, %3$s%% of memory_limit %4$s MB."
 msgstr ""
 
 #. translators: 1: scan id, 2: peak memory MB.
-#: src/Report/Join.php:801
+#: src/Report/Join.php:830
 #, php-format
 msgid "Scan #%1$d finished; peak memory %2$s MB, but its memory_limit was not recorded (scan from before T6, or a later scan replaced the record) or it ran in WP-CLI with memory_limit -1. Run a scan from the Scan tab to measure M1 with the host limits."
 msgstr ""
 
-#: src/Report/Join.php:808
+#: src/Report/Join.php:837
 msgid "memory_limit was -1 (unlimited) during the scan; the scan budgeted with this limit."
 msgstr ""
 
 #. translators: 1: percent, 2: findings not always loaded, 3: counted findings.
-#: src/Report/Join.php:830
+#: src/Report/Join.php:859
 #, php-format
 msgid "%1$s%% not always loaded (%2$s of %3$s counted findings)."
 msgstr ""
 
-#: src/Report/Join.php:833
+#: src/Report/Join.php:862
 msgid "the scan was made before the new-risk check, so a new scan is needed"
 msgstr ""
 
 #. translators: %d: minimum.
-#: src/Report/Join.php:837
+#: src/Report/Join.php:866
 #, php-format
 msgid "under %d counted findings"
 msgstr ""
 
 #. translators: %d: minimum.
-#: src/Report/Join.php:841
+#: src/Report/Join.php:870
 #, php-format
 msgid "under %d sampled requests"
 msgstr ""
 
 #. translators: %d: minimum.
-#: src/Report/Join.php:845
+#: src/Report/Join.php:874
 #, php-format
 msgid "under %d days observed"
 msgstr ""
 
-#: src/Report/Join.php:865
+#: src/Report/Join.php:894
 msgid "Inactive plugins were not scanned (the Scan tab scans active plugins unless \"Also scan inactive plugins\" is ticked), or the site has none. This report says nothing about problems in inactive plugins."
 msgstr ""
 
-#: src/Report/Join.php:877
+#: src/Report/Join.php:906
 msgid "PASS"
 msgstr ""
 
-#: src/Report/Join.php:879
+#: src/Report/Join.php:908
 msgid "FAIL"
 msgstr ""
 
-#: src/Report/Join.php:881
+#: src/Report/Join.php:910
 msgid "INCONCLUSIVE"
 msgstr ""
 
-#: src/Report/Join.php:883
+#: src/Report/Join.php:912
 msgid "not measured"
 msgstr ""
 
@@ -2201,18 +2194,18 @@ msgstr ""
 msgid "Ready"
 msgstr ""
 
-#: src/Report/Status.php:291
+#: src/Report/Status.php:292
 msgid "Ask your host one question before you upgrade."
 msgstr ""
 
 #. translators: %s: target PHP version.
-#: src/Report/Status.php:305
+#: src/Report/Status.php:306
 #, php-format
 msgid "Your site looks ready for PHP %s."
 msgstr ""
 
 #. translators: 1: number of plugins, 2: target PHP version.
-#: src/Report/Status.php:321
+#: src/Report/Status.php:322
 #, php-format
 msgid "%1$s plugin will likely break on PHP %2$s. Fix it before you upgrade."
 msgid_plural "%1$s plugins will likely break on PHP %2$s. Fix them before you upgrade."
@@ -2220,7 +2213,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of themes, 2: target PHP version.
-#: src/Report/Status.php:325
+#: src/Report/Status.php:326
 #, php-format
 msgid "%1$s theme will likely break on PHP %2$s. Fix it before you upgrade."
 msgid_plural "%1$s themes will likely break on PHP %2$s. Fix them before you upgrade."
@@ -2228,7 +2221,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of plugins and themes together, 2: target PHP version.
-#: src/Report/Status.php:328
+#: src/Report/Status.php:329
 #, php-format
 msgid "%1$s plugin or theme will likely break on PHP %2$s. Fix it before you upgrade."
 msgid_plural "%1$s plugins and themes will likely break on PHP %2$s. Fix them before you upgrade."
@@ -2236,7 +2229,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: target PHP version, 2: number of plugins.
-#: src/Report/Status.php:343
+#: src/Report/Status.php:344
 #, php-format
 msgid "Your site should work on PHP %1$s. %2$s plugin shows warnings you can fix later."
 msgid_plural "Your site should work on PHP %1$s. %2$s plugins show warnings you can fix later."
@@ -2244,7 +2237,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: target PHP version, 2: number of themes.
-#: src/Report/Status.php:347
+#: src/Report/Status.php:348
 #, php-format
 msgid "Your site should work on PHP %1$s. %2$s theme shows warnings you can fix later."
 msgid_plural "Your site should work on PHP %1$s. %2$s themes show warnings you can fix later."
@@ -2252,25 +2245,25 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: target PHP version, 2: number of plugins and themes together.
-#: src/Report/Status.php:350
+#: src/Report/Status.php:351
 #, php-format
 msgid "Your site should work on PHP %1$s. %2$s plugin or theme shows warnings you can fix later."
 msgid_plural "Your site should work on PHP %1$s. %2$s plugins and themes show warnings you can fix later."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Scan/Inventory.php:266
+#: src/Scan/Inventory.php:264
 msgid "File not readable."
 msgstr ""
 
 #. translators: 1: file size in KB, 2: limit in KB.
-#: src/Scan/Inventory.php:297
+#: src/Scan/Inventory.php:295
 #, php-format
 msgid "skipped: too large (%1$s KB, limit %2$s KB)"
 msgstr ""
 
 #. translators: %s: file size in KB.
-#: src/Scan/Inventory.php:301
+#: src/Scan/Inventory.php:299
 #, php-format
 msgid "skipped: too large (data/classmap file, %s KB)"
 msgstr ""
@@ -2280,55 +2273,55 @@ msgid "Another scan request is still running."
 msgstr ""
 
 #. translators: %s: WP-CLI command.
-#: src/Scan/Runner.php:166
+#: src/Scan/Runner.php:167
 #, php-format
 msgid "The file inventory did not finish (the request hit a time or memory limit). Start the scan again; if this keeps happening, run it with WP-CLI: %s"
 msgstr ""
 
 #. translators: %d: scan id.
-#: src/Scan/Runner.php:177
+#: src/Scan/Runner.php:178
 #, php-format
 msgid "A scan is already running (#%d). Resume or cancel it."
 msgstr ""
 
 #. translators: %s: component id.
-#: src/Scan/Runner.php:207
+#: src/Scan/Runner.php:208
 #, php-format
 msgid "Component not found: %s"
 msgstr ""
 
-#: src/Scan/Runner.php:219
 #: src/Scan/Runner.php:220
+#: src/Scan/Runner.php:221
 msgid "The file inventory took longer than the scan lock allows."
 msgstr ""
 
-#: src/Scan/Runner.php:340
+#: src/Scan/Runner.php:341
 msgid "Another batch of this scan is still running."
 msgstr ""
 
 #. translators: 1: memory the file needs (MB), 2: memory already in use (MB), 3: memory_limit (MB), 4: memory_limit that would be enough (MB), 5: wp-config.php line, 6: WP-CLI command.
-#: src/Scan/Runner.php:481
+#: src/Scan/Runner.php:482
 #, php-format
 msgid "skipped: not enough memory to check this file. It needs about %1$s MB and %2$s MB of the %3$s MB PHP memory limit is already in use. Raise the limit to about %4$s MB (ask your host, or add %5$s to wp-config.php), or run the scan with WP-CLI: %6$s"
 msgstr ""
 
 #. translators: %d: number of separate requests the file was tried in.
-#: src/Scan/Runner.php:491
+#: src/Scan/Runner.php:492
 #, php-format
 msgid "(It did not fit in any of %d separate requests.)"
 msgstr ""
 
 #. translators: 1: memory in use (MB), 2: memory_limit needed (MB), 3: current memory_limit (MB), 4: wp-config.php line, 5: WP-CLI command.
-#: src/Scan/Runner.php:577
+#: src/Scan/Runner.php:578
 #, php-format
 msgid "Not enough memory to scan: %1$s MB is already in use before the first file, and a scan needs a memory_limit of about %2$s MB (this request has %3$s MB). To fix it, add %4$s to wp-config.php, ask your host for a higher PHP memory_limit, or run the scan with WP-CLI: %5$s"
 msgstr ""
 
-#: src/Scan/Runner.php:965
+#: src/Scan/Runner.php:967
 msgid "File not found or not readable."
 msgstr ""
 
-#: src/Scan/Runner.php:1349
+#: src/Scan/Runner.php:1439
 msgid "request died while scanning (memory/time limit)"
 msgstr ""
 
@@ -2352,36 +2345,36 @@ msgid_plural "In the last %1$s days, %2$s of %3$s recorded page views were saved
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Usage/Recorder.php:870
+#: src/Usage/Recorder.php:869
 msgid "front end"
 msgstr ""
 
-#: src/Usage/Recorder.php:872
+#: src/Usage/Recorder.php:871
 msgid "ajax"
 msgstr ""
 
-#: src/Usage/Recorder.php:873
+#: src/Usage/Recorder.php:872
 msgid "rest"
 msgstr ""
 
-#: src/Usage/Recorder.php:874
+#: src/Usage/Recorder.php:873
 msgid "cron"
 msgstr ""
 
-#: src/Usage/Recorder.php:875
+#: src/Usage/Recorder.php:874
 msgid "cli"
 msgstr ""
 
-#: src/Usage/Recorder.php:879
+#: src/Usage/Recorder.php:878
 msgid "product"
 msgstr ""
 
-#: src/Usage/Recorder.php:881
+#: src/Usage/Recorder.php:880
 msgid "account"
 msgstr ""
 
 #. translators: 1: plugin name, 2: number of crashes.
-#: src/Watch/Notify.php:101
+#: src/Watch/Notify.php:133
 #, php-format
 msgid "%1$s has crashed %2$s time since your PHP version changed."
 msgid_plural "%1$s has crashed %2$s times since your PHP version changed."
@@ -2389,20 +2382,20 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: page type, e.g. checkout.
-#: src/Watch/Notify.php:105
+#: src/Watch/Notify.php:137
 #, php-format
 msgid "Where: %s."
 msgstr ""
 
-#: src/Watch/Notify.php:108
+#: src/Watch/Notify.php:140
 msgid "See what happened and what to do:"
 msgstr ""
 
-#: src/Watch/Notify.php:112
+#: src/Watch/Notify.php:144
 msgid "A plugin started crashing after a PHP change"
 msgstr ""
 
-#: src/Watch/Notify.php:144
+#: src/Watch/Notify.php:176
 #: src/Watch/Report.php:288
 msgid "WordPress or your server"
 msgstr ""

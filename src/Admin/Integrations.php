@@ -102,6 +102,9 @@ class Integrations {
 	 * @return array
 	 */
 	public static function row_meta( $meta, $file ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return $meta;
+		}
 		$summary = Status::summary();
 		if ( null === $summary ) {
 			return $meta;

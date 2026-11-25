@@ -78,7 +78,9 @@ Each site has its own check and data under Tools > PHP Upgrade. Deleting the plu
 
 == External services ==
 
-This plugin does not connect to any external service. It makes no remote requests and sends no data.
+This plugin does not connect to any third-party API or external service, makes no remote HTTP requests, loads no remote assets and sends no telemetry.
+
+The only data that can leave your site is the optional Upgrade guard crash email, which is off by default. When you turn it on in Settings, the plugin uses WordPress's built-in `wp_mail()` function, at most once per day, to send a plain-text message to your site's own admin email address. The message contains only the name of the plugin or theme that crashed, the crash count, the general page type (for example checkout or admin) and a link to the plugin's Upgrade guard tab in your dashboard. It does not contain error text, file paths or visitor data. The email is delivered by whatever mail method your site is already set up to use.
 
 The Help tab shows three plain links to WordPress.org: the support forum (https://wordpress.org/support/plugin/qasim-php-upgrade-check-guard/), the reviews page (https://wordpress.org/support/plugin/qasim-php-upgrade-check-guard/reviews/) and the author's other plugin (https://wordpress.org/plugins/qasim-checkout-test-lab-for-woocommerce/). Nothing is loaded from these addresses. A page on WordPress.org opens only if an administrator clicks a link, and WordPress.org's own privacy policy (https://wordpress.org/about/privacy/) then applies.
 
@@ -122,6 +124,6 @@ The check uses these open-source projects, bundled in `vendor-prefixed/` with th
 * PHPCSUtils 1.2.3, LGPL-3.0-or-later, https://github.com/PHPCSStandards/PHPCSUtils
 * Composer's class loader, MIT
 
-The bundled code in `vendor-prefixed/` contains only the stripped, namespace-prefixed runtime parser libraries required to statically check PHP files (zero dev dependencies, tests, docs, or CLI binaries). It is renamed into the `Qpucg\Vendor` namespace (with PHP-Scoper) so it cannot clash with other plugins, and any lines that would run shell commands or `eval()` are removed.
+The bundled code in `vendor-prefixed/` contains only the stripped runtime parser libraries needed to check PHP files statically (no tests, docs or command-line binaries). PHP_CodeSniffer, PHPCompatibility, PHPCompatibilityWP, PHPCompatibilityParagonie and PHPCSUtils are renamed into the `Qpucg\Vendor` namespace with PHP-Scoper so they cannot clash with other plugins. Composer's standard class loader and the global token constants that PHP_CodeSniffer defines (`T_*`, `PHP_CODESNIFFER_*`) keep their standard names. Lines that would run shell commands, `eval()`, `ini_set()` or `error_reporting()` are removed from the bundled code.
 
-Source code: https://github.com/qasimwp/qasim-php-upgrade-check-guard . To reproduce the bundled scan engine and release package from source, run `php bin/build-engine.php` followed by `php bin/build-zip.php` (full build requirements are in the repository README).
+Source code: https://github.com/qasimwp/qasim-php-upgrade-check-guard . The build files are in that repository: `engine/composer.json` and `engine/composer.lock` (library versions), `scoper.inc.php` (prefixing and patches), `bin/build-engine.php` (builds `vendor-prefixed/`) and `bin/build-zip.php` (builds the release zip). To reproduce them, run `php bin/build-engine.php` followed by `php bin/build-zip.php`; full build requirements are in the repository README.
