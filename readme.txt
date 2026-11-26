@@ -107,6 +107,7 @@ How long it is kept: collected data older than 30 days is removed automatically,
 3. A check running in the background, with progress.
 4. Upgrade guard, waiting for your host to change PHP.
 5. Settings: Smart results, Upgrade guard and the crash email, all off by default.
+6. The Plugins screen: each checked plugin shows its PHP compatibility status right in the list.
 
 == Changelog ==
 
